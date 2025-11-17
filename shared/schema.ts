@@ -1,18 +1,244 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, timestamp, integer, decimal, uuid, jsonb } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Users table with subscription support
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
+  subscriptionTier: text("subscription_tier").notNull().default("free"), // 'free' or 'premium'
+  subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+// Sermons table
+export const sermons = pgTable("sermons", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  title: text("title").notNull(),
+  mosqueName: text("mosque_name"),
+  date: timestamp("date").notNull(),
+  duration: integer("duration"), // in seconds
+  arabicTranscript: text("arabic_transcript"),
+  englishTranslation: text("english_translation"),
+  audioUrl: text("audio_url"),
+  isPublic: boolean("is_public").notNull().default(false),
+  topic: text("topic"), // for categorization
+  mainTheme: text("main_theme"), // primary theme for AI processing
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
+// Transcript segments for real-time display
+export const transcriptSegments = pgTable("transcript_segments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  sermonId: uuid("sermon_id").references(() => sermons.id, { onDelete: "cascade" }).notNull(),
+  sequenceNumber: integer("sequence_number").notNull(),
+  arabicText: text("arabic_text").notNull(),
+  englishTranslation: text("english_translation").notNull(),
+  timestampSeconds: decimal("timestamp_seconds"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Notes (premium feature)
+export const notes = pgTable("notes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  sermonId: uuid("sermon_id").references(() => sermons.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  timestampSeconds: decimal("timestamp_seconds"),
+  highlights: jsonb("highlights"), // array of {text, color}
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Journal entries (premium feature)
+export const journalEntries = pgTable("journal_entries", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  sermonId: uuid("sermon_id").references(() => sermons.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  prompt: text("prompt"), // the AI-generated prompt
+  mood: text("mood"), // e.g., "grateful", "reflective", "inspired"
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// User analytics
+export const userAnalytics = pgTable("user_analytics", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  date: timestamp("date").notNull(),
+  sermonsAttended: integer("sermons_attended").notNull().default(0),
+  dhikrCount: integer("dhikr_count").notNull().default(0),
+  prayersOnTime: integer("prayers_on_time").notNull().default(0),
+  quranPagesRead: integer("quran_pages_read").notNull().default(0),
+});
+
+// User preferences
+export const userPreferences = pgTable("user_preferences", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
+  location: jsonb("location"), // {latitude, longitude, city}
+  prayerCalculationMethod: text("prayer_calculation_method").notNull().default("MuslimWorldLeague"),
+  fontSize: text("font_size").notNull().default("medium"), // small, medium, large
+  theme: text("theme").notNull().default("light"), // light, dark
+  language: text("language").notNull().default("en"), // en, ar, ur, etc.
+});
+
+// AI-generated action points (premium feature)
+export const actionPoints = pgTable("action_points", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  sermonId: uuid("sermon_id").references(() => sermons.id, { onDelete: "cascade" }).notNull(),
+  content: text("content").notNull(),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  weekNumber: integer("week_number").notNull(), // week of the year
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Relations
+export const usersRelations = relations(users, ({ many, one }) => ({
+  sermons: many(sermons),
+  notes: many(notes),
+  journalEntries: many(journalEntries),
+  analytics: many(userAnalytics),
+  preferences: one(userPreferences),
+  actionPoints: many(actionPoints),
+}));
+
+export const sermonsRelations = relations(sermons, ({ one, many }) => ({
+  user: one(users, {
+    fields: [sermons.userId],
+    references: [users.id],
+  }),
+  segments: many(transcriptSegments),
+  notes: many(notes),
+  journalEntries: many(journalEntries),
+  actionPoints: many(actionPoints),
+}));
+
+export const transcriptSegmentsRelations = relations(transcriptSegments, ({ one }) => ({
+  sermon: one(sermons, {
+    fields: [transcriptSegments.sermonId],
+    references: [sermons.id],
+  }),
+}));
+
+export const notesRelations = relations(notes, ({ one }) => ({
+  user: one(users, {
+    fields: [notes.userId],
+    references: [users.id],
+  }),
+  sermon: one(sermons, {
+    fields: [notes.sermonId],
+    references: [sermons.id],
+  }),
+}));
+
+export const journalEntriesRelations = relations(journalEntries, ({ one }) => ({
+  user: one(users, {
+    fields: [journalEntries.userId],
+    references: [users.id],
+  }),
+  sermon: one(sermons, {
+    fields: [journalEntries.sermonId],
+    references: [sermons.id],
+  }),
+}));
+
+export const userAnalyticsRelations = relations(userAnalytics, ({ one }) => ({
+  user: one(users, {
+    fields: [userAnalytics.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userPreferences.userId],
+    references: [users.id],
+  }),
+}));
+
+export const actionPointsRelations = relations(actionPoints, ({ one }) => ({
+  user: one(users, {
+    fields: [actionPoints.userId],
+    references: [users.id],
+  }),
+  sermon: one(sermons, {
+    fields: [actionPoints.sermonId],
+    references: [sermons.id],
+  }),
+}));
+
+// Zod schemas for validation
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  subscriptionTier: true,
+  subscriptionExpiresAt: true,
+  stripeCustomerId: true,
+  stripeSubscriptionId: true,
+});
+
+export const insertSermonSchema = createInsertSchema(sermons).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTranscriptSegmentSchema = createInsertSchema(transcriptSegments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertNoteSchema = createInsertSchema(notes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertJournalEntrySchema = createInsertSchema(journalEntries).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserAnalyticsSchema = createInsertSchema(userAnalytics).omit({
+  id: true,
+});
+
+export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
+  id: true,
+});
+
+export const insertActionPointSchema = createInsertSchema(actionPoints).omit({
+  id: true,
+  createdAt: true,
+});
+
+// TypeScript types
 export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type Sermon = typeof sermons.$inferSelect;
+export type InsertSermon = z.infer<typeof insertSermonSchema>;
+
+export type TranscriptSegment = typeof transcriptSegments.$inferSelect;
+export type InsertTranscriptSegment = z.infer<typeof insertTranscriptSegmentSchema>;
+
+export type Note = typeof notes.$inferSelect;
+export type InsertNote = z.infer<typeof insertNoteSchema>;
+
+export type JournalEntry = typeof journalEntries.$inferSelect;
+export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
+
+export type UserAnalytics = typeof userAnalytics.$inferSelect;
+export type InsertUserAnalytics = z.infer<typeof insertUserAnalyticsSchema>;
+
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+
+export type ActionPoint = typeof actionPoints.$inferSelect;
+export type InsertActionPoint = z.infer<typeof insertActionPointSchema>;

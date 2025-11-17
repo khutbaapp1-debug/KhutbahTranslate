@@ -84,6 +84,7 @@ export default {
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
+        arabic: ["var(--font-arabic)"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
       },

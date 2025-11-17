@@ -43,7 +43,8 @@
   --chart-3: 145 55% 30%;
   --chart-4: 180 58% 28%;
   --chart-5: 155 62% 26%;
-  --font-sans: Open Sans, sans-serif;
+  --font-sans: Inter, 'Noto Naskh Arabic', sans-serif;
+  --font-arabic: 'Noto Naskh Arabic', serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
   --radius: .5rem;
