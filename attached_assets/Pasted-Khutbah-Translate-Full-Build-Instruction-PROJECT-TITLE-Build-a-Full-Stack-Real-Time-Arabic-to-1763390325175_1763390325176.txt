@@ -1,0 +1,185 @@
+Khutbah Translate (Full Build Instruction)
+
+🎯 PROJECT TITLE:
+Build a Full-Stack Real-Time Arabic-to-English “Khutbah Translate” Web Application
+
+⸻
+
+🔧 TASK
+
+Build a complete full-stack web application called Khutbah Translate, which performs real-time translation of Arabic khutbahs into English while respecting Islamic terminology, cultural tone, and religious etiquette.
+
+The app should:
+	1.	Record live Arabic audio continuously during a khutbah (no pauses).
+	2.	Transcribe speech to Arabic text in real time using OpenAI Whisper (streaming or chunk-based).
+	3.	Translate each transcript chunk into English in real time, using GPT/Gemini via Lovable AI Gateway.
+	4.	Preserve Islamic terminology, Qur’anic references, and cultural meaning.
+	5.	Automatically append “peace be upon him” whenever Prophet Muhammad ﷺ is mentioned.
+	6.	Identify Qur’anic verses and mark them respectfully.
+	7.	Provide real-time translated subtitles with smooth, continuous updates.
+
+⸻
+
+🌙 RELIGIOUS RESPECT REQUIREMENTS
+
+Replit must implement custom logic:
+	•	Always preserve Islamic terms (e.g., salah, taqwa, jannah, zakah, ihsan).
+	•	Never mistranslate Allah, Rasulullah, SWT, Jannah, Jahannam, etc.
+	•	Add “(peace be upon him)” automatically after any mention of Prophet Muhammad, or “Rasulullah,” or “the Messenger.”
+	•	Detect Qur’anic recitation and format it as a Qur’an block with markers.
+	•	Maintain scholarly tone and cultural sensitivity throughout translations.
+
+⸻
+
+📱 CORE FEATURES TO BUILD
+
+1. Real-Time Live Translation
+	•	Microphone recording (Web Audio API)
+	•	Audio chunking (WebM)
+	•	Whisper transcription (Arabic → Arabic text)
+	•	GPT/Gemini translation (Arabic → English)
+	•	Continuous subtitle feed (auto-scroll)
+
+2. Sermon Management
+	•	Save full sermons with:
+	•	Title
+	•	Mosque name
+	•	Date & Duration
+	•	Arabic transcript
+	•	English translation
+	•	Optional audio URL
+	•	View sermon history with search + filters
+	•	Timestamped segments
+
+3. Translation Quality Enhancements
+	•	Glossary of Islamic terms per sermon
+	•	Sermon summary generation
+	•	Context-aware translation (religious tone)
+	•	Auto-correction for common Arabic dialect variations
+
+4. Multi-Language Support
+
+Add translation options:
+	•	English
+	•	Urdu
+	•	Hindi
+	•	Malay
+	•	Indonesian
+	•	Turkish
+	•	French
+
+(Drop-down selector on UI)
+
+5. Public Sermon Library
+	•	Toggle sermons as public or private
+	•	Public discovery page
+	•	SEO-friendly sermon pages
+
+6. Live Streaming Mode
+	•	Allow mosques to broadcast audio feed live
+	•	Real-time subtitles for online viewers
+
+7. Progressive Web App (PWA)
+	•	Installable on iPhone/Android
+	•	Offline sermon reading
+	•	Push notifications for saved sermons
+
+⸻
+
+🏗️ TECHNOLOGY STACK
+
+Frontend
+	•	React 18 + TypeScript
+	•	Vite
+	•	Tailwind CSS
+	•	shadcn/ui
+	•	React Router
+	•	React Query
+	•	PWA manifest + service workers
+
+Backend (Supabase / Lovable Cloud)
+	•	PostgreSQL
+	•	Edge Functions (Deno)
+	•	User Authentication
+	•	Row Level Security
+	•	Storage buckets for audio files
+
+AI/ML
+	•	OpenAI Whisper (transcription)
+	•	Lovable AI Gateway (GPT/Gemini translation)
+	•	Optional TTS for audio playback
+
+⸻
+
+🔄 SYSTEM ARCHITECTURE
+
+Recording Flow
+	1.	User clicks Start Recording
+	2.	Microphone data captured in small WebM chunks
+	3.	Base64 audio → transcribe-audio edge function
+	4.	Whisper converts speech → Arabic text
+	5.	Arabic text sent to translate-text function
+	6.	English translation returned instantly
+	7.	UI updates a live “translation feed”
+
+Data Flow
+
+Client → Edge Function → OpenAI/Lovable → Supabase → Back to Client
+	•	Users can create, read, update, delete their own sermons only
+	•	RLS ensures full privacy
+
+⸻
+
+🔐 SECURITY REQUIREMENTS
+	•	JWT auth for all API function calls
+	•	Secure API key vault (never exposed to client)
+	•	RLS policies per user
+	•	Rate limiting on translation endpoints
+
+⸻
+
+🧪 TESTING
+	•	Use prerecorded khutbah audio to simulate real-time chunked input.
+	•	Verify:
+	•	Real-time text updating
+	•	Religious terminology preserved
+	•	“(peace be upon him)” auto-append logic
+	•	Qur’an detection formatting
+	•	Speech-to-text accuracy
+	•	No pause required in sermon
+	•	Test PWA installation and offline capabilities
+
+⸻
+
+🎨 UI REQUIREMENTS
+	•	Clean, distraction-free reading layout
+	•	Auto-scroll as translation appears
+	•	Light/Dark mode
+	•	Large clear Arabic + English fonts
+	•	Accessible for older users (big text options)
+
+⸻
+
+⛔ DO NOT
+	•	Do not require the khatib to pause
+	•	Do not store API keys on frontend
+	•	Do not simplify Islamic terms
+	•	Do not translate names like Allah into “God” unless user chooses
+	•	Do not add any personality analysis or unrelated AI tasks
+
+⸻
+
+✅ DELIVERABLE
+
+Build the entire application end-to-end, including:
+	•	Complete frontend
+	•	Complete backend
+	•	All edge functions
+	•	Database schema
+	•	Authentication
+	•	Live translation engine
+	•	PWA support
+	•	Public library
+	•	Deployment scripts
+
+Everything should be generated and wired together automatically.
