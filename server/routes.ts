@@ -384,6 +384,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ QURAN ROUTES ============
+  
+  // Get all surahs (index)
+  app.get("/api/quran/surahs", async (req, res) => {
+    try {
+      const response = await fetch(
+        "https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/chapters/en/index.json"
+      );
+      const surahs = await response.json();
+      res.json(surahs);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Get specific surah with verses
+  app.get("/api/quran/surah/:id", async (req, res) => {
+    try {
+      const surahId = parseInt(req.params.id);
+      if (isNaN(surahId) || surahId < 1 || surahId > 114) {
+        return res.status(400).json({ error: "Surah ID must be between 1 and 114" });
+      }
+      
+      const response = await fetch(
+        `https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/chapters/en/${surahId}.json`
+      );
+      const surah = await response.json();
+      res.json(surah);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
