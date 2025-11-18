@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 interface PrayerTime {
   name: string;
@@ -13,18 +15,36 @@ interface PrayerTime {
   isPassed: boolean;
 }
 
-export default function PrayerTimesPage() {
-  const [location, setLocation] = useState<string>("Getting location...");
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [isLoading, setIsLoading] = useState(true);
+interface PrayerTimesData {
+  fajr: string;
+  sunrise: string;
+  dhuhr: string;
+  asr: string;
+  maghrib: string;
+  isha: string;
+  nextPrayer: {
+    nextPrayer: string;
+    timeRemaining: string;
+    hours: number;
+    minutes: number;
+    seconds: number;
+  };
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+}
 
-  const prayerTimes: PrayerTime[] = [
-    { name: "Fajr", time: "05:30 AM", isNext: false, isPassed: true },
-    { name: "Dhuhr", time: "12:45 PM", isNext: true, isPassed: false },
-    { name: "Asr", time: "03:30 PM", isNext: false, isPassed: false },
-    { name: "Maghrib", time: "06:15 PM", isNext: false, isPassed: false },
-    { name: "Isha", time: "07:45 PM", isNext: false, isPassed: false },
-  ];
+export default function PrayerTimesPage() {
+  const [coords, setCoords] = useState<{latitude: number; longitude: number} | null>(null);
+  const [locationName, setLocationName] = useState<string>("Getting location...");
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const { toast } = useToast();
+
+  const { data: prayerData, isLoading, error } = useQuery<PrayerTimesData>({
+    queryKey: ["/api/prayer-times", coords?.latitude, coords?.longitude],
+    enabled: coords !== null,
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,22 +53,102 @@ export default function PrayerTimesPage() {
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        () => {
-          setLocation("New York, NY");
-          setIsLoading(false);
+        (position) => {
+          setCoords({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          
+          fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`
+          )
+            .then((res) => res.json())
+            .then((data) => {
+              const city = data.address?.city || data.address?.town || data.address?.village || "Unknown";
+              const state = data.address?.state || "";
+              setLocationName(`${city}${state ? `, ${state}` : ""}`);
+            })
+            .catch(() => {
+              setLocationName("Location found");
+            });
         },
-        () => {
-          setLocation("Location unavailable");
-          setIsLoading(false);
+        (error) => {
+          setLocationName("Location unavailable");
+          toast({
+            title: "Location Error",
+            description: "Unable to get your location. Please enable location services.",
+            variant: "destructive",
+          });
         }
       );
+    } else {
+      setLocationName("Location not supported");
+      toast({
+        title: "Location Not Supported",
+        description: "Your browser doesn't support geolocation.",
+        variant: "destructive",
+      });
     }
 
     return () => clearInterval(timer);
-  }, []);
+  }, [toast]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
+          <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
+            <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
+              Prayer Times
+            </h1>
+          </div>
+        </header>
+        <main className="p-6 max-w-screen-md mx-auto">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p className="text-destructive">Error loading prayer times. Please try again.</p>
+            </CardContent>
+          </Card>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  const prayerTimes: PrayerTime[] = prayerData ? [
+    { 
+      name: "Fajr", 
+      time: prayerData.fajr, 
+      isNext: prayerData.nextPrayer?.nextPrayer === "Fajr", 
+      isPassed: isTimePassed(prayerData.fajr, currentTime)
+    },
+    { 
+      name: "Dhuhr", 
+      time: prayerData.dhuhr, 
+      isNext: prayerData.nextPrayer?.nextPrayer === "Dhuhr", 
+      isPassed: isTimePassed(prayerData.dhuhr, currentTime)
+    },
+    { 
+      name: "Asr", 
+      time: prayerData.asr, 
+      isNext: prayerData.nextPrayer?.nextPrayer === "Asr", 
+      isPassed: isTimePassed(prayerData.asr, currentTime)
+    },
+    { 
+      name: "Maghrib", 
+      time: prayerData.maghrib, 
+      isNext: prayerData.nextPrayer?.nextPrayer === "Maghrib", 
+      isPassed: isTimePassed(prayerData.maghrib, currentTime)
+    },
+    { 
+      name: "Isha", 
+      time: prayerData.isha, 
+      isNext: prayerData.nextPrayer?.nextPrayer === "Isha", 
+      isPassed: isTimePassed(prayerData.isha, currentTime)
+    },
+  ] : [];
 
   const nextPrayer = prayerTimes.find((p) => p.isNext);
-  const timeUntilNext = "2:15:30";
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -64,7 +164,7 @@ export default function PrayerTimesPage() {
       </header>
 
       <main className="p-6 space-y-6 max-w-screen-md mx-auto">
-        {isLoading ? (
+        {isLoading || !prayerData ? (
           <Card>
             <CardContent className="p-6">
               <Skeleton className="h-8 w-3/4 mb-4" />
@@ -77,19 +177,21 @@ export default function PrayerTimesPage() {
               <CardContent className="p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <MapPin className="w-4 h-4" />
-                  <span className="text-sm" data-testid="text-location">{location}</span>
+                  <span className="text-sm" data-testid="text-location">{locationName}</span>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm opacity-90">Next Prayer</p>
                   <h2 className="text-4xl font-bold" data-testid="text-next-prayer">
-                    {nextPrayer?.name}
+                    {nextPrayer?.name || prayerData.nextPrayer?.nextPrayer}
                   </h2>
                   <p className="text-2xl" data-testid="text-next-prayer-time">
                     {nextPrayer?.time}
                   </p>
                   <div className="flex items-center gap-2 text-sm opacity-90">
                     <Clock className="w-4 h-4" />
-                    <span data-testid="text-countdown">{timeUntilNext} remaining</span>
+                    <span data-testid="text-countdown">
+                      {prayerData.nextPrayer?.timeRemaining} remaining
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -139,7 +241,7 @@ export default function PrayerTimesPage() {
             </Card>
 
             <p className="text-center text-sm text-muted-foreground">
-              Times calculated using Muslim World League method
+              Times calculated using ISNA method based on your location
             </p>
           </>
         )}
@@ -148,4 +250,21 @@ export default function PrayerTimesPage() {
       <BottomNav />
     </div>
   );
+}
+
+function isTimePassed(timeStr: string, currentTime: Date): boolean {
+  const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/);
+  if (!match) return false;
+  
+  let hours = parseInt(match[1]);
+  const minutes = parseInt(match[2]);
+  const period = match[3];
+  
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+  
+  const prayerMinutes = hours * 60 + minutes;
+  const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+  
+  return currentMinutes > prayerMinutes;
 }

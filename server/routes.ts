@@ -359,6 +359,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ PRAYER TIMES ROUTES ============
+  
+  // Get prayer times for a location
+  app.get("/api/prayer-times", async (req, res) => {
+    try {
+      const latitude = parseFloat(req.query.latitude as string);
+      const longitude = parseFloat(req.query.longitude as string);
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        return res.status(400).json({ error: "Valid latitude and longitude required" });
+      }
+      
+      const { calculatePrayerTimes, getTimeUntilNextPrayer } = await import("./prayer-times");
+      const prayerTimes = calculatePrayerTimes({ latitude, longitude });
+      const nextPrayerInfo = getTimeUntilNextPrayer(prayerTimes);
+      
+      res.json({
+        ...prayerTimes,
+        nextPrayer: nextPrayerInfo,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
