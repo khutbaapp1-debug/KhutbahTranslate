@@ -10,7 +10,9 @@ import {
   generateSermonSummary,
   generateJournalPrompt,
 } from "./openai-service";
-import { insertSermonSchema, insertNoteSchema, insertJournalEntrySchema } from "@shared/schema";
+import { insertSermonSchema, insertNoteSchema, insertJournalEntrySchema, duas, favoriteDuas } from "@shared/schema";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 // Middleware for authenticated routes
 function requireAuth(req: any, res: any, next: any) {
@@ -412,6 +414,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       const surah = await response.json();
       res.json(surah);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============ DUAS ROUTES ============
+  
+  // Get all duas (optionally filtered by category)
+  app.get("/api/duas", async (req, res) => {
+    try {
+      const { category } = req.query;
+      
+      if (category && typeof category === "string") {
+        const categoryDuas = await db
+          .select()
+          .from(duas)
+          .where(eq(duas.category, category));
+        return res.json(categoryDuas);
+      }
+      
+      const allDuas = await db.select().from(duas);
+      res.json(allDuas);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Get user's favorited duas
+  app.get("/api/duas/favorites", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      
+      const favorites = await db
+        .select({
+          id: duas.id,
+          arabicText: duas.arabicText,
+          transliteration: duas.transliteration,
+          translation: duas.translation,
+          category: duas.category,
+          occasion: duas.occasion,
+          reference: duas.reference,
+          favoriteId: favoriteDuas.id,
+          favoritedAt: favoriteDuas.createdAt,
+        })
+        .from(favoriteDuas)
+        .innerJoin(duas, eq(favoriteDuas.duaId, duas.id))
+        .where(eq(favoriteDuas.userId, userId));
+      
+      res.json(favorites);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Add a dua to favorites
+  app.post("/api/duas/:id/favorite", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const duaId = req.params.id;
+      
+      // Check if already favorited
+      const existing = await db
+        .select()
+        .from(favoriteDuas)
+        .where(and(
+          eq(favoriteDuas.userId, userId),
+          eq(favoriteDuas.duaId, duaId)
+        ));
+      
+      if (existing.length > 0) {
+        return res.status(409).json({ error: "Dua already favorited" });
+      }
+      
+      const [favorite] = await db
+        .insert(favoriteDuas)
+        .values({ userId, duaId })
+        .returning();
+      
+      res.status(201).json(favorite);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Remove a dua from favorites
+  app.delete("/api/duas/:id/favorite", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const duaId = req.params.id;
+      
+      await db
+        .delete(favoriteDuas)
+        .where(and(
+          eq(favoriteDuas.userId, userId),
+          eq(favoriteDuas.duaId, duaId)
+        ));
+      
+      res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

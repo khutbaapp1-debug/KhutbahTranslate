@@ -89,6 +89,25 @@ export const userPreferences = pgTable("user_preferences", {
   language: text("language").notNull().default("en"), // en, ar, ur, etc.
 });
 
+// Duas (supplications) collection
+export const duas = pgTable("duas", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  arabicText: text("arabic_text").notNull(),
+  transliteration: text("transliteration").notNull(),
+  translation: text("translation").notNull(),
+  category: text("category").notNull(), // 'morning', 'evening', 'daily', 'travel', 'food', etc.
+  occasion: text("occasion"), // specific occasion or situation
+  reference: text("reference"), // hadith or Quran reference
+});
+
+// Favorited duas (user-specific)
+export const favoriteDuas = pgTable("favorite_duas", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  duaId: uuid("dua_id").references(() => duas.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // AI-generated action points (premium feature)
 export const actionPoints = pgTable("action_points", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -108,6 +127,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   analytics: many(userAnalytics),
   preferences: one(userPreferences),
   actionPoints: many(actionPoints),
+  favoriteDuas: many(favoriteDuas),
 }));
 
 export const sermonsRelations = relations(sermons, ({ one, many }) => ({
@@ -175,6 +195,21 @@ export const actionPointsRelations = relations(actionPoints, ({ one }) => ({
   }),
 }));
 
+export const duasRelations = relations(duas, ({ many }) => ({
+  favorites: many(favoriteDuas),
+}));
+
+export const favoriteDuasRelations = relations(favoriteDuas, ({ one }) => ({
+  user: one(users, {
+    fields: [favoriteDuas.userId],
+    references: [users.id],
+  }),
+  dua: one(duas, {
+    fields: [favoriteDuas.duaId],
+    references: [duas.id],
+  }),
+}));
+
 // Zod schemas for validation
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -218,6 +253,15 @@ export const insertActionPointSchema = createInsertSchema(actionPoints).omit({
   createdAt: true,
 });
 
+export const insertDuaSchema = createInsertSchema(duas).omit({
+  id: true,
+});
+
+export const insertFavoriteDuaSchema = createInsertSchema(favoriteDuas).omit({
+  id: true,
+  createdAt: true,
+});
+
 // TypeScript types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -242,3 +286,9 @@ export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 
 export type ActionPoint = typeof actionPoints.$inferSelect;
 export type InsertActionPoint = z.infer<typeof insertActionPointSchema>;
+
+export type Dua = typeof duas.$inferSelect;
+export type InsertDua = z.infer<typeof insertDuaSchema>;
+
+export type FavoriteDua = typeof favoriteDuas.$inferSelect;
+export type InsertFavoriteDua = z.infer<typeof insertFavoriteDuaSchema>;

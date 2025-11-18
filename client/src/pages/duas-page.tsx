@@ -1,88 +1,80 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Heart } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
+import type { Dua } from "@shared/schema";
 
 const duaCategories = [
+  { id: "all", label: "All" },
   { id: "morning", label: "Morning" },
   { id: "evening", label: "Evening" },
   { id: "daily", label: "Daily" },
+  { id: "sleep", label: "Sleep" },
   { id: "travel", label: "Travel" },
   { id: "food", label: "Food" },
+  { id: "prayer", label: "Prayer" },
+  { id: "distress", label: "Distress" },
+  { id: "gratitude", label: "Gratitude" },
+  { id: "forgiveness", label: "Forgiveness" },
+  { id: "knowledge", label: "Knowledge" },
+  { id: "protection", label: "Protection" },
 ];
 
-const duas = {
-  morning: [
-    {
-      id: 1,
-      arabic: "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ",
-      translation: "We have entered a new day and with it all dominion is Allah's.",
-      transliteration: "Aṣbaḥnā wa aṣbaḥa-l-mulku lillāh",
-      occasion: "Upon waking",
-    },
-    {
-      id: 2,
-      arabic: "اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ",
-      translation: "O Allah, by You we enter the morning and by You we enter the evening, by You we live and by You we die, and to You is the resurrection.",
-      transliteration: "Allāhumma bika aṣbaḥnā wa bika amsaynā wa bika naḥyā wa bika namūtu wa ilayka-n-nushūr",
-      occasion: "Morning remembrance",
-    },
-  ],
-  evening: [
-    {
-      id: 3,
-      arabic: "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ",
-      translation: "We have entered the evening and with it all dominion is Allah's.",
-      transliteration: "Amsaynā wa amsā-l-mulku lillāh",
-      occasion: "Evening time",
-    },
-  ],
-  daily: [
-    {
-      id: 4,
-      arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-      translation: "In the name of Allah, the Most Gracious, the Most Merciful",
-      transliteration: "Bismillāhi r-raḥmāni r-raḥīm",
-      occasion: "Before any action",
-    },
-  ],
-  travel: [
-    {
-      id: 5,
-      arabic: "سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَٰذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ",
-      translation: "Glory be to Him who has placed this at our service, and we ourselves would not have been capable of it.",
-      transliteration: "Subḥāna-lladhī sakhkhara lanā hādhā wa mā kunnā lahu muqrinīn",
-      occasion: "When starting a journey",
-    },
-  ],
-  food: [
-    {
-      id: 6,
-      arabic: "بِسْمِ اللَّهِ",
-      translation: "In the name of Allah",
-      transliteration: "Bismillāh",
-      occasion: "Before eating",
-    },
-    {
-      id: 7,
-      arabic: "الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا وَجَعَلَنَا مُسْلِمِينَ",
-      translation: "Praise be to Allah Who has fed us and given us drink and made us Muslims.",
-      transliteration: "Alḥamdu lillāhi-lladhī aṭ'amanā wa saqānā wa ja'alanā muslimīn",
-      occasion: "After eating",
-    },
-  ],
-};
+interface FavoriteDua {
+  id: string;
+  favoriteId: string;
+  arabicText: string;
+  transliteration: string;
+  translation: string;
+  category: string;
+  occasion: string | null;
+  reference: string | null;
+}
 
 export default function DuasPage() {
-  const [activeCategory, setActiveCategory] = useState("morning");
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const { user } = useAuth();
 
-  const toggleFavorite = (id: number) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]
-    );
+  const { data: allDuas, isLoading: loadingDuas } = useQuery<Dua[]>({
+    queryKey: ["/api/duas"],
+  });
+
+  const { data: favoriteDuas } = useQuery<FavoriteDua[]>({
+    queryKey: ["/api/duas/favorites"],
+    enabled: !!user,
+  });
+
+  const favoriteMutation = useMutation({
+    mutationFn: async ({ duaId, isFavorite }: { duaId: string; isFavorite: boolean }) => {
+      if (isFavorite) {
+        await apiRequest("DELETE", `/api/duas/${duaId}/favorite`);
+      } else {
+        await apiRequest("POST", `/api/duas/${duaId}/favorite`);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/duas/favorites"] });
+    },
+  });
+
+  const filteredDuas = allDuas?.filter((dua) => {
+    if (activeCategory === "all") return true;
+    return dua.category === activeCategory;
+  });
+
+  const isFavorited = (duaId: string) => {
+    return favoriteDuas?.some((fav) => fav.id === duaId) || false;
+  };
+
+  const toggleFavorite = (duaId: string) => {
+    if (!user) return;
+    const isFavorite = isFavorited(duaId);
+    favoriteMutation.mutate({ duaId, isFavorite });
   };
 
   return (
@@ -113,52 +105,72 @@ export default function DuasPage() {
             ))}
           </TabsList>
 
-          {duaCategories.map((category) => (
-            <TabsContent key={category.id} value={category.id} className="space-y-4">
-              {duas[category.id as keyof typeof duas].map((dua) => (
-                <Card key={dua.id} className="overflow-hidden" data-testid={`card-dua-${dua.id}`}>
-                  <CardContent className="p-6 space-y-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <Badge variant="secondary" className="shrink-0">
-                        {dua.occasion}
-                      </Badge>
-                      <button
-                        onClick={() => toggleFavorite(dua.id)}
-                        className="shrink-0 p-2 rounded-full hover-elevate"
-                        data-testid={`button-favorite-${dua.id}`}
-                      >
-                        <Heart
-                          className={`w-5 h-5 ${
-                            favorites.includes(dua.id)
-                              ? "fill-primary text-primary"
-                              : "text-muted-foreground"
-                          }`}
-                        />
-                      </button>
-                    </div>
+          {loadingDuas ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredDuas && filteredDuas.length > 0 ? (
+                filteredDuas.map((dua) => (
+                  <Card key={dua.id} className="overflow-hidden" data-testid={`card-dua-${dua.id}`}>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex gap-2 flex-wrap">
+                          <Badge variant="secondary" className="shrink-0">
+                            {dua.occasion || dua.category}
+                          </Badge>
+                          {dua.reference && (
+                            <Badge variant="outline" className="shrink-0 text-xs">
+                              {dua.reference}
+                            </Badge>
+                          )}
+                        </div>
+                        {user && (
+                          <button
+                            onClick={() => toggleFavorite(dua.id)}
+                            className="shrink-0 p-2 rounded-full hover-elevate"
+                            data-testid={`button-favorite-${dua.id}`}
+                            disabled={favoriteMutation.isPending}
+                          >
+                            <Heart
+                              className={`w-5 h-5 ${
+                                isFavorited(dua.id)
+                                  ? "fill-primary text-primary"
+                                  : "text-muted-foreground"
+                              }`}
+                            />
+                          </button>
+                        )}
+                      </div>
 
-                    <div className="space-y-4">
-                      <p
-                        className="text-3xl font-arabic leading-loose text-right"
-                        dir="rtl"
-                        data-testid={`text-arabic-${dua.id}`}
-                      >
-                        {dua.arabic}
-                      </p>
+                      <div className="space-y-4">
+                        <p
+                          className="text-3xl font-arabic leading-loose text-right"
+                          dir="rtl"
+                          data-testid={`text-arabic-${dua.id}`}
+                        >
+                          {dua.arabicText}
+                        </p>
 
-                      <p className="text-sm italic text-muted-foreground">
-                        {dua.transliteration}
-                      </p>
+                        <p className="text-sm italic text-muted-foreground">
+                          {dua.transliteration}
+                        </p>
 
-                      <p className="text-base leading-relaxed" data-testid={`text-translation-${dua.id}`}>
-                        {dua.translation}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </TabsContent>
-          ))}
+                        <p className="text-base leading-relaxed" data-testid={`text-translation-${dua.id}`}>
+                          {dua.translation}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <p className="text-center py-12 text-muted-foreground">
+                  No duas found in this category
+                </p>
+              )}
+            </div>
+          )}
         </Tabs>
       </main>
 
