@@ -7,7 +7,7 @@ import { Sunrise, Sunset, Moon, Star } from "lucide-react";
 import ramadanImage from "@assets/generated_images/Ramadan_crescent_moon_lanterns_7acbaea8.png";
 
 export default function RamadanPage() {
-  const [timeToIf tar, setTimeToIftar] = useState({ hours: 5, minutes: 32, seconds: 15 });
+  const [timeToIftar, setTimeToIftar] = useState({ hours: 5, minutes: 32, seconds: 15 });
   const [timeToSuhoor, setTimeToSuhoor] = useState({ hours: 18, minutes: 25, seconds: 0 });
 
   const currentDay = 15;
