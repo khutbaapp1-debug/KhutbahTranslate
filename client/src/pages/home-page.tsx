@@ -33,12 +33,12 @@ import duasImage from "@assets/generated_images/hands_in_dua_position.png";
 import mosqueFinderImage from "@assets/generated_images/mosque_aerial_city_view.png";
 import namesOfAllahImage from "@assets/generated_images/islamic_calligraphy_allah_names.png";
 
-type LayoutMode = "carousel" | "hybrid" | "categorized" | "quickaccess";
+type LayoutMode = "carousel" | "hybrid" | "categorized" | "quickaccess" | "appgrid";
 
 export default function HomePage() {
   const [, setLocation] = useLocation();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>("carousel");
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>("appgrid");
   const [showAllTools, setShowAllTools] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
@@ -169,6 +169,37 @@ export default function HomePage() {
   };
 
   const carouselFeatures = getCarouselFeatures();
+
+  const renderAppGridLayout = () => (
+    <div className="px-6">
+      <div className="grid grid-cols-3 gap-5">
+        {features.map((feature) => {
+          const Icon = feature.icon;
+          return (
+            <button
+              key={feature.title}
+              onClick={() => setLocation(feature.path)}
+              className="flex flex-col items-center gap-2 hover-elevate active-elevate-2 transition-all"
+              data-testid={`tile-${feature.title.toLowerCase().replace(/\s+/g, '-')}`}
+              aria-label={`Open ${feature.title}`}
+            >
+              <div
+                className="w-full aspect-square rounded-2xl bg-cover bg-center relative flex items-center justify-center overflow-hidden"
+                style={{ backgroundImage: `url(${feature.backgroundImage})` }}
+                aria-hidden="true"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/40 to-primary/60" aria-hidden="true" />
+                <Icon className="w-12 h-12 text-white relative z-10" />
+              </div>
+              <span className="text-xs font-medium text-center text-foreground leading-tight line-clamp-2 w-full">
+                {feature.title}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   const renderCarouselLayout = () => (
     <>
@@ -430,7 +461,8 @@ export default function HomePage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="carousel">Current</SelectItem>
+                <SelectItem value="appgrid">App Grid</SelectItem>
+                <SelectItem value="carousel">Carousel</SelectItem>
                 <SelectItem value="hybrid">Hybrid</SelectItem>
                 <SelectItem value="categorized">Categorized</SelectItem>
                 <SelectItem value="quickaccess">Quick Access</SelectItem>
@@ -458,6 +490,7 @@ export default function HomePage() {
             Assalamu Alaikum
           </h2>
           <p className="text-sm text-muted-foreground">
+            {layoutMode === "appgrid" && "All tools at a glance, phone-style"}
             {layoutMode === "carousel" && "Explore your Islamic tools and resources"}
             {layoutMode === "hybrid" && "Priority tools at top, all others below"}
             {layoutMode === "categorized" && "Tools organized by Islamic practice"}
@@ -465,6 +498,7 @@ export default function HomePage() {
           </p>
         </div>
 
+        {layoutMode === "appgrid" && renderAppGridLayout()}
         {layoutMode === "carousel" && renderCarouselLayout()}
         {layoutMode === "hybrid" && renderHybridLayout()}
         {layoutMode === "categorized" && renderCategorizedLayout()}
