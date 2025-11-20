@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Moon, Sparkles, Grid3x3, LayoutGrid } from "lucide-react";
+import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Moon, Sparkles, Grid3x3, Users, BookOpen, Calendar } from "lucide-react";
 import { FeatureCard } from "@/components/feature-card";
 import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
@@ -123,22 +123,30 @@ export default function HomePage() {
 
   const categories = {
     khutbah: {
-      title: "🎙️ Khutbah & Community",
+      title: "Khutbah & Community",
+      icon: Mic,
       features: features.filter(f => f.category === "khutbah" || f.category === "community"),
     },
     prayer: {
-      title: "🕌 Prayer & Worship",
+      title: "Prayer & Worship",
+      icon: Circle,
       features: features.filter(f => f.category === "prayer"),
     },
     knowledge: {
-      title: "📖 Quran & Knowledge",
+      title: "Quran & Knowledge",
+      icon: BookOpen,
       features: features.filter(f => f.category === "knowledge"),
     },
     calendar: {
-      title: "🌙 Islamic Calendar",
+      title: "Islamic Calendar",
+      icon: Calendar,
       features: features.filter(f => f.category === "calendar"),
     },
   };
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [layoutMode]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -153,7 +161,14 @@ export default function HomePage() {
 
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [layoutMode]);
+
+  const getCarouselFeatures = () => {
+    if (layoutMode === "carousel") return features;
+    return featuredFeatures;
+  };
+
+  const carouselFeatures = getCarouselFeatures();
 
   const renderCarouselLayout = () => (
     <>
@@ -262,42 +277,48 @@ export default function HomePage() {
 
   const renderCategorizedLayout = () => (
     <div className="px-6 space-y-8">
-      {Object.entries(categories).map(([key, category]) => (
-        <div key={key}>
-          <h3 className="text-base font-semibold text-foreground mb-4">{category.title}</h3>
-          <div className="grid grid-cols-1 gap-3">
-            {category.features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <Card
-                  key={feature.title}
-                  className="hover-elevate active-elevate-2 cursor-pointer overflow-hidden"
-                  onClick={() => setLocation(feature.path)}
-                  data-testid={`card-feature-${feature.title.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <div className="flex items-stretch h-24">
-                    <div
-                      className="w-28 bg-cover bg-center relative flex-shrink-0"
-                      style={{ backgroundImage: `url(${feature.backgroundImage})` }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Icon className="w-8 h-8 text-white" />
+      {Object.entries(categories).map(([key, category]) => {
+        const CategoryIcon = category.icon;
+        return (
+          <div key={key}>
+            <div className="flex items-center gap-2 mb-4">
+              <CategoryIcon className="w-5 h-5 text-primary" />
+              <h3 className="text-base font-semibold text-foreground">{category.title}</h3>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              {category.features.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <Card
+                    key={feature.title}
+                    className="hover-elevate active-elevate-2 cursor-pointer overflow-hidden"
+                    onClick={() => setLocation(feature.path)}
+                    data-testid={`card-feature-${feature.title.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <div className="flex items-stretch h-24">
+                      <div
+                        className="w-28 bg-cover bg-center relative flex-shrink-0"
+                        style={{ backgroundImage: `url(${feature.backgroundImage})` }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Icon className="w-8 h-8 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1 p-4 flex flex-col justify-center">
+                        <h4 className="font-semibold text-foreground mb-1">{feature.title}</h4>
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {feature.description}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex-1 p-4 flex flex-col justify-center">
-                      <h4 className="font-semibold text-foreground mb-1">{feature.title}</h4>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+                  </Card>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 
