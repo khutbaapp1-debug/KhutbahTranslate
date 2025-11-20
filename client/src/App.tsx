@@ -23,6 +23,7 @@ import ActionPointsPage from "@/pages/action-points-page";
 import AnalyticsPage from "@/pages/analytics-page";
 import JournalPage from "@/pages/journal-page";
 import ProfilePage from "@/pages/profile-page";
+import PremiumPage from "@/pages/premium-page";
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
 
@@ -53,6 +54,7 @@ function Router() {
       <Route path="/journal" component={JournalPage} />
       
       <Route path="/profile" component={ProfilePage} />
+      <Route path="/premium" component={PremiumPage} />
       
       <Route component={NotFound} />
     </Switch>

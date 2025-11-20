@@ -3,8 +3,10 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mic, MicOff, Save, Clock } from "lucide-react";
+import { Mic, MicOff, Save, Clock, Pause, Play, X, AlertCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAudioRecorder } from "@/hooks/use-audio-recorder";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface TranscriptSegment {
   id: number;
@@ -14,29 +16,22 @@ interface TranscriptSegment {
 }
 
 export default function KhutbahPage() {
-  const [isRecording, setIsRecording] = useState(false);
-  const [duration, setDuration] = useState(0);
   const [segments, setSegments] = useState<TranscriptSegment[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const durationIntervalRef = useRef<NodeJS.Timeout>();
-
-  useEffect(() => {
-    if (isRecording) {
-      durationIntervalRef.current = setInterval(() => {
-        setDuration((prev) => prev + 1);
-      }, 1000);
-    } else {
-      if (durationIntervalRef.current) {
-        clearInterval(durationIntervalRef.current);
-      }
-    }
-
-    return () => {
-      if (durationIntervalRef.current) {
-        clearInterval(durationIntervalRef.current);
-      }
-    };
-  }, [isRecording]);
+  
+  const {
+    isRecording,
+    isPaused,
+    recordingTime,
+    audioBlob,
+    audioUrl,
+    error,
+    startRecording,
+    stopRecording,
+    pauseRecording,
+    resumeRecording,
+    clearRecording,
+  } = useAudioRecorder();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -44,27 +39,45 @@ export default function KhutbahPage() {
     }
   }, [segments]);
 
-  const handleToggleRecording = () => {
-    setIsRecording(!isRecording);
-    
-    if (!isRecording) {
-      setTimeout(() => {
-        setSegments((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
-            english: "All praise is due to Allah, Lord of the worlds.",
-            timestamp: duration,
-          },
-        ]);
-      }, 3000);
+  const handleStartRecording = async () => {
+    clearRecording();
+    setSegments([]);
+    await startRecording();
+  };
+
+  const handleStopRecording = () => {
+    stopRecording();
+  };
+
+  const handleSaveRecording = () => {
+    if (audioBlob) {
+      // TODO: Send audioBlob to backend for transcription using OpenAI Whisper
+      console.log("Audio blob ready for upload:", {
+        size: audioBlob.size,
+        type: audioBlob.type,
+        duration: recordingTime,
+      });
+      
+      // Placeholder: Show a sample transcript segment
+      setSegments([
+        {
+          id: Date.now(),
+          arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+          english: "All praise is due to Allah, Lord of the worlds.",
+          timestamp: 0,
+        },
+      ]);
     }
   };
 
   const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
+    
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
@@ -153,47 +166,83 @@ export default function KhutbahPage() {
         )}
 
         <div className="sticky bottom-0 bg-background/95 backdrop-blur-lg border-t border-border p-6">
-          <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className="font-mono" data-testid="text-duration">
-                  {formatDuration(duration)}
-                </span>
+          <div className="max-w-3xl mx-auto">
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 h-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-mono" data-testid="text-duration">
+                    {formatDuration(recordingTime)}
+                  </span>
+                </div>
+                {audioBlob && (
+                  <Badge variant="secondary">
+                    {(audioBlob.size / 1024 / 1024).toFixed(2)} MB • {audioBlob.type.split("/")[1].toUpperCase()}
+                  </Badge>
+                )}
               </div>
-              {segments.length > 0 && (
-                <Badge variant="secondary">
-                  {segments.length} segments
-                </Badge>
-              )}
-            </div>
 
-            <div className="flex gap-3">
-              {segments.length > 0 && !isRecording && (
-                <Button variant="outline" data-testid="button-save">
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Sermon
-                </Button>
-              )}
-              <Button
-                onClick={handleToggleRecording}
-                variant={isRecording ? "destructive" : "default"}
-                size="lg"
-                className="min-w-[140px]"
-                data-testid="button-record"
-              >
-                {isRecording ? (
+              <div className="flex gap-2">
+                {!isRecording && audioBlob && (
                   <>
-                    <MicOff className="w-5 h-5 mr-2" />
-                    Stop
-                  </>
-                ) : (
-                  <>
-                    <Mic className="w-5 h-5 mr-2" />
-                    Record
+                    <Button variant="outline" onClick={clearRecording} data-testid="button-clear">
+                      <X className="w-4 h-4 mr-2" />
+                      Clear
+                    </Button>
+                    <Button variant="default" onClick={handleSaveRecording} data-testid="button-save">
+                      <Save className="w-4 h-4 mr-2" />
+                      Process
+                    </Button>
                   </>
                 )}
-              </Button>
+                
+                {isRecording && (
+                  <Button
+                    variant="outline"
+                    onClick={isPaused ? resumeRecording : pauseRecording}
+                    data-testid="button-pause-resume"
+                  >
+                    {isPaused ? (
+                      <>
+                        <Play className="w-4 h-4 mr-2" />
+                        Resume
+                      </>
+                    ) : (
+                      <>
+                        <Pause className="w-4 h-4 mr-2" />
+                        Pause
+                      </>
+                    )}
+                  </Button>
+                )}
+                
+                <Button
+                  onClick={isRecording ? handleStopRecording : handleStartRecording}
+                  variant={isRecording ? "destructive" : "default"}
+                  size="lg"
+                  className="min-w-[140px]"
+                  data-testid="button-record"
+                >
+                  {isRecording ? (
+                    <>
+                      <MicOff className="w-5 h-5 mr-2" />
+                      Stop
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-5 h-5 mr-2" />
+                      Record
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

@@ -4,9 +4,34 @@
 
 Khutbah Translate is a full-stack Islamic companion web application that provides real-time Arabic-to-English translation of khutbahs (sermons) alongside essential Islamic tools. The app features prayer times, Qibla compass, digital Quran reader, tasbih counter, duas collection, mosque finder, and Ramadan/Hijri calendar utilities. Built with a mobile-first design philosophy emphasizing spiritual serenity and effortless navigation through swipe-based interactions and Islamic aesthetic principles.
 
+## Recent Updates (Nov 20, 2025)
+
+**Monetization & Premium Features**
+- Integrated 12 total features (9 free + 3 premium) in homepage app grid
+- Premium features (Khutbah Database, Reflection Journal, Analytics) show gold crown lock icons for free users
+- Created `/premium` page showcasing all premium benefits and upgrade CTA
+- Google AdSense placements: Homepage banner below grid, inline ads on Prayer Times and Duas pages
+- Premium feature gating implemented (requires completion for other layouts)
+
+**Audio Recording System**
+- Implemented Opus audio recording (WebM, 48kHz mono, 48kbps) for khutbah translation
+- Custom `useAudioRecorder` hook with start, stop, pause, resume, clear controls
+- Automatic fallback to other formats if Opus not supported
+- Fixed media stream leak issue - proper cleanup on stop/clear
+
+**Technical Improvements**
+- Fixed HTML nesting error in BottomNav component
+- Increased feature icon size from 40px to 48px
+- Changed "99 Names of Allah" icon to display "99" text instead of star icon
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+**Monetization Strategy**
+- Google Ads: Non-intrusive placements (homepage banner, inline on long pages)
+- Premium subscriptions: $9.99/month via Stripe (to be implemented)
+- Never interrupt worship features (Tasbih, Qibla, live Khutbah translation) with ads
 
 ## System Architecture
 

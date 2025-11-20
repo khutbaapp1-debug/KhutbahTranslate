@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Moon, Sparkles, Grid3x3, Users, BookOpen, Calendar } from "lucide-react";
+import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Moon, Sparkles, Grid3x3, Users, BookOpen, Calendar, Crown, BarChart3, BookMarked } from "lucide-react";
 import { FeatureCard } from "@/components/feature-card";
 import { BottomNav } from "@/components/bottom-nav";
+import { HomepageBannerAd } from "@/components/google-ad";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-provider";
 import { Sun, Moon as MoonIcon } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Select,
   SelectContent,
@@ -32,6 +34,9 @@ import khutbahImage from "@assets/generated_images/mosque_microphone_audio_setup
 import duasImage from "@assets/generated_images/hands_in_dua_position.png";
 import mosqueFinderImage from "@assets/generated_images/mosque_aerial_city_view.png";
 import namesOfAllahImage from "@assets/generated_images/islamic_calligraphy_allah_names.png";
+import khutbahDatabaseImage from "@assets/generated_images/khutbah_database_mosque_interior.png";
+import journalImage from "@assets/generated_images/reflection_journal_writing_setup.png";
+import analyticsImage from "@assets/generated_images/analytics_spiritual_dashboard.png";
 
 type LayoutMode = "carousel" | "hybrid" | "categorized" | "quickaccess" | "appgrid";
 
@@ -42,6 +47,9 @@ export default function HomePage() {
   const [showAllTools, setShowAllTools] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
+  
+  const isPremium = user?.subscriptionTier === "premium";
 
   const features = [
     {
@@ -124,6 +132,33 @@ export default function HomePage() {
       path: "/ramadan",
       category: "calendar",
     },
+    {
+      title: "Khutbah Database",
+      description: "Access thousands of khutbahs with full translations",
+      icon: BookMarked,
+      backgroundImage: khutbahDatabaseImage,
+      path: "/khutbah-database",
+      category: "khutbah",
+      premium: true,
+    },
+    {
+      title: "Reflection Journal",
+      description: "Reflect on teachings with guided journal prompts",
+      icon: BookOpen,
+      backgroundImage: journalImage,
+      path: "/journal",
+      category: "knowledge",
+      premium: true,
+    },
+    {
+      title: "Analytics",
+      description: "Track your spiritual progress and growth over time",
+      icon: BarChart3,
+      backgroundImage: analyticsImage,
+      path: "/analytics",
+      category: "prayer",
+      premium: true,
+    },
   ];
 
   const featuredFeatures = features.slice(0, 4);
@@ -181,12 +216,20 @@ export default function HomePage() {
   const renderAppGridLayout = () => (
     <div className="px-6">
       <div className="grid grid-cols-3 gap-5">
-        {features.map((feature) => {
+        {features.map((feature: any) => {
           const Icon = feature.icon;
+          const isLocked = feature.premium && !isPremium;
+          
           return (
             <button
               key={feature.title}
-              onClick={() => setLocation(feature.path)}
+              onClick={() => {
+                if (isLocked) {
+                  setLocation("/premium");
+                } else {
+                  setLocation(feature.path);
+                }
+              }}
               className="flex flex-col items-center gap-2 hover-elevate active-elevate-2 transition-all"
               data-testid={`tile-${feature.title.toLowerCase().replace(/\s+/g, '-')}`}
               aria-label={`Open ${feature.title}`}
@@ -197,6 +240,11 @@ export default function HomePage() {
                 aria-hidden="true"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/40 to-primary/60" aria-hidden="true" />
+                {isLocked && (
+                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center z-20">
+                    <Crown className="w-4 h-4 text-white" />
+                  </div>
+                )}
                 <Icon className="w-12 h-12 text-white relative z-10" />
               </div>
               <span className="text-xs font-medium text-center text-foreground leading-tight line-clamp-2 w-full">
@@ -511,6 +559,11 @@ export default function HomePage() {
         {layoutMode === "hybrid" && renderHybridLayout()}
         {layoutMode === "categorized" && renderCategorizedLayout()}
         {layoutMode === "quickaccess" && renderQuickAccessLayout()}
+        
+        {/* Google Ad Placement */}
+        <div className="mt-8 px-6">
+          <HomepageBannerAd />
+        </div>
       </main>
 
       <BottomNav />
