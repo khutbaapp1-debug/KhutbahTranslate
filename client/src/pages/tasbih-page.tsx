@@ -10,6 +10,11 @@ const dhikrPresets = [
   { id: "alhamdulillah", text: "ٱلْحَمْدُ لِلَّٰهِ", translation: "Alhamdulillah", target: 33 },
   { id: "allahu-akbar", text: "ٱللَّٰهُ أَكْبَرُ", translation: "Allahu Akbar", target: 34 },
   { id: "la-ilaha", text: "لَا إِلَٰهَ إِلَّا ٱللَّٰهُ", translation: "La ilaha illallah", target: 100 },
+  { id: "astaghfirullah", text: "أَسْتَغْفِرُ ٱللَّٰهَ", translation: "Astaghfirullah", target: 100 },
+  { id: "salawat", text: "ٱللَّٰهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ", translation: "Allahumma salli ala Muhammad", target: 100 },
+  { id: "la-hawla", text: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِٱللَّٰهِ", translation: "La hawla wa la quwwata illa billah", target: 100 },
+  { id: "subhanallahi-wabihamdihi", text: "سُبْحَانَ ٱللَّٰهِ وَبِحَمْدِهِ", translation: "Subhanallahi wa bihamdihi", target: 100 },
+  { id: "tawhid-full", text: "لَا إِلَٰهَ إِلَّا ٱللَّٰهُ وَحْدَهُ لَا شَرِيكَ لَهُ", translation: "La ilaha illallah wahdahu la sharika lah", target: 100 },
 ];
 
 export default function TasbihPage() {

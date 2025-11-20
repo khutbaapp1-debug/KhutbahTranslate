@@ -12,8 +12,8 @@ import kaabaImage from "@assets/generated_images/Kaaba_aerial_view_Makkah_b34ddc
 import quranImage from "@assets/generated_images/Open_Quran_with_calligraphy_c7ef6e94.png";
 import tasbihImage from "@assets/generated_images/Prayer_beads_tasbih_closeup_5696650d.png";
 import ramadanImage from "@assets/generated_images/Ramadan_crescent_moon_lanterns_7acbaea8.png";
-import khutbahImage from "@assets/generated_images/friday_khutbah_sermon_scene.png";
-import duasImage from "@assets/generated_images/islamic_duas_prayer_book.png";
+import khutbahImage from "@assets/generated_images/mosque_microphone_audio_setup.png";
+import duasImage from "@assets/generated_images/hands_in_dua_position.png";
 import mosqueFinderImage from "@assets/generated_images/mosque_aerial_city_view.png";
 import namesOfAllahImage from "@assets/generated_images/islamic_calligraphy_allah_names.png";
 
