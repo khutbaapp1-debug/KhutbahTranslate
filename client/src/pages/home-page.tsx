@@ -95,7 +95,7 @@ export default function HomePage() {
     {
       title: "99 Names of Allah",
       description: "Discover the beautiful names of Allah with meanings",
-      icon: Sparkles,
+      icon: (() => <span className="text-3xl font-bold">99</span>) as any,
       backgroundImage: namesOfAllahImage,
       path: "/names-of-allah",
       category: "knowledge",
