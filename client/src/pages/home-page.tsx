@@ -12,6 +12,9 @@ import kaabaImage from "@assets/generated_images/Kaaba_aerial_view_Makkah_b34ddc
 import quranImage from "@assets/generated_images/Open_Quran_with_calligraphy_c7ef6e94.png";
 import tasbihImage from "@assets/generated_images/Prayer_beads_tasbih_closeup_5696650d.png";
 import ramadanImage from "@assets/generated_images/Ramadan_crescent_moon_lanterns_7acbaea8.png";
+import khutbahImage from "@assets/generated_images/friday_khutbah_sermon_scene.png";
+import duasImage from "@assets/generated_images/islamic_duas_prayer_book.png";
+import mosqueFinderImage from "@assets/generated_images/mosque_aerial_city_view.png";
 
 export default function HomePage() {
   const [, setLocation] = useLocation();
@@ -21,11 +24,32 @@ export default function HomePage() {
 
   const features = [
     {
+      title: "Khutbah Translate",
+      description: "Real-time translation of Friday sermons from Arabic to English",
+      icon: Mic,
+      backgroundImage: khutbahImage,
+      path: "/khutbah",
+    },
+    {
       title: "Prayer Times",
       description: "Never miss a prayer with accurate timings based on your location",
       icon: Clock,
       backgroundImage: mosqueImage,
       path: "/prayer",
+    },
+    {
+      title: "Qur'an Reader",
+      description: "Read the Holy Qur'an with translation and transliteration",
+      icon: Book,
+      backgroundImage: quranImage,
+      path: "/quran",
+    },
+    {
+      title: "Daily Duas",
+      description: "Access a comprehensive collection of Islamic supplications",
+      icon: Heart,
+      backgroundImage: duasImage,
+      path: "/duas",
     },
     {
       title: "Tasbih Counter",
@@ -42,28 +66,10 @@ export default function HomePage() {
       path: "/qibla",
     },
     {
-      title: "Qur'an Reader",
-      description: "Read the Holy Qur'an with translation and transliteration",
-      icon: Book,
-      backgroundImage: quranImage,
-      path: "/quran",
-    },
-    {
-      title: "Daily Duas",
-      description: "Access a comprehensive collection of Islamic supplications",
-      icon: Heart,
-      path: "/duas",
-    },
-    {
-      title: "Khutbah Translate",
-      description: "Real-time translation of Friday sermons from Arabic to English",
-      icon: Mic,
-      path: "/khutbah",
-    },
-    {
       title: "Mosque Finder",
       description: "Locate nearby mosques for prayer and community",
       icon: MapPin,
+      backgroundImage: mosqueFinderImage,
       path: "/mosques",
     },
     {

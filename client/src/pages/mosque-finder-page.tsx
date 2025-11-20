@@ -96,17 +96,22 @@ export default function MosqueFinderPage() {
   }, [toast]);
 
   // Fetch nearby mosques when user location is available
+  const queryUrl = userLocation
+    ? `/api/mosques/nearby?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&radius=5000`
+    : null;
+    
   const { data: mosques = [], isLoading, error } = useQuery<Mosque[]>({
-    queryKey: ["/api/mosques/nearby", userLocation],
-    enabled: !!userLocation,
+    queryKey: ["/api/mosques/nearby", userLocation?.latitude, userLocation?.longitude, 5000],
     queryFn: async () => {
-      if (!userLocation) return [];
-      const response = await fetch(
-        `/api/mosques/nearby?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&radius=5000`
-      );
-      if (!response.ok) throw new Error("Failed to fetch nearby mosques");
+      if (!queryUrl) return [];
+      const response = await fetch(queryUrl);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch mosques: ${response.status}`);
+      }
       return response.json();
     },
+    enabled: !!userLocation,
   });
 
   // Filter mosques based on search query
