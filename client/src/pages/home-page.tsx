@@ -95,7 +95,15 @@ export default function HomePage() {
     {
       title: "99 Names of Allah",
       description: "Discover the beautiful names of Allah with meanings",
-      icon: ((props: any) => <span {...props} className={`${props.className} text-4xl font-bold leading-none`}>99</span>) as any,
+      icon: ((props: any) => (
+        <span 
+          {...props} 
+          className={`${props.className} flex items-center justify-center text-5xl font-bold leading-none`}
+          style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+        >
+          99
+        </span>
+      )) as any,
       backgroundImage: namesOfAllahImage,
       path: "/names-of-allah",
       category: "knowledge",
