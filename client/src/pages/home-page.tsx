@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Moon } from "lucide-react";
+import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Moon, Sparkles } from "lucide-react";
 import { FeatureCard } from "@/components/feature-card";
 import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import ramadanImage from "@assets/generated_images/Ramadan_crescent_moon_lantern
 import khutbahImage from "@assets/generated_images/friday_khutbah_sermon_scene.png";
 import duasImage from "@assets/generated_images/islamic_duas_prayer_book.png";
 import mosqueFinderImage from "@assets/generated_images/mosque_aerial_city_view.png";
+import namesOfAllahImage from "@assets/generated_images/islamic_calligraphy_allah_names.png";
 
 export default function HomePage() {
   const [, setLocation] = useLocation();
@@ -64,6 +65,13 @@ export default function HomePage() {
       icon: Compass,
       backgroundImage: kaabaImage,
       path: "/qibla",
+    },
+    {
+      title: "99 Names of Allah",
+      description: "Discover the beautiful names of Allah with meanings",
+      icon: Sparkles,
+      backgroundImage: namesOfAllahImage,
+      path: "/names-of-allah",
     },
     {
       title: "Mosque Finder",
