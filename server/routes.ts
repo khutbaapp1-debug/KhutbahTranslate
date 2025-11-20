@@ -386,6 +386,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ MOSQUES ROUTES ============
+  
+  // Get nearby mosques using OpenStreetMap Overpass API
+  app.get("/api/mosques/nearby", async (req, res) => {
+    try {
+      const latitude = parseFloat(req.query.latitude as string);
+      const longitude = parseFloat(req.query.longitude as string);
+      const radius = parseInt(req.query.radius as string) || 5000; // default 5km
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        return res.status(400).json({ error: "Valid latitude and longitude required" });
+      }
+      
+      // Query Overpass API for mosques within radius
+      const overpassQuery = `
+        [out:json][timeout:25];
+        (
+          node["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${latitude},${longitude});
+          way["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${latitude},${longitude});
+          relation["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${latitude},${longitude});
+        );
+        out center;
+      `;
+      
+      const overpassUrl = "https://overpass-api.de/api/interpreter";
+      const response = await fetch(overpassUrl, {
+        method: "POST",
+        body: `data=${encodeURIComponent(overpassQuery)}`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch mosques from OpenStreetMap");
+      }
+      
+      const data: any = await response.json();
+      
+      // Calculate distance using Haversine formula
+      const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+          Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+      };
+      
+      // Process and format mosque data
+      const mosques = data.elements.map((element: any) => {
+        const lat = element.center?.lat || element.lat;
+        const lon = element.center?.lon || element.lon;
+        const distance = calculateDistance(latitude, longitude, lat, lon);
+        
+        return {
+          id: element.id.toString(),
+          name: element.tags?.name || "Unnamed Mosque",
+          latitude: lat,
+          longitude: lon,
+          distance: distance.toFixed(2),
+          address: [
+            element.tags?.["addr:street"],
+            element.tags?.["addr:housenumber"],
+            element.tags?.["addr:city"],
+            element.tags?.["addr:postcode"],
+          ].filter(Boolean).join(", ") || "Address not available",
+          denomination: element.tags?.denomination,
+          website: element.tags?.website,
+          phone: element.tags?.phone,
+        };
+      }).sort((a: any, b: any) => parseFloat(a.distance) - parseFloat(b.distance));
+      
+      res.json(mosques);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ============ QURAN ROUTES ============
   
   // Get all surahs (index)
