@@ -197,12 +197,15 @@ export default function PrayerTimesPage() {
 
   // Check if today is Friday (day 5 in JavaScript Date)
   const isFriday = currentTime.getDay() === 5;
+  
+  // Check if next prayer is tomorrow's Fajr (all prayers passed today)
+  const isAfterIsha = prayerData?.nextPrayer?.nextPrayer === "Fajr" && isTimePassed(prayerData.isha, currentTime);
 
   const prayerTimes: PrayerTime[] = prayerData ? [
     { 
       name: "Fajr", 
       time: prayerData.fajr, 
-      isNext: prayerData.nextPrayer?.nextPrayer === "Fajr", 
+      isNext: prayerData.nextPrayer?.nextPrayer === "Fajr" && !isAfterIsha, 
       isPassed: isTimePassed(prayerData.fajr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Fajr"
     },
     { 
@@ -226,8 +229,8 @@ export default function PrayerTimesPage() {
     { 
       name: "Isha", 
       time: prayerData.isha, 
-      isNext: prayerData.nextPrayer?.nextPrayer === "Isha", 
-      isPassed: isTimePassed(prayerData.isha, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Isha"
+      isNext: isAfterIsha, // Isha becomes "next" (current) after it passes until midnight
+      isPassed: false // Never mark Isha as passed - keeps it highlighted until midnight
     },
   ] : [];
 
