@@ -47,6 +47,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const timerRef = useRef<number | null>(null);
   const chunkTimerRef = useRef<number | null>(null);
   const sequenceNumberRef = useRef(0);
+  const isPausedRef = useRef(false);
 
   const startTimer = useCallback(() => {
     timerRef.current = window.setInterval(() => {
@@ -175,7 +176,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       processorRef.current = processor;
 
       processor.onaudioprocess = (e) => {
-        if (isPaused) return;
+        if (isPausedRef.current) return;
         
         const inputData = e.inputBuffer.getChannelData(0);
         const samples = new Float32Array(inputData);
@@ -196,7 +197,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       stopMediaTracks();
       setError(err.message || "Failed to start recording. Please allow microphone access.");
     }
-  }, [startTimer, stopMediaTracks, processChunk, isPaused]);
+  }, [startTimer, stopMediaTracks, processChunk]);
 
   const stopRecording = useCallback(() => {
     if (chunkTimerRef.current) {
@@ -223,6 +224,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const pauseRecording = useCallback(() => {
     if (isRecording && !isPaused) {
       setIsPaused(true);
+      isPausedRef.current = true;
       stopTimer();
     }
   }, [isRecording, isPaused, stopTimer]);
@@ -230,6 +232,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const resumeRecording = useCallback(() => {
     if (isRecording && isPaused) {
       setIsPaused(false);
+      isPausedRef.current = false;
       startTimer();
     }
   }, [isRecording, isPaused, startTimer]);
