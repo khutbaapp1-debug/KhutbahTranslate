@@ -65,7 +65,8 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const sendAudioChunkForTranscription = useCallback(async (blob: Blob, sequenceNumber: number) => {
     try {
       const formData = new FormData();
-      formData.append("audio", blob);
+      // Add proper filename with extension to help OpenAI decode the audio
+      formData.append("audio", blob, "audio.webm");
       formData.append("sequenceNumber", sequenceNumber.toString());
       
       const response = await fetch("/api/transcribe", {
@@ -151,8 +152,8 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
           // Only send chunk for transcription if it has sufficient audio data
-          // Skip chunks smaller than 10KB (likely silence or corrupted)
-          if (event.data.size > 10000) {
+          // Skip chunks smaller than 5KB (likely silence or corrupted)
+          if (event.data.size > 5000) {
             sendAudioChunkForTranscription(event.data, chunkSequenceNumber++);
           }
         }
@@ -169,7 +170,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
         stopMediaTracks();
       };
 
-      mediaRecorder.start(10000); // Capture data every 10 seconds
+      mediaRecorder.start(5000); // Capture data every 5 seconds
       setIsRecording(true);
       setRecordingTime(0);
       startTimer();
