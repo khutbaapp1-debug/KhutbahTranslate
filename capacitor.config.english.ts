@@ -1,0 +1,22 @@
+import type { CapacitorConfig } from '@capacitor/cli';
+
+// English variant for USA, UK, Canada, Australia markets
+const config: CapacitorConfig = {
+  appId: 'com.khutbahtranslate.english',
+  appName: 'Khutbah Translate',
+  webDir: 'dist/public',
+  server: {
+    androidScheme: 'https',
+    iosScheme: 'https'
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: '#0F766E',
+      androidSplashResourceName: 'splash',
+      iosSplashResourceName: 'Default'
+    }
+  }
+};
+
+export default config;

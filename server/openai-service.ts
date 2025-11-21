@@ -1,6 +1,7 @@
 // OpenAI service for khutbah transcription, translation, and AI features
 // Based on javascript_openai blueprint
 import OpenAI from "openai";
+import { getLanguageConfig } from "@shared/language-config";
 
 // Using gpt-4o model for reliable translations
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -48,12 +49,17 @@ export async function transcribeArabicAudio(audioBuffer: Buffer): Promise<Transc
   }
 }
 
-// Translate Arabic text to English with Islamic terminology preservation
+// Translate Arabic text to target language with Islamic terminology preservation
 export async function translateArabicToEnglish(arabicText: string): Promise<TranslationResult> {
   try {
+    const languageConfig = getLanguageConfig();
+    const targetLanguage = languageConfig.targetLanguage;
+    
     const prompt = `You are translating a live khutbah (Islamic sermon) in real-time. Each audio chunk is 5 seconds, so the text will be a fragment of a longer sermon.
 
 TRANSLATE EXACTLY WHAT IS SAID - nothing more, nothing less.
+
+TARGET LANGUAGE: ${targetLanguage}
 
 RULES:
 1. Preserve Islamic terminology (keep "Allah", "SubhanAllah", "Alhamdulillah", "Insha'Allah")
@@ -77,7 +83,7 @@ Respond in JSON: { "translation": "the translation only - no other text" }`;
       messages: [
         {
           role: "system",
-          content: "You are a real-time Arabic-to-English translator for Islamic sermons. You translate ONLY what is said, with no commentary, explanations, or requests for more context. You are processing live audio chunks, so fragments are expected and normal."
+          content: `You are a real-time Arabic-to-${targetLanguage} translator for Islamic sermons. You translate ONLY what is said, with no commentary, explanations, or requests for more context. You are processing live audio chunks, so fragments are expected and normal.`
         },
         {
           role: "user",
