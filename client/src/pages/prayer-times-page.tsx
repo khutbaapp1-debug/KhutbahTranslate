@@ -44,7 +44,9 @@ export default function PrayerTimesPage() {
   const { toast } = useToast();
 
   const { data: prayerData, isLoading, error } = useQuery<PrayerTimesData>({
-    queryKey: ["/api/prayer-times", coords?.latitude, coords?.longitude],
+    queryKey: coords 
+      ? [`/api/prayer-times?latitude=${coords.latitude}&longitude=${coords.longitude}`]
+      : ["/api/prayer-times"],
     enabled: coords !== null,
   });
 
