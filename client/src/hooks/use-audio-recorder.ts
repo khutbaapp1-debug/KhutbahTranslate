@@ -76,7 +76,12 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       });
       
       if (!response.ok) {
-        console.error("Transcription error:", await response.json());
+        // Silently skip failed chunks (likely silence/pauses causing format errors)
+        // Only log to console, don't show to user
+        const error = await response.json();
+        if (!error.error?.includes("could not be decoded")) {
+          console.error("Transcription error:", error);
+        }
         return;
       }
       
