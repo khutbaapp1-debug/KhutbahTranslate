@@ -368,18 +368,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const latitude = parseFloat(req.query.latitude as string);
       const longitude = parseFloat(req.query.longitude as string);
+      const method = (req.query.method as string)?.toUpperCase() || 'ISNA';
       
       if (isNaN(latitude) || isNaN(longitude)) {
         return res.status(400).json({ error: "Valid latitude and longitude required" });
       }
+
+      // Validate method
+      const validMethods = ['ISNA', 'MWL', 'EGYPTIAN', 'KARACHI', 'MAKKAH', 'JAFARI', 'TEHRAN'];
+      if (!validMethods.includes(method)) {
+        return res.status(400).json({ error: "Invalid calculation method" });
+      }
       
       const { calculatePrayerTimes, getTimeUntilNextPrayer } = await import("./prayer-times");
-      const prayerTimes = calculatePrayerTimes({ latitude, longitude });
+      const prayerTimes = calculatePrayerTimes({ 
+        latitude, 
+        longitude,
+        method: method as any,
+      });
       const nextPrayerInfo = getTimeUntilNextPrayer(prayerTimes);
       
       res.json({
         ...prayerTimes,
         nextPrayer: nextPrayerInfo,
+        method,
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

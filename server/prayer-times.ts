@@ -16,12 +16,58 @@ interface PrayerTimesResult {
   date: string;
 }
 
+export type CalculationMethod = 
+  | 'ISNA' 
+  | 'MWL' 
+  | 'EGYPTIAN' 
+  | 'KARACHI' 
+  | 'MAKKAH' 
+  | 'JAFARI'
+  | 'TEHRAN';
+
+export const CALCULATION_METHODS = {
+  ISNA: {
+    name: 'Islamic Society of North America',
+    fajrAngle: 15,
+    ishaAngle: 15,
+  },
+  MWL: {
+    name: 'Muslim World League',
+    fajrAngle: 18,
+    ishaAngle: 17,
+  },
+  EGYPTIAN: {
+    name: 'Egyptian General Authority of Survey',
+    fajrAngle: 19.5,
+    ishaAngle: 17.5,
+  },
+  KARACHI: {
+    name: 'University of Islamic Sciences, Karachi',
+    fajrAngle: 18,
+    ishaAngle: 18,
+  },
+  MAKKAH: {
+    name: 'Umm Al-Qura University, Makkah',
+    fajrAngle: 18.5,
+    ishaAngle: 90, // 90 minutes after Maghrib (handled separately)
+  },
+  JAFARI: {
+    name: 'Shia Ithna-Ashari (Jafari)',
+    fajrAngle: 16,
+    ishaAngle: 14,
+  },
+  TEHRAN: {
+    name: 'Institute of Geophysics, University of Tehran',
+    fajrAngle: 17.7,
+    ishaAngle: 14,
+  },
+};
+
 interface PrayerTimesOptions {
   latitude: number;
   longitude: number;
   date?: Date;
-  fajrAngle?: number;
-  ishaAngle?: number;
+  method?: CalculationMethod;
   asrMethod?: 1 | 2; // 1 = Shafi, 2 = Hanafi
 }
 
@@ -30,10 +76,13 @@ export function calculatePrayerTimes(options: PrayerTimesOptions): PrayerTimesRe
     latitude,
     longitude,
     date = new Date(),
-    fajrAngle = 15, // ISNA standard
-    ishaAngle = 15, // ISNA standard
+    method = 'ISNA',
     asrMethod = 1, // Shafi method (shadow = object length)
   } = options;
+
+  const methodConfig = CALCULATION_METHODS[method];
+  const fajrAngle = methodConfig.fajrAngle;
+  const ishaAngle = methodConfig.ishaAngle;
 
   // Julian date calculation
   const julianDate = getJulianDate(date);

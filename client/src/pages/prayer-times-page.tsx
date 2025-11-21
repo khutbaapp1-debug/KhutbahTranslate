@@ -5,9 +5,22 @@ import { InlineAd } from "@/components/google-ad";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MapPin, Clock, Settings } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+
+const CALCULATION_METHODS = {
+  ISNA: 'Islamic Society of North America',
+  MWL: 'Muslim World League',
+  EGYPTIAN: 'Egyptian General Authority',
+  KARACHI: 'University of Karachi',
+  MAKKAH: 'Umm Al-Qura, Makkah',
+  JAFARI: 'Shia Ithna-Ashari',
+  TEHRAN: 'Institute of Geophysics, Tehran',
+} as const;
+
+type CalculationMethod = keyof typeof CALCULATION_METHODS;
 
 interface PrayerTime {
   name: string;
@@ -41,14 +54,23 @@ export default function PrayerTimesPage() {
   const [locationName, setLocationName] = useState<string>("Getting location...");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [calculationMethod, setCalculationMethod] = useState<CalculationMethod>(() => {
+    const saved = localStorage.getItem('prayerCalculationMethod');
+    return (saved as CalculationMethod) || 'ISNA';
+  });
   const { toast } = useToast();
 
   const { data: prayerData, isLoading, error } = useQuery<PrayerTimesData>({
     queryKey: coords 
-      ? [`/api/prayer-times?latitude=${coords.latitude}&longitude=${coords.longitude}`]
+      ? [`/api/prayer-times?latitude=${coords.latitude}&longitude=${coords.longitude}&method=${calculationMethod}`]
       : ["/api/prayer-times"],
     enabled: coords !== null,
   });
+
+  const handleMethodChange = (method: CalculationMethod) => {
+    setCalculationMethod(method);
+    localStorage.setItem('prayerCalculationMethod', method);
+  };
 
   const requestLocation = () => {
     setLocationError(null);
@@ -198,9 +220,6 @@ export default function PrayerTimesPage() {
           <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
             Prayer Times
           </h1>
-          <Button variant="ghost" size="icon" data-testid="button-location-edit">
-            <MapPin className="w-5 h-5" />
-          </Button>
         </div>
       </header>
 
@@ -232,13 +251,28 @@ export default function PrayerTimesPage() {
         ) : !locationError && prayerData ? (
           <>
             <Card>
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-3 space-y-3">
                 <div className="flex items-center justify-between">
                   <CardTitle>Today's Prayer Times</CardTitle>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="w-4 h-4" />
                     <span data-testid="text-location">{locationName}</span>
                   </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Settings className="w-4 h-4 text-muted-foreground" />
+                  <Select value={calculationMethod} onValueChange={(v) => handleMethodChange(v as CalculationMethod)}>
+                    <SelectTrigger className="w-full" data-testid="select-calculation-method">
+                      <SelectValue placeholder="Select calculation method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(CALCULATION_METHODS).map(([key, name]) => (
+                        <SelectItem key={key} value={key} data-testid={`method-${key.toLowerCase()}`}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -299,7 +333,7 @@ export default function PrayerTimesPage() {
             </Card>
 
             <p className="text-center text-sm text-muted-foreground">
-              Times calculated using ISNA method based on your location
+              Times calculated using {CALCULATION_METHODS[calculationMethod]} method
             </p>
             
             {/* Google Ad Placement */}
