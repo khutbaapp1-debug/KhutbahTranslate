@@ -3,10 +3,13 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mic, MicOff, Save, Clock, Pause, Play, X, AlertCircle } from "lucide-react";
+import { Mic, MicOff, Save, Clock, Pause, Play, X, AlertCircle, Crown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 interface TranscriptSegment {
   id: number;
@@ -19,6 +22,8 @@ export default function KhutbahPage() {
   const [processingError, setProcessingError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
+  const [, navigate] = useLocation();
+  const { user } = useAuth();
   
   const {
     isRecording,
@@ -34,6 +39,13 @@ export default function KhutbahPage() {
     resumeRecording,
     clearRecording,
   } = useAudioRecorder();
+
+  // Fetch translation usage info for authenticated users
+  const { data: usageInfo } = useQuery({
+    queryKey: ['/api/translation/usage'],
+    enabled: !!user,
+    refetchInterval: 30000, // Refresh every 30 seconds while recording
+  });
 
   useEffect(() => {
     // Auto-scroll to bottom when new translations arrive
@@ -71,7 +83,7 @@ export default function KhutbahPage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="p-4 max-w-screen-xl mx-auto">
+        <div className="p-4 max-w-screen-xl mx-auto space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
@@ -88,6 +100,49 @@ export default function KhutbahPage() {
               </div>
             )}
           </div>
+          
+          {user && usageInfo && !usageInfo.isLimitReached && usageInfo.monthlyLimit !== Infinity && (
+            <Alert className="bg-muted/50" data-testid="alert-usage-info">
+              <Clock className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                <span className="font-medium">{Math.floor(usageInfo.minutesRemaining)} minutes</span> of free translation remaining this month
+                {user.subscriptionTier === "free" && (
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    className="h-auto p-0 ml-2"
+                    onClick={() => navigate("/premium")}
+                    data-testid="link-upgrade"
+                  >
+                    <Crown className="w-3 h-3 mr-1" />
+                    Upgrade for unlimited
+                  </Button>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {user && usageInfo?.isLimitReached && (
+            <Alert variant="destructive" data-testid="alert-limit-reached">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <p className="font-medium">Translation limit reached</p>
+                <p className="text-sm mt-1">
+                  You've used all {usageInfo.monthlyLimit} minutes this month. 
+                  Resets on {new Date(usageInfo.resetDate).toLocaleDateString()}.
+                </p>
+                <Button 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={() => navigate("/premium")}
+                  data-testid="button-upgrade-now"
+                >
+                  <Crown className="w-4 h-4 mr-2" />
+                  Upgrade to Premium
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       </header>
 
