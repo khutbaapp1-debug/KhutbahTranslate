@@ -159,7 +159,7 @@ export default function KhutbahPage() {
               </Alert>
             )}
             
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="w-4 h-4 text-muted-foreground" />
@@ -174,7 +174,7 @@ export default function KhutbahPage() {
                 )}
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-end">
                 {!isRecording && translations.length > 0 && (
                   <>
                     <Button variant="outline" onClick={clearRecording} data-testid="button-clear">
