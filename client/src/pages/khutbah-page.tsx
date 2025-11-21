@@ -106,26 +106,28 @@ export default function KhutbahPage() {
           </div>
         ) : (
           <ScrollArea className="flex-1 p-6" ref={scrollRef}>
-            <div className="max-w-4xl mx-auto">
-              <div className="space-y-1 text-lg leading-relaxed">
-                {translations.map((segment, index) => (
-                  <span 
-                    key={segment.id}
-                    data-testid={`segment-${segment.id}`}
-                  >
-                    {segment.english}{' '}
-                  </span>
-                ))}
-                {isRecording && (
-                  <span className="inline-flex items-center gap-2 align-middle">
-                    <span className="inline-flex gap-1">
-                      <span className="inline-block w-1 h-4 bg-primary rounded-full animate-pulse" />
-                      <span className="inline-block w-1 h-5 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                      <span className="inline-block w-1 h-3 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
-                    </span>
-                  </span>
-                )}
-              </div>
+            <div className="max-w-4xl mx-auto space-y-4">
+              {translations.map((segment, index) => (
+                <div 
+                  key={segment.id}
+                  className="pb-3 border-b border-border/40 last:border-0"
+                  data-testid={`segment-${segment.id}`}
+                >
+                  <p className="text-lg leading-relaxed">
+                    {segment.english}
+                  </p>
+                </div>
+              ))}
+              {isRecording && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="flex gap-1">
+                    <span className="w-1.5 h-4 bg-primary rounded-full animate-pulse" />
+                    <span className="w-1.5 h-5 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                    <span className="w-1.5 h-3 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                  </div>
+                  <span className="text-sm">Listening...</span>
+                </div>
+              )}
             </div>
           </ScrollArea>
         )}
