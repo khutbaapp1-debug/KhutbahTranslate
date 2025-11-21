@@ -4,7 +4,17 @@
 
 Khutbah Translate is a full-stack Islamic companion web application that provides real-time Arabic-to-English translation of khutbahs (sermons) alongside essential Islamic tools. The app features prayer times, Qibla compass, digital Quran reader, tasbih counter, duas collection, mosque finder, and Ramadan/Hijri calendar utilities. Built with a mobile-first design philosophy emphasizing spiritual serenity and effortless navigation through swipe-based interactions and Islamic aesthetic principles.
 
-## Recent Updates (Nov 20, 2025)
+## Recent Updates (Nov 21, 2025)
+
+**Native Mobile Apps (iOS & Android)**
+- Integrated Capacitor for native iOS and Android app deployment
+- Configured permissions: microphone (recording), location (prayer times/mosque finder), background audio
+- Generated app icons and splash screens (123 Android files, 10 iOS files)
+- Created comprehensive deployment documentation for App Store and Google Play Store
+- Bundle identifier: `com.khutbahtranslate.app`
+- App name: "Khutbah Translate"
+
+**Previous Updates (Nov 20, 2025)**
 
 **Monetization & Premium Features**
 - Integrated 12 total features (9 free + 3 premium) in homepage app grid
@@ -137,6 +147,12 @@ Preferred communication style: Simple, everyday language.
 - ESBuild for server-side bundling
 - Drizzle Kit for database migrations
 - PostCSS with Autoprefixer for CSS processing
+
+**Native Mobile Platform**
+- Capacitor for wrapping web app as native iOS and Android apps
+- iOS project in `/ios` directory (Xcode project)
+- Android project in `/android` directory (Android Studio project)
+- Asset generation via @capacitor/assets for icons and splash screens
 
 **Planned Integrations** (Not Yet Implemented)
 - Geolocation APIs for prayer time calculations and mosque finder
