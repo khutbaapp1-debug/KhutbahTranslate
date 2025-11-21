@@ -65,8 +65,11 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const sendAudioChunkForTranscription = useCallback(async (blob: Blob, sequenceNumber: number) => {
     try {
       const formData = new FormData();
-      // Add proper filename with extension to help OpenAI decode the audio
-      formData.append("audio", blob, "audio.webm");
+      // Determine file extension from blob type
+      const extension = blob.type.includes("mpeg") ? "mp3" : 
+                       blob.type.includes("mp4") ? "m4a" :
+                       blob.type.includes("webm") ? "webm" : "audio";
+      formData.append("audio", blob, `audio.${extension}`);
       formData.append("sequenceNumber", sequenceNumber.toString());
       
       const response = await fetch("/api/transcribe", {
@@ -124,13 +127,13 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       
       mediaStreamRef.current = stream;
 
-      // Try to use Opus codec (WebM container) for smallest file size
+      // Try MP3 first - creates more reliable standalone chunks for OpenAI
       const mimeTypes = [
-        "audio/webm;codecs=opus", // Best: Opus in WebM
-        "audio/webm", // Fallback: WebM
-        "audio/ogg;codecs=opus", // Alternative: Opus in OGG
-        "audio/mp4", // Fallback: MP4
-        "audio/mpeg", // Fallback: MP3
+        "audio/mpeg", // MP3 - most reliable for chunking
+        "audio/mp4", // MP4
+        "audio/webm;codecs=opus", // Opus in WebM
+        "audio/webm", // WebM
+        "audio/ogg;codecs=opus", // Opus in OGG
       ];
 
       let selectedMimeType = "";
