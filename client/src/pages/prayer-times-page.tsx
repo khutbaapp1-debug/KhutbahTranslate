@@ -195,6 +195,9 @@ export default function PrayerTimesPage() {
     );
   }
 
+  // Check if today is Friday (day 5 in JavaScript Date)
+  const isFriday = currentTime.getDay() === 5;
+
   const prayerTimes: PrayerTime[] = prayerData ? [
     { 
       name: "Fajr", 
@@ -203,7 +206,7 @@ export default function PrayerTimesPage() {
       isPassed: isTimePassed(prayerData.fajr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Fajr"
     },
     { 
-      name: "Dhuhr", 
+      name: isFriday ? "Jummah" : "Dhuhr", 
       time: prayerData.dhuhr, 
       isNext: prayerData.nextPrayer?.nextPrayer === "Dhuhr", 
       isPassed: isTimePassed(prayerData.dhuhr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Dhuhr"
