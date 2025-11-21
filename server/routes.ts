@@ -369,6 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const latitude = parseFloat(req.query.latitude as string);
       const longitude = parseFloat(req.query.longitude as string);
       const method = (req.query.method as string)?.toUpperCase() || 'ISNA';
+      const asrMethod = req.query.asrMethod === 'hanafi' ? 2 : 1;
       
       if (isNaN(latitude) || isNaN(longitude)) {
         return res.status(400).json({ error: "Valid latitude and longitude required" });
@@ -385,6 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         latitude, 
         longitude,
         method: method as any,
+        asrMethod: asrMethod as 1 | 2,
       });
       const nextPrayerInfo = getTimeUntilNextPrayer(prayerTimes);
       
@@ -392,6 +394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...prayerTimes,
         nextPrayer: nextPrayerInfo,
         method,
+        asrMethod: asrMethod === 2 ? 'hanafi' : 'standard',
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

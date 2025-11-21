@@ -58,11 +58,15 @@ export default function PrayerTimesPage() {
     const saved = localStorage.getItem('prayerCalculationMethod');
     return (saved as CalculationMethod) || 'ISNA';
   });
+  const [asrMethod, setAsrMethod] = useState<'standard' | 'hanafi'>(() => {
+    const saved = localStorage.getItem('asrCalculationMethod');
+    return (saved as 'standard' | 'hanafi') || 'standard';
+  });
   const { toast } = useToast();
 
   const { data: prayerData, isLoading, error } = useQuery<PrayerTimesData>({
     queryKey: coords 
-      ? [`/api/prayer-times?latitude=${coords.latitude}&longitude=${coords.longitude}&method=${calculationMethod}`]
+      ? [`/api/prayer-times?latitude=${coords.latitude}&longitude=${coords.longitude}&method=${calculationMethod}&asrMethod=${asrMethod}`]
       : ["/api/prayer-times"],
     enabled: coords !== null,
   });
@@ -70,6 +74,11 @@ export default function PrayerTimesPage() {
   const handleMethodChange = (method: CalculationMethod) => {
     setCalculationMethod(method);
     localStorage.setItem('prayerCalculationMethod', method);
+  };
+
+  const handleAsrMethodChange = (method: 'standard' | 'hanafi') => {
+    setAsrMethod(method);
+    localStorage.setItem('asrCalculationMethod', method);
   };
 
   const requestLocation = () => {
@@ -259,20 +268,44 @@ export default function PrayerTimesPage() {
                     <span data-testid="text-location">{locationName}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Settings className="w-4 h-4 text-muted-foreground" />
-                  <Select value={calculationMethod} onValueChange={(v) => handleMethodChange(v as CalculationMethod)}>
-                    <SelectTrigger className="w-full" data-testid="select-calculation-method">
-                      <SelectValue placeholder="Select calculation method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(CALCULATION_METHODS).map(([key, name]) => (
-                        <SelectItem key={key} value={key} data-testid={`method-${key.toLowerCase()}`}>
-                          {name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <Settings className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1">
+                      <label className="text-xs text-muted-foreground mb-1 block">Fajr/Isha Calculation</label>
+                      <Select value={calculationMethod} onValueChange={(v) => handleMethodChange(v as CalculationMethod)}>
+                        <SelectTrigger className="w-full" data-testid="select-calculation-method">
+                          <SelectValue placeholder="Select calculation method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(CALCULATION_METHODS).map(([key, name]) => (
+                            <SelectItem key={key} value={key} data-testid={`method-${key.toLowerCase()}`}>
+                              {name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Settings className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1">
+                      <label className="text-xs text-muted-foreground mb-1 block">Asr Calculation</label>
+                      <Select value={asrMethod} onValueChange={(v) => handleAsrMethodChange(v as 'standard' | 'hanafi')}>
+                        <SelectTrigger className="w-full" data-testid="select-asr-method">
+                          <SelectValue placeholder="Select Asr method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="standard" data-testid="asr-standard">
+                            Standard (Shafi, Maliki, Hanbali)
+                          </SelectItem>
+                          <SelectItem value="hanafi" data-testid="asr-hanafi">
+                            Hanafi
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -333,7 +366,7 @@ export default function PrayerTimesPage() {
             </Card>
 
             <p className="text-center text-sm text-muted-foreground">
-              Times calculated using {CALCULATION_METHODS[calculationMethod]} method
+              {CALCULATION_METHODS[calculationMethod]} • Asr: {asrMethod === 'hanafi' ? 'Hanafi' : 'Standard'}
             </p>
             
             {/* Google Ad Placement */}
