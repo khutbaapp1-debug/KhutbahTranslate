@@ -4,13 +4,20 @@ This guide explains how to build different language variants of Khutbah Translat
 
 ## Overview
 
-We create **three separate apps** for different markets:
+The app **auto-detects the source language** using OpenAI Whisper (supports 99+ languages including Arabic, Urdu, Hindi, French, English) and translates to the target language for that market.
 
-| Variant | Target Markets | App ID | Languages |
-|---------|---------------|--------|-----------|
-| **English** | USA, UK, Canada, Australia | `com.khutbahtranslate.english` | 🇬🇧 English |
-| **Hindi/Urdu** | India, Pakistan | `com.khutbahtranslate.hindi` | 🇮🇳 हिन्दी / اردو |
-| **French** | France, Morocco, Algeria, Tunisia, Senegal | `com.khutbahtranslate.french` | 🇫🇷 Français |
+**Three separate apps** for different regional markets:
+
+| Variant | Target Markets | App ID | Source Languages | Target |
+|---------|---------------|--------|------------------|--------|
+| **English** | UK, USA, Canada, Australia | `com.khutbahtranslate.english` | Auto-detect (Arabic/Urdu/Hindi/French/etc) | 🇬🇧 English |
+| **Hindi/Urdu** | India, Pakistan | `com.khutbahtranslate.hindi` | Auto-detect (Arabic/English/etc) | 🇮🇳 हिन्दी / اردو |
+| **French** | France, Morocco, Algeria, Tunisia | `com.khutbahtranslate.french` | Auto-detect (Arabic/etc) | 🇫🇷 Français |
+
+**Use Cases:**
+- **UK**: Khutbahs in Arabic/Urdu/Hindi/French → Auto-detect → English
+- **India**: Khutbahs in Arabic/English → Auto-detect → Hindi/Urdu
+- **France**: Khutbahs in Arabic → Auto-detect → French
 
 ## Why Separate Apps?
 

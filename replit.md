@@ -17,16 +17,19 @@ Khutbah Translate is a full-stack Islamic companion web application that provide
 - `/api/translation/usage` endpoint provides current usage info for authenticated users
 - Each 5-second audio chunk tracked as ~0.083 minutes
 
-**Multi-Language App Variants Strategy**
-- Implemented separate app variants for different regional markets (English, Hindi/Urdu, French)
+**Multi-Language App Variants with Auto-Detection**
+- **Auto-detects source language**: Whisper automatically detects Arabic, Urdu, Hindi, French, English, and 99+ other languages
+- **Three regional app variants**: English, Hindi/Urdu, French (separate app store listings)
+- **UK Use Case**: Khutbahs in Arabic/Urdu/Hindi/French → Auto-detect → Translate to English
+- **India Use Case**: Khutbahs in Arabic/English → Auto-detect → Translate to Hindi/Urdu
+- **France Use Case**: Khutbahs in Arabic → Auto-detect → Translate to French
 - Created language configuration system in `shared/language-config.ts`
 - Each variant has unique bundle ID: `.english`, `.hindi`, `.french`
-- Updated OpenAI translation service to support multiple target languages
 - Same codebase builds all three variants - just change `DEFAULT_LANGUAGE` config
-- Target markets: 🇬🇧 English (USA/UK/Canada), 🇮🇳 Hindi (India/Pakistan), 🇫🇷 French (France/North Africa)
+- Target markets: 🇬🇧 English (UK/USA/Canada), 🇮🇳 Hindi (India/Pakistan), 🇫🇷 French (France/North Africa)
 - See `BUILD_VARIANTS.md` for complete build instructions
-- Translation quality: GPT-4o excellent at Hindi/Urdu and French
-- API costs remain same (~$4.68 per 30-min khutbah) regardless of target language
+- Translation quality: GPT-4o excellent at all language pairs
+- API costs remain same (~$4.68 per 30-min khutbah) regardless of source or target language
 
 **Native Mobile Apps (iOS & Android)**
 - Integrated Capacitor for native iOS and Android app deployment
