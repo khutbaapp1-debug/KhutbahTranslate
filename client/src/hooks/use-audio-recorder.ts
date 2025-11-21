@@ -166,7 +166,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
         stopMediaTracks();
       };
 
-      mediaRecorder.start(1000); // Capture data every second
+      mediaRecorder.start(10000); // Capture data every 10 seconds
       setIsRecording(true);
       setRecordingTime(0);
       startTimer();
