@@ -1,5 +1,11 @@
 import { useState, useRef, useCallback } from "react";
 
+export interface TranslationSegment {
+  id: number;
+  arabic: string;
+  english: string;
+}
+
 export interface AudioRecorderState {
   isRecording: boolean;
   isPaused: boolean;
@@ -7,6 +13,7 @@ export interface AudioRecorderState {
   audioBlob: Blob | null;
   audioUrl: string | null;
   error: string | null;
+  translations: TranslationSegment[];
 }
 
 export interface AudioRecorderControls {
@@ -15,6 +22,7 @@ export interface AudioRecorderControls {
   pauseRecording: () => void;
   resumeRecording: () => void;
   clearRecording: () => void;
+  onTranslation?: (segment: TranslationSegment) => void;
 }
 
 export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
@@ -24,11 +32,14 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [translations, setTranslations] = useState<TranslationSegment[]>([]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
+  const chunkTimerRef = useRef<number | null>(null);
+  const onTranslationRef = useRef<((segment: TranslationSegment) => void) | undefined>();
 
   const startTimer = useCallback(() => {
     timerRef.current = window.setInterval(() => {
@@ -47,6 +58,42 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
+    }
+  }, []);
+
+  const sendAudioChunkForTranscription = useCallback(async (blob: Blob, sequenceNumber: number) => {
+    try {
+      const formData = new FormData();
+      formData.append("audio", blob);
+      formData.append("sequenceNumber", sequenceNumber.toString());
+      
+      const response = await fetch("/api/transcribe", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        console.error("Transcription error:", await response.json());
+        return;
+      }
+      
+      const result = await response.json();
+      
+      if (result.arabic && result.english) {
+        const segment: TranslationSegment = {
+          id: Date.now() + sequenceNumber,
+          arabic: result.arabic,
+          english: result.english,
+        };
+        
+        setTranslations(prev => [...prev, segment]);
+        if (onTranslationRef.current) {
+          onTranslationRef.current(segment);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to transcribe chunk:", err);
     }
   }, []);
 
