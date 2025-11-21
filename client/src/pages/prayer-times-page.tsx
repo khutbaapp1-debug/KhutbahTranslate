@@ -6,6 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { MapPin, Clock, Settings } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -54,6 +62,7 @@ export default function PrayerTimesPage() {
   const [locationName, setLocationName] = useState<string>("Getting location...");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [calculationMethod, setCalculationMethod] = useState<CalculationMethod>(() => {
     const saved = localStorage.getItem('prayerCalculationMethod');
     return (saved as CalculationMethod) || 'ISNA';
@@ -229,6 +238,54 @@ export default function PrayerTimesPage() {
           <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
             Prayer Times
           </h1>
+          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" data-testid="button-settings">
+                <Settings className="w-5 h-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Prayer Time Settings</DialogTitle>
+                <DialogDescription>
+                  Choose your preferred calculation methods
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Fajr/Isha Calculation Method</label>
+                  <Select value={calculationMethod} onValueChange={(v) => handleMethodChange(v as CalculationMethod)}>
+                    <SelectTrigger className="w-full" data-testid="select-calculation-method">
+                      <SelectValue placeholder="Select calculation method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(CALCULATION_METHODS).map(([key, name]) => (
+                        <SelectItem key={key} value={key} data-testid={`method-${key.toLowerCase()}`}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Asr Calculation Method</label>
+                  <Select value={asrMethod} onValueChange={(v) => handleAsrMethodChange(v as 'standard' | 'hanafi')}>
+                    <SelectTrigger className="w-full" data-testid="select-asr-method">
+                      <SelectValue placeholder="Select Asr method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard" data-testid="asr-standard">
+                        Standard (Shafi, Maliki, Hanbali)
+                      </SelectItem>
+                      <SelectItem value="hanafi" data-testid="asr-hanafi">
+                        Hanafi
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </header>
 
@@ -260,51 +317,12 @@ export default function PrayerTimesPage() {
         ) : !locationError && prayerData ? (
           <>
             <Card>
-              <CardHeader className="pb-3 space-y-3">
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle>Today's Prayer Times</CardTitle>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="w-4 h-4" />
                     <span data-testid="text-location">{locationName}</span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <Settings className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1">
-                      <label className="text-xs text-muted-foreground mb-1 block">Fajr/Isha Calculation</label>
-                      <Select value={calculationMethod} onValueChange={(v) => handleMethodChange(v as CalculationMethod)}>
-                        <SelectTrigger className="w-full" data-testid="select-calculation-method">
-                          <SelectValue placeholder="Select calculation method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(CALCULATION_METHODS).map(([key, name]) => (
-                            <SelectItem key={key} value={key} data-testid={`method-${key.toLowerCase()}`}>
-                              {name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Settings className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1">
-                      <label className="text-xs text-muted-foreground mb-1 block">Asr Calculation</label>
-                      <Select value={asrMethod} onValueChange={(v) => handleAsrMethodChange(v as 'standard' | 'hanafi')}>
-                        <SelectTrigger className="w-full" data-testid="select-asr-method">
-                          <SelectValue placeholder="Select Asr method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="standard" data-testid="asr-standard">
-                            Standard (Shafi, Maliki, Hanbali)
-                          </SelectItem>
-                          <SelectItem value="hanafi" data-testid="asr-hanafi">
-                            Hanafi
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
                 </div>
               </CardHeader>
