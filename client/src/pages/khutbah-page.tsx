@@ -145,31 +145,22 @@ export default function KhutbahPage() {
               </Alert>
             )}
             
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-mono" data-testid="text-duration">
-                    {formatDuration(recordingTime)}
-                  </span>
-                </div>
+            <div className="flex flex-col items-center gap-4">
+              {/* Timer */}
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="font-mono text-lg" data-testid="text-duration">
+                  {formatDuration(recordingTime)}
+                </span>
                 {audioBlob && (
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="ml-2">
                     {(audioBlob.size / 1024 / 1024).toFixed(2)} MB
                   </Badge>
                 )}
               </div>
 
-              <div className="flex gap-2 justify-end">
-                {!isRecording && translations.length > 0 && (
-                  <>
-                    <Button variant="outline" onClick={clearRecording} data-testid="button-clear">
-                      <X className="w-4 h-4 mr-2" />
-                      Clear
-                    </Button>
-                  </>
-                )}
-                
+              {/* Main buttons - centered */}
+              <div className="flex gap-2 items-center">
                 {isRecording && (
                   <Button
                     variant="outline"
@@ -210,6 +201,14 @@ export default function KhutbahPage() {
                   )}
                 </Button>
               </div>
+
+              {/* Clear button - below when stopped */}
+              {!isRecording && translations.length > 0 && (
+                <Button variant="outline" onClick={clearRecording} data-testid="button-clear">
+                  <X className="w-4 h-4 mr-2" />
+                  Clear
+                </Button>
+              )}
             </div>
           </div>
         </div>
