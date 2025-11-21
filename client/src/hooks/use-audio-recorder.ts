@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { encodeWAV } from "@/utils/wav-encoder";
 
 export interface TranslationSegment {
   id: number;
@@ -26,6 +27,9 @@ export interface AudioRecorderControls {
   onTranslation?: (segment: TranslationSegment) => void;
 }
 
+const SAMPLE_RATE = 16000; // 16kHz is optimal for speech recognition
+const CHUNK_DURATION = 5; // seconds
+
 export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -35,12 +39,14 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const [error, setError] = useState<string | null>(null);
   const [translations, setTranslations] = useState<TranslationSegment[]>([]);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const pcmBufferRef = useRef<Float32Array[]>([]);
   const timerRef = useRef<number | null>(null);
   const chunkTimerRef = useRef<number | null>(null);
-  const onTranslationRef = useRef<((segment: TranslationSegment) => void) | undefined>();
+  const sequenceNumberRef = useRef(0);
 
   const startTimer = useCallback(() => {
     timerRef.current = window.setInterval(() => {
@@ -60,16 +66,20 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
     }
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
   }, []);
 
   const sendAudioChunkForTranscription = useCallback(async (blob: Blob, sequenceNumber: number) => {
     try {
       const formData = new FormData();
-      // Determine file extension from blob type
-      const extension = blob.type.includes("mpeg") ? "mp3" : 
-                       blob.type.includes("mp4") ? "m4a" :
-                       blob.type.includes("webm") ? "webm" : "audio";
-      formData.append("audio", blob, `audio.${extension}`);
+      formData.append("audio", blob, "audio.wav");
       formData.append("sequenceNumber", sequenceNumber.toString());
       
       const response = await fetch("/api/transcribe", {
@@ -79,11 +89,10 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       });
       
       if (!response.ok) {
-        // Silently skip failed chunks (likely silence/pauses causing format errors)
-        // Only log to console, don't show to user
-        const error = await response.json();
-        if (!error.error?.includes("could not be decoded")) {
-          console.error("Transcription error:", error);
+        const errorData = await response.json();
+        // Only log non-format errors
+        if (!errorData.error?.includes("could not be decoded")) {
+          console.error("Transcription error:", errorData);
         }
         return;
       }
@@ -95,30 +104,55 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
           id: Date.now() + sequenceNumber,
           arabic: result.arabic,
           english: result.english,
-          timestamp: sequenceNumber,
+          timestamp: sequenceNumber * CHUNK_DURATION,
         };
         
         setTranslations(prev => [...prev, segment]);
-        if (onTranslationRef.current) {
-          onTranslationRef.current(segment);
-        }
       }
     } catch (err) {
       console.error("Failed to transcribe chunk:", err);
     }
   }, []);
 
+  const processChunk = useCallback(() => {
+    if (pcmBufferRef.current.length === 0) return;
+
+    // Combine all buffered PCM samples
+    const totalLength = pcmBufferRef.current.reduce((acc, arr) => acc + arr.length, 0);
+    const combined = new Float32Array(totalLength);
+    let offset = 0;
+    for (const buffer of pcmBufferRef.current) {
+      combined.set(buffer, offset);
+      offset += buffer.length;
+    }
+
+    // Encode to WAV with proper headers
+    const wavBlob = encodeWAV(combined, SAMPLE_RATE);
+    
+    // Store for final audio file
+    audioChunksRef.current.push(wavBlob);
+    
+    // Send for transcription (only if chunk has sufficient data)
+    if (wavBlob.size > 5000) {
+      sendAudioChunkForTranscription(wavBlob, sequenceNumberRef.current++);
+    }
+
+    // Clear buffer for next chunk
+    pcmBufferRef.current = [];
+  }, [sendAudioChunkForTranscription]);
+
   const startRecording = useCallback(async () => {
     try {
-      // Stop any existing streams first
       stopMediaTracks();
       setError(null);
       audioChunksRef.current = [];
+      pcmBufferRef.current = [];
+      sequenceNumberRef.current = 0;
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          channelCount: 1, // Mono
-          sampleRate: 48000, // 48kHz
+          channelCount: 1,
+          sampleRate: SAMPLE_RATE,
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
@@ -127,58 +161,33 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       
       mediaStreamRef.current = stream;
 
-      // Try MP3 first - creates more reliable standalone chunks for OpenAI
-      const mimeTypes = [
-        "audio/mpeg", // MP3 - most reliable for chunking
-        "audio/mp4", // MP4
-        "audio/webm;codecs=opus", // Opus in WebM
-        "audio/webm", // WebM
-        "audio/ogg;codecs=opus", // Opus in OGG
-      ];
-
-      let selectedMimeType = "";
-      for (const mimeType of mimeTypes) {
-        if (MediaRecorder.isTypeSupported(mimeType)) {
-          selectedMimeType = mimeType;
-          break;
-        }
-      }
-
-      if (!selectedMimeType) {
-        throw new Error("No supported audio format found");
-      }
-
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: selectedMimeType,
-        audioBitsPerSecond: 48000, // 48kbps for good speech quality
+      // Create Web Audio API context
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+        sampleRate: SAMPLE_RATE,
       });
+      audioContextRef.current = audioContext;
 
-      mediaRecorderRef.current = mediaRecorder;
+      const source = audioContext.createMediaStreamSource(stream);
+      
+      // Use ScriptProcessor to capture PCM samples
+      const bufferSize = 4096;
+      const processor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+      processorRef.current = processor;
 
-      let chunkSequenceNumber = 0;
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-          // Only send chunk for transcription if it has sufficient audio data
-          // Skip chunks smaller than 5KB (likely silence or corrupted)
-          if (event.data.size > 5000) {
-            sendAudioChunkForTranscription(event.data, chunkSequenceNumber++);
-          }
-        }
+      processor.onaudioprocess = (e) => {
+        if (isPaused) return;
+        
+        const inputData = e.inputBuffer.getChannelData(0);
+        const samples = new Float32Array(inputData);
+        pcmBufferRef.current.push(samples);
       };
 
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: selectedMimeType,
-        });
-        setAudioBlob(audioBlob);
-        setAudioUrl(URL.createObjectURL(audioBlob));
+      source.connect(processor);
+      processor.connect(audioContext.destination);
 
-        // Stop all media tracks
-        stopMediaTracks();
-      };
+      // Process chunks every 5 seconds
+      chunkTimerRef.current = window.setInterval(processChunk, CHUNK_DURATION * 1000);
 
-      mediaRecorder.start(5000); // Capture data every 5 seconds
       setIsRecording(true);
       setRecordingTime(0);
       startTimer();
@@ -187,28 +196,39 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       stopMediaTracks();
       setError(err.message || "Failed to start recording. Please allow microphone access.");
     }
-  }, [startTimer, stopMediaTracks]);
+  }, [startTimer, stopMediaTracks, processChunk, isPaused]);
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsPaused(false);
-      stopTimer();
+    if (chunkTimerRef.current) {
+      clearInterval(chunkTimerRef.current);
+      chunkTimerRef.current = null;
     }
-  }, [isRecording, stopTimer]);
+
+    // Process any remaining buffered audio
+    processChunk();
+
+    // Create final complete audio file
+    if (audioChunksRef.current.length > 0) {
+      const finalBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+      setAudioBlob(finalBlob);
+      setAudioUrl(URL.createObjectURL(finalBlob));
+    }
+
+    stopMediaTracks();
+    setIsRecording(false);
+    setIsPaused(false);
+    stopTimer();
+  }, [processChunk, stopMediaTracks, stopTimer]);
 
   const pauseRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording && !isPaused) {
-      mediaRecorderRef.current.pause();
+    if (isRecording && !isPaused) {
       setIsPaused(true);
       stopTimer();
     }
   }, [isRecording, isPaused, stopTimer]);
 
   const resumeRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording && isPaused) {
-      mediaRecorderRef.current.resume();
+    if (isRecording && isPaused) {
       setIsPaused(false);
       startTimer();
     }
@@ -225,6 +245,8 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     setError(null);
     setTranslations([]);
     audioChunksRef.current = [];
+    pcmBufferRef.current = [];
+    sequenceNumberRef.current = 0;
   }, [audioUrl, stopMediaTracks]);
 
   return {
