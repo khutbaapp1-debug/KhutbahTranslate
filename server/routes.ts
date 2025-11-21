@@ -159,10 +159,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No audio file provided" });
       }
 
-      // Transcribe Arabic audio
+      // Transcribe audio with auto-detection (supports Arabic, Urdu, Hindi, French, etc.)
       const transcription = await transcribeArabicAudio(req.file.buffer);
       
-      // Translate to target language
+      // Translate from detected language to target language
       const translation = await translateArabicToEnglish(transcription.text);
 
       // Track usage for authenticated users (5 seconds per chunk = 0.083 minutes)
@@ -175,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.sermonId) {
         await storage.createTranscript({
           sermonId: req.body.sermonId,
-          arabicText: translation.arabicOriginal,
+          arabicText: translation.originalText,
           englishTranslation: translation.translatedText,
           sequenceNumber: parseInt(req.body.sequenceNumber || "0"),
           timestampSeconds: req.body.timestampSeconds || "0",
@@ -183,8 +183,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({
-        arabic: translation.arabicOriginal,
+        arabic: translation.originalText, // Original text in any detected language
         translation: translation.translatedText,
+        sourceLanguage: translation.sourceLanguage,
         targetLanguage: translation.targetLanguage,
         duration: transcription.duration,
       });

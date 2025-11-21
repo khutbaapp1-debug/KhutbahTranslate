@@ -156,7 +156,7 @@ export default function KhutbahPage() {
                 </div>
                 <h2 className="text-xl font-semibold">Start Recording Khutbah</h2>
                 <p className="text-muted-foreground">
-                  Press the record button to begin real-time translation of the sermon from Arabic to English
+                  Press the record button to begin real-time translation. Automatically detects Arabic, Urdu, Hindi, French, and other languages.
                 </p>
               </CardContent>
             </Card>

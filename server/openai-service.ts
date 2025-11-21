@@ -13,7 +13,8 @@ export interface TranscriptionResult {
 
 export interface TranslationResult {
   translatedText: string; // Language-agnostic - could be English, Hindi, French, etc.
-  arabicOriginal: string;
+  originalText: string; // Original text in any detected language
+  sourceLanguage?: string; // Detected source language (if available)
   targetLanguage: string; // Which language this was translated to
 }
 
@@ -29,17 +30,19 @@ export interface SermonSummary {
   detailedSummary: string;
 }
 
-// Transcribe Arabic audio using Whisper
+// Transcribe audio using Whisper with auto-detection
+// Can detect Arabic, Urdu, Hindi, French, English, and many other languages
 export async function transcribeArabicAudio(audioBuffer: Buffer): Promise<TranscriptionResult> {
   try {
     // Create a Blob from buffer for OpenAI (works in Node.js with proper polyfills)
     const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
     const audioFile = new File([blob], "audio.mp3", { type: "audio/mpeg" });
     
+    // Let Whisper auto-detect the language - supports 99+ languages
     const transcription = await openai.audio.transcriptions.create({
       file: audioFile,
       model: "whisper-1",
-      language: "ar", // Arabic
+      // No language specified - Whisper will auto-detect
     });
 
     return {
@@ -50,41 +53,46 @@ export async function transcribeArabicAudio(audioBuffer: Buffer): Promise<Transc
   }
 }
 
-// Translate Arabic text to target language with Islamic terminology preservation
-export async function translateArabicToEnglish(arabicText: string): Promise<TranslationResult> {
+// Translate text from any language to target language with Islamic terminology preservation
+// Supports Arabic, Urdu, Hindi, French, and other languages → English/Hindi/French
+export async function translateArabicToEnglish(sourceText: string): Promise<TranslationResult> {
   try {
     const languageConfig = getLanguageConfig();
     const targetLanguage = languageConfig.targetLanguage;
     
     const prompt = `You are translating a live khutbah (Islamic sermon) in real-time. Each audio chunk is 5 seconds, so the text will be a fragment of a longer sermon.
 
+The source text may be in ANY language (Arabic, Urdu, Hindi, French, English, etc). Auto-detect the source language and translate to ${targetLanguage}.
+
 TRANSLATE EXACTLY WHAT IS SAID - nothing more, nothing less.
 
 TARGET LANGUAGE: ${targetLanguage}
 
 RULES:
-1. Preserve Islamic terminology (keep "Allah", "SubhanAllah", "Alhamdulillah", "Insha'Allah")
-2. Add (SAW) or (PBUH) after Prophet Muhammad mentions
-3. Add (AS) after other prophet mentions
-4. If the text is empty or just background noise, return empty translation
-5. NEVER add commentary like "please provide the full sermon" or "this is only a fragment"
-6. NEVER add explanations or requests for more context
-7. Remove social media phrases (subscribe, like, share, follow, channel)
-8. Translate ONLY the actual words spoken - no extra text
-9. NEVER include translator names, attributions, or credits
-10. NEVER add phrases like "translated by", "translation by", or any names at the end
+1. Auto-detect source language (could be Arabic, Urdu, Hindi, French, English, or any language)
+2. Preserve Islamic terminology (keep "Allah", "SubhanAllah", "Alhamdulillah", "Insha'Allah", "salah", "jannah", "iman")
+3. Add (SAW) or (PBUH) after Prophet Muhammad mentions
+4. Add (AS) after other prophet mentions
+5. If the text is empty or just background noise, return empty translation
+6. NEVER add commentary like "please provide the full sermon" or "this is only a fragment"
+7. NEVER add explanations or requests for more context
+8. Remove social media phrases (subscribe, like, share, follow, channel)
+9. Translate ONLY the actual words spoken - no extra text
+10. NEVER include translator names, attributions, or credits
+11. NEVER add phrases like "translated by", "translation by", or any names at the end
+12. If source is already in target language, return it as-is (no translation needed)
 
-Arabic text to translate:
-${arabicText}
+Text to translate:
+${sourceText}
 
-Respond in JSON: { "translation": "the translation only - no other text" }`;
+Respond in JSON: { "translation": "the translation only - no other text", "detectedLanguage": "detected source language name" }`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are a real-time Arabic-to-${targetLanguage} translator for Islamic sermons. You translate ONLY what is said, with no commentary, explanations, or requests for more context. You are processing live audio chunks, so fragments are expected and normal.`
+          content: `You are a real-time multilingual-to-${targetLanguage} translator for Islamic sermons. You auto-detect the source language and translate ONLY what is said, with no commentary, explanations, or requests for more context. You are processing live audio chunks, so fragments are expected and normal.`
         },
         {
           role: "user",
@@ -96,6 +104,7 @@ Respond in JSON: { "translation": "the translation only - no other text" }`;
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
     let translation = result.translation || "";
+    const detectedLanguage = result.detectedLanguage || "Unknown";
     
     // Filter out unwanted phrases and AI commentary
     const unwantedPhrases = [
@@ -130,7 +139,8 @@ Respond in JSON: { "translation": "the translation only - no other text" }`;
     
     return {
       translatedText: translation,
-      arabicOriginal: arabicText,
+      originalText: sourceText,
+      sourceLanguage: detectedLanguage,
       targetLanguage: languageConfig.displayName,
     };
   } catch (error: any) {
