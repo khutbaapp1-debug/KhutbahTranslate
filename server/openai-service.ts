@@ -60,6 +60,8 @@ IMPORTANT RULES:
 4. Maintain respectful, formal tone appropriate for Islamic sermon
 5. If Qur'anic verses are detected, provide clear translation
 6. Keep the spiritual and religious context intact
+7. REMOVE any phrases related to social media like "subscribe", "like", "share", "follow", "channel" - these are NOT part of the sermon
+8. ONLY translate the actual sermon content, ignore any background noise or non-sermon phrases
 
 Arabic text:
 ${arabicText}
@@ -71,7 +73,7 @@ Respond in JSON format with: { "translation": "English translation here" }`;
       messages: [
         {
           role: "system",
-          content: "You are an expert Arabic-to-English translator specializing in Islamic religious content, khutbahs, and sermons. You preserve Islamic terminology and maintain the spiritual essence of the text."
+          content: "You are an expert Arabic-to-English translator specializing in Islamic religious content, khutbahs, and sermons. You preserve Islamic terminology and maintain the spiritual essence of the text. You filter out any non-sermon content like social media requests or background noise."
         },
         {
           role: "user",
@@ -82,9 +84,28 @@ Respond in JSON format with: { "translation": "English translation here" }`;
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
+    let translation = result.translation || "";
+    
+    // Additional filtering to remove common social media phrases
+    const unwantedPhrases = [
+      /subscribe to (the|our) channel/gi,
+      /like and subscribe/gi,
+      /follow us on/gi,
+      /share this video/gi,
+      /don't forget to subscribe/gi,
+      /hit the bell icon/gi,
+      /turn on notifications/gi,
+    ];
+    
+    for (const regex of unwantedPhrases) {
+      translation = translation.replace(regex, '').trim();
+    }
+    
+    // Clean up extra spaces
+    translation = translation.replace(/\s{2,}/g, ' ').trim();
     
     return {
-      english: result.translation || "",
+      english: translation,
       arabicOriginal: arabicText,
     };
   } catch (error: any) {
