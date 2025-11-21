@@ -6,6 +6,17 @@ Khutbah Translate is a full-stack Islamic companion web application that provide
 
 ## Recent Updates (Nov 21, 2025)
 
+**Translation Usage Limits (2 Hours/Month for Free Users)**
+- Added monthly translation usage tracking to users table (`monthlyTranslationMinutesUsed`, `translationUsageResetDate`)
+- Free users limited to 120 minutes (2 hours) of translation per month
+- Premium users get unlimited translation
+- Anonymous users (no login) get unlimited translation for mosque use cases
+- Created `server/translation-limits.ts` with usage tracking functions and middleware
+- Frontend displays remaining time and upgrade CTA when approaching/hitting limit
+- Usage resets automatically every month
+- `/api/translation/usage` endpoint provides current usage info for authenticated users
+- Each 5-second audio chunk tracked as ~0.083 minutes
+
 **Multi-Language App Variants Strategy**
 - Implemented separate app variants for different regional markets (English, Hindi/Urdu, French)
 - Created language configuration system in `shared/language-config.ts`
@@ -50,8 +61,10 @@ Khutbah Translate is a full-stack Islamic companion web application that provide
 Preferred communication style: Simple, everyday language.
 
 **Monetization Strategy**
+- Free tier: 2 hours (120 minutes) of translation per month - encourages premium upgrades
+- Premium subscriptions: $9.99/month via Stripe (to be fully implemented with Stripe integration)
+- Anonymous users (no login): Unlimited translation access for mosque congregations
 - Google Ads: Non-intrusive placements (homepage banner, inline on long pages)
-- Premium subscriptions: $9.99/month via Stripe (to be implemented)
 - Never interrupt worship features (Tasbih, Qibla, live Khutbah translation) with ads
 
 ## System Architecture
