@@ -51,29 +51,31 @@ export async function transcribeArabicAudio(audioBuffer: Buffer): Promise<Transc
 // Translate Arabic text to English with Islamic terminology preservation
 export async function translateArabicToEnglish(arabicText: string): Promise<TranslationResult> {
   try {
-    const prompt = `Translate the following Arabic khutbah (sermon) text to English. 
-    
-IMPORTANT RULES:
-1. Preserve Islamic terminology (e.g., keep "Allah", "SubhanAllah", "Alhamdulillah", "Insha'Allah")
-2. Add (SAW) or (PBUH) after mentions of Prophet Muhammad
-3. Add (AS) after mentions of other prophets
-4. Maintain respectful, formal tone appropriate for Islamic sermon
-5. If Qur'anic verses are detected, provide clear translation
-6. Keep the spiritual and religious context intact
-7. REMOVE any phrases related to social media like "subscribe", "like", "share", "follow", "channel" - these are NOT part of the sermon
-8. ONLY translate the actual sermon content, ignore any background noise or non-sermon phrases
+    const prompt = `You are translating a live khutbah (Islamic sermon) in real-time. Each audio chunk is 5 seconds, so the text will be a fragment of a longer sermon.
 
-Arabic text:
+TRANSLATE EXACTLY WHAT IS SAID - nothing more, nothing less.
+
+RULES:
+1. Preserve Islamic terminology (keep "Allah", "SubhanAllah", "Alhamdulillah", "Insha'Allah")
+2. Add (SAW) or (PBUH) after Prophet Muhammad mentions
+3. Add (AS) after other prophet mentions
+4. If the text is empty or just background noise, return empty translation
+5. NEVER add commentary like "please provide the full sermon" or "this is only a fragment"
+6. NEVER add explanations or requests for more context
+7. Remove social media phrases (subscribe, like, share, follow, channel)
+8. Translate ONLY the actual words spoken - no extra text
+
+Arabic text to translate:
 ${arabicText}
 
-Respond in JSON format with: { "translation": "English translation here" }`;
+Respond in JSON: { "translation": "the translation only - no other text" }`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: "You are an expert Arabic-to-English translator specializing in Islamic religious content, khutbahs, and sermons. You preserve Islamic terminology and maintain the spiritual essence of the text. You filter out any non-sermon content like social media requests or background noise."
+          content: "You are a real-time Arabic-to-English translator for Islamic sermons. You translate ONLY what is said, with no commentary, explanations, or requests for more context. You are processing live audio chunks, so fragments are expected and normal."
         },
         {
           role: "user",
@@ -86,7 +88,7 @@ Respond in JSON format with: { "translation": "English translation here" }`;
     const result = JSON.parse(response.choices[0].message.content || "{}");
     let translation = result.translation || "";
     
-    // Additional filtering to remove common social media phrases
+    // Filter out unwanted phrases and AI commentary
     const unwantedPhrases = [
       /subscribe to (the|our) channel/gi,
       /like and subscribe/gi,
@@ -95,14 +97,20 @@ Respond in JSON format with: { "translation": "English translation here" }`;
       /don't forget to subscribe/gi,
       /hit the bell icon/gi,
       /turn on notifications/gi,
+      /please provide (the )?full sermon/gi,
+      /this (is|appears to be) (only )?(a )?fragment/gi,
+      /I need more context/gi,
+      /could you provide more/gi,
+      /this is incomplete/gi,
     ];
     
     for (const regex of unwantedPhrases) {
       translation = translation.replace(regex, '').trim();
     }
     
-    // Clean up extra spaces
+    // Clean up extra spaces and punctuation artifacts
     translation = translation.replace(/\s{2,}/g, ' ').trim();
+    translation = translation.replace(/^[,.\s]+|[,.\s]+$/g, '').trim();
     
     return {
       english: translation,
