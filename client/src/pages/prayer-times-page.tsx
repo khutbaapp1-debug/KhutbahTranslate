@@ -160,35 +160,36 @@ export default function PrayerTimesPage() {
       name: "Fajr", 
       time: prayerData.fajr, 
       isNext: prayerData.nextPrayer?.nextPrayer === "Fajr", 
-      isPassed: isTimePassed(prayerData.fajr, currentTime)
+      isPassed: isTimePassed(prayerData.fajr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Fajr"
     },
     { 
       name: "Dhuhr", 
       time: prayerData.dhuhr, 
       isNext: prayerData.nextPrayer?.nextPrayer === "Dhuhr", 
-      isPassed: isTimePassed(prayerData.dhuhr, currentTime)
+      isPassed: isTimePassed(prayerData.dhuhr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Dhuhr"
     },
     { 
       name: "Asr", 
       time: prayerData.asr, 
       isNext: prayerData.nextPrayer?.nextPrayer === "Asr", 
-      isPassed: isTimePassed(prayerData.asr, currentTime)
+      isPassed: isTimePassed(prayerData.asr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Asr"
     },
     { 
       name: "Maghrib", 
       time: prayerData.maghrib, 
       isNext: prayerData.nextPrayer?.nextPrayer === "Maghrib", 
-      isPassed: isTimePassed(prayerData.maghrib, currentTime)
+      isPassed: isTimePassed(prayerData.maghrib, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Maghrib"
     },
     { 
       name: "Isha", 
       time: prayerData.isha, 
       isNext: prayerData.nextPrayer?.nextPrayer === "Isha", 
-      isPassed: isTimePassed(prayerData.isha, currentTime)
+      isPassed: isTimePassed(prayerData.isha, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Isha"
     },
   ] : [];
 
   const nextPrayer = prayerTimes.find((p) => p.isNext);
+  const currentPrayer = prayerTimes.find((p) => !p.isPassed && !p.isNext);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -230,70 +231,70 @@ export default function PrayerTimesPage() {
           </Card>
         ) : !locationError && prayerData ? (
           <>
-            <Card className="bg-primary text-primary-foreground">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-sm" data-testid="text-location">{locationName}</span>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm opacity-90">Next Prayer</p>
-                  <h2 className="text-4xl font-bold" data-testid="text-next-prayer">
-                    {nextPrayer?.name || prayerData.nextPrayer?.nextPrayer}
-                  </h2>
-                  <p className="text-2xl" data-testid="text-next-prayer-time">
-                    {nextPrayer?.time}
-                  </p>
-                  <div className="flex items-center gap-2 text-sm opacity-90">
-                    <Clock className="w-4 h-4" />
-                    <span data-testid="text-countdown">
-                      {prayerData.nextPrayer?.timeRemaining} remaining
-                    </span>
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle>Today's Prayer Times</CardTitle>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    <span data-testid="text-location">{locationName}</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Today's Prayer Times</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {prayerTimes.map((prayer) => (
-                  <div
-                    key={prayer.name}
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
-                      prayer.isNext
-                        ? "border-primary bg-accent"
-                        : "border-border"
-                    } ${prayer.isPassed ? "opacity-50" : ""}`}
-                    data-testid={`prayer-${prayer.name.toLowerCase()}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        prayer.isNext ? "bg-primary text-primary-foreground" : "bg-muted"
-                      }`}>
-                        <Clock className="w-5 h-5" />
+                {prayerTimes.map((prayer) => {
+                  const isCurrent = !prayer.isPassed && !prayer.isNext;
+                  return (
+                    <div
+                      key={prayer.name}
+                      className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                        isCurrent
+                          ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                          : prayer.isNext
+                          ? "border-primary bg-accent"
+                          : prayer.isPassed
+                          ? "border-border opacity-50"
+                          : "border-border"
+                      }`}
+                      data-testid={`prayer-${prayer.name.toLowerCase()}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isCurrent
+                            ? "bg-green-500 text-white"
+                            : prayer.isNext 
+                            ? "bg-primary text-primary-foreground" 
+                            : "bg-muted"
+                        }`}>
+                          <Clock className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="font-medium text-lg block">{prayer.name}</span>
+                          {prayer.isNext && prayerData.nextPrayer && (
+                            <span className="text-xs text-muted-foreground">
+                              {prayerData.nextPrayer.timeRemaining} remaining
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <span className="font-medium text-lg">{prayer.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-semibold" data-testid={`time-${prayer.name.toLowerCase()}`}>
+                          {prayer.time}
+                        </span>
+                        {isCurrent && (
+                          <Badge className="bg-green-500 hover:bg-green-600 text-white text-xs">
+                            Now
+                          </Badge>
+                        )}
+                        {prayer.isNext && (
+                          <Badge variant="default" className="text-xs">
+                            Next
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-semibold" data-testid={`time-${prayer.name.toLowerCase()}`}>
-                        {prayer.time}
-                      </span>
-                      {prayer.isPassed && (
-                        <Badge variant="secondary" className="text-xs">
-                          Passed
-                        </Badge>
-                      )}
-                      {prayer.isNext && (
-                        <Badge variant="default" className="text-xs">
-                          Next
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </CardContent>
             </Card>
 
