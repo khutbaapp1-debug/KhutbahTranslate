@@ -16,8 +16,6 @@ interface TranscriptSegment {
 }
 
 export default function KhutbahPage() {
-  const [segments, setSegments] = useState<TranscriptSegment[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
@@ -28,6 +26,7 @@ export default function KhutbahPage() {
     audioBlob,
     audioUrl,
     error,
+    translations,
     startRecording,
     stopRecording,
     pauseRecording,
@@ -39,11 +38,10 @@ export default function KhutbahPage() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [segments]);
+  }, [translations]);
 
   const handleStartRecording = async () => {
     clearRecording();
-    setSegments([]);
     setProcessingError(null);
     await startRecording();
   };
@@ -52,47 +50,9 @@ export default function KhutbahPage() {
     stopRecording();
   };
 
-  const handleSaveRecording = async () => {
-    if (!audioBlob) return;
-    
-    setIsProcessing(true);
-    setProcessingError(null);
-    
-    try {
-      const formData = new FormData();
-      formData.append("audio", audioBlob);
-      
-      const response = await fetch("/api/transcribe", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to transcribe audio");
-      }
-      
-      const result = await response.json();
-      
-      // Add the transcribed segment
-      setSegments([
-        {
-          id: Date.now(),
-          arabic: result.arabic,
-          english: result.english,
-          timestamp: 0,
-        },
-      ]);
-      
-      // Clear the recording after successful transcription
-      clearRecording();
-    } catch (err: any) {
-      setProcessingError(err.message || "Failed to process recording");
-      console.error("Transcription error:", err);
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleSaveRecording = () => {
+    // Translations happen in real-time, no need for manual processing
+    clearRecording();
   };
 
   const formatDuration = (seconds: number) => {
@@ -130,7 +90,7 @@ export default function KhutbahPage() {
       </header>
 
       <main className="flex flex-col h-[calc(100vh-200px)]">
-        {segments.length === 0 && !isRecording ? (
+        {translations.length === 0 && !isRecording ? (
           <div className="flex-1 flex items-center justify-center p-6">
             <Card className="max-w-md w-full">
               <CardContent className="p-8 text-center space-y-4">
@@ -147,7 +107,7 @@ export default function KhutbahPage() {
         ) : (
           <ScrollArea className="flex-1 p-6" ref={scrollRef}>
             <div className="max-w-3xl mx-auto space-y-6">
-              {segments.map((segment) => (
+              {translations.map((segment) => (
                 <Card key={segment.id} className="overflow-hidden" data-testid={`segment-${segment.id}`}>
                   <CardContent className="p-6 space-y-4">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -215,15 +175,11 @@ export default function KhutbahPage() {
               </div>
 
               <div className="flex gap-2">
-                {!isRecording && audioBlob && (
+                {!isRecording && translations.length > 0 && (
                   <>
-                    <Button variant="outline" onClick={clearRecording} data-testid="button-clear" disabled={isProcessing}>
+                    <Button variant="outline" onClick={clearRecording} data-testid="button-clear">
                       <X className="w-4 h-4 mr-2" />
                       Clear
-                    </Button>
-                    <Button variant="default" onClick={handleSaveRecording} data-testid="button-save" disabled={isProcessing}>
-                      <Save className="w-4 h-4 mr-2" />
-                      {isProcessing ? "Processing..." : "Process"}
                     </Button>
                   </>
                 )}

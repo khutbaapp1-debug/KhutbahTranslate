@@ -4,6 +4,7 @@ export interface TranslationSegment {
   id: number;
   arabic: string;
   english: string;
+  timestamp: number;
 }
 
 export interface AudioRecorderState {
@@ -85,6 +86,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
           id: Date.now() + sequenceNumber,
           arabic: result.arabic,
           english: result.english,
+          timestamp: sequenceNumber,
         };
         
         setTranslations(prev => [...prev, segment]);
@@ -144,9 +146,12 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
 
       mediaRecorderRef.current = mediaRecorder;
 
+      let chunkSequenceNumber = 0;
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
+          // Send chunk for real-time transcription
+          sendAudioChunkForTranscription(event.data, chunkSequenceNumber++);
         }
       };
 
@@ -206,6 +211,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     setAudioUrl(null);
     setRecordingTime(0);
     setError(null);
+    setTranslations([]);
     audioChunksRef.current = [];
   }, [audioUrl, stopMediaTracks]);
 
@@ -216,6 +222,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     audioBlob,
     audioUrl,
     error,
+    translations,
     startRecording,
     stopRecording,
     pauseRecording,

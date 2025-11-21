@@ -42,7 +42,6 @@ export async function transcribeArabicAudio(audioBuffer: Buffer): Promise<Transc
 
     return {
       text: transcription.text,
-      duration: transcription.duration || 0,
     };
   } catch (error: any) {
     throw new Error("Failed to transcribe audio: " + error.message);
