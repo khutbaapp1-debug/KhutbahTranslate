@@ -13,6 +13,7 @@ import {
 import { insertSermonSchema, insertNoteSchema, insertJournalEntrySchema, duas, favoriteDuas } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
+import { checkTranslationLimit, addTranslationMinutes, getUserUsageInfo } from "./translation-limits";
 
 // Middleware for authenticated routes
 function requireAuth(req: any, res: any, next: any) {
@@ -138,8 +139,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ AUDIO TRANSCRIPTION & TRANSLATION ============
   
-  // Transcribe and translate audio chunk (no auth required for public access)
-  app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
+  // Get translation usage info (authenticated users only)
+  app.get("/api/translation/usage", requireAuth, async (req, res) => {
+    try {
+      const usage = await getUserUsageInfo(req.user!.id);
+      res.json(usage);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Transcribe and translate audio chunk
+  // Free tier: 2 hours per month (120 minutes)
+  // Premium: unlimited
+  // Anonymous users: unlimited (no tracking)
+  app.post("/api/transcribe", upload.single("audio"), checkTranslationLimit, async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No audio file provided" });
@@ -148,8 +162,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Transcribe Arabic audio
       const transcription = await transcribeArabicAudio(req.file.buffer);
       
-      // Translate to English
+      // Translate to target language
       const translation = await translateArabicToEnglish(transcription.text);
+
+      // Track usage for authenticated users (5 seconds per chunk = 0.083 minutes)
+      if (req.user) {
+        const chunkDurationMinutes = 5 / 60; // 5 seconds = 0.083 minutes
+        await addTranslationMinutes(req.user.id, chunkDurationMinutes);
+      }
 
       // If sermonId is provided, save the transcript
       if (req.body.sermonId) {

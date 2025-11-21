@@ -14,6 +14,9 @@ export const users = pgTable("users", {
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  // Translation usage tracking (free tier: 120 minutes/month)
+  monthlyTranslationMinutesUsed: integer("monthly_translation_minutes_used").notNull().default(0),
+  translationUsageResetDate: timestamp("translation_usage_reset_date").notNull().defaultNow(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
