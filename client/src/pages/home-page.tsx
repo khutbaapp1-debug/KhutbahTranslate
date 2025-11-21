@@ -137,10 +137,41 @@ export default function HomePage() {
     },
   ];
 
+  const khutbahFeature = features[0]; // Khutbah Translate is first
+  const otherFeatures = features.slice(1); // All other features
+
   const renderAppGridLayout = () => (
-    <div className="px-6">
+    <div className="px-6 space-y-5">
+      {/* Featured: Khutbah Translate - Full Width Banner */}
+      <button
+        onClick={() => setLocation(khutbahFeature.path)}
+        className="w-full hover-elevate active-elevate-2 transition-all"
+        data-testid={`tile-${khutbahFeature.title.toLowerCase().replace(/\s+/g, '-')}`}
+        aria-label={`Open ${khutbahFeature.title}`}
+      >
+        <div
+          className="w-full aspect-[3/1] rounded-2xl bg-cover bg-center relative flex items-center justify-center overflow-hidden"
+          style={{ backgroundImage: `url(${khutbahFeature.backgroundImage})` }}
+          aria-hidden="true"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/40 to-primary/60" aria-hidden="true" />
+          <div className="relative z-10 flex items-center gap-3">
+            <Mic className="w-14 h-14 text-white" />
+            <div className="text-left">
+              <div className="text-xl font-semibold text-white">
+                {khutbahFeature.title}
+              </div>
+              <div className="text-sm text-white/90">
+                {khutbahFeature.description}
+              </div>
+            </div>
+          </div>
+        </div>
+      </button>
+
+      {/* Other Features - 3 Column Grid */}
       <div className="grid grid-cols-3 gap-5">
-        {features.map((feature: any) => {
+        {otherFeatures.map((feature: any) => {
           const Icon = feature.icon;
           const isLocked = feature.premium && !isPremium;
           
