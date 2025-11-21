@@ -6,13 +6,24 @@ Khutbah Translate is a full-stack Islamic companion web application that provide
 
 ## Recent Updates (Nov 21, 2025)
 
+**Multi-Language App Variants Strategy**
+- Implemented separate app variants for different regional markets (English, Hindi/Urdu, French)
+- Created language configuration system in `shared/language-config.ts`
+- Each variant has unique bundle ID: `.english`, `.hindi`, `.french`
+- Updated OpenAI translation service to support multiple target languages
+- Same codebase builds all three variants - just change `DEFAULT_LANGUAGE` config
+- Target markets: 🇬🇧 English (USA/UK/Canada), 🇮🇳 Hindi (India/Pakistan), 🇫🇷 French (France/North Africa)
+- See `BUILD_VARIANTS.md` for complete build instructions
+- Translation quality: GPT-4o excellent at Hindi/Urdu and French
+- API costs remain same (~$4.68 per 30-min khutbah) regardless of target language
+
 **Native Mobile Apps (iOS & Android)**
 - Integrated Capacitor for native iOS and Android app deployment
 - Configured permissions: microphone (recording), location (prayer times/mosque finder), background audio
 - Generated app icons and splash screens (123 Android files, 10 iOS files)
 - Created comprehensive deployment documentation for App Store and Google Play Store
-- Bundle identifier: `com.khutbahtranslate.app`
-- App name: "Khutbah Translate"
+- Three Capacitor config files: `capacitor.config.english.ts`, `.hindi.ts`, `.french.ts`
+- Bundle identifiers: `com.khutbahtranslate.english/hindi/french`
 
 **Previous Updates (Nov 20, 2025)**
 
@@ -121,7 +132,8 @@ Preferred communication style: Simple, everyday language.
 
 **AI Services (OpenAI)**
 - **Whisper API** - Arabic audio transcription with language detection
-- **GPT-4o** - Arabic-to-English translation with Islamic context preservation
+- **GPT-4o** - Arabic-to-multilingual translation with Islamic context preservation
+  - Supports English, Hindi/Urdu (Hindustani), and French translations
   - Custom prompt engineering to preserve Islamic terminology (Allah, salah, jannah, etc.)
   - Automatic addition of "peace be upon him" for Prophet Muhammad mentions
   - Quranic verse detection and respectful formatting
@@ -196,3 +208,11 @@ Preferred communication style: Simple, everyday language.
 - RTL text direction support via `dir="rtl"` attribute
 - Larger font sizes for Arabic content (text-2xl to text-4xl)
 - Custom translation logic preserving Islamic terminology and adding honorifics automatically
+
+**Multi-Language Variant System**
+- Language configuration in `shared/language-config.ts` defines target language per app build
+- Three app variants from single codebase: English, Hindi/Urdu, French
+- `DEFAULT_LANGUAGE` constant determines which variant is built
+- Separate Capacitor configs allow different bundle IDs and app store listings
+- Regional pricing strategy: $9.99 (USA), ₹299 (India), €9.99 (France)
+- See `BUILD_VARIANTS.md` for deployment instructions
