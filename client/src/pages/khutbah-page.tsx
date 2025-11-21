@@ -18,6 +18,7 @@ interface TranscriptSegment {
 export default function KhutbahPage() {
   const [processingError, setProcessingError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const endOfMessagesRef = useRef<HTMLDivElement>(null);
   
   const {
     isRecording,
@@ -35,8 +36,9 @@ export default function KhutbahPage() {
   } = useAudioRecorder();
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    // Auto-scroll to bottom when new translations arrive
+    if (endOfMessagesRef.current) {
+      endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [translations]);
 
@@ -105,7 +107,7 @@ export default function KhutbahPage() {
             </Card>
           </div>
         ) : (
-          <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+          <ScrollArea className="flex-1 p-6">
             <div className="max-w-4xl mx-auto space-y-4">
               {translations.map((segment, index) => (
                 <div 
@@ -128,6 +130,8 @@ export default function KhutbahPage() {
                   <span className="text-sm">Listening...</span>
                 </div>
               )}
+              {/* Invisible element at the bottom for auto-scroll */}
+              <div ref={endOfMessagesRef} />
             </div>
           </ScrollArea>
         )}
