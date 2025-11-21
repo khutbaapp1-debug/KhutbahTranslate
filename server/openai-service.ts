@@ -64,6 +64,8 @@ RULES:
 6. NEVER add explanations or requests for more context
 7. Remove social media phrases (subscribe, like, share, follow, channel)
 8. Translate ONLY the actual words spoken - no extra text
+9. NEVER include translator names, attributions, or credits
+10. NEVER add phrases like "translated by", "translation by", or any names at the end
 
 Arabic text to translate:
 ${arabicText}
@@ -104,6 +106,11 @@ Respond in JSON: { "translation": "the translation only - no other text" }`;
       /this is incomplete/gi,
       /^thank you\.?$/gi,
       /^thanks\.?$/gi,
+      /translated by [a-z\s]+$/gi,
+      /translation by [a-z\s]+$/gi,
+      /translator:?\s*[a-z\s]+$/gi,
+      /\band the translation (of|by) [a-z\s]+$/gi,
+      /nancy kankar/gi,
     ];
     
     for (const regex of unwantedPhrases) {
