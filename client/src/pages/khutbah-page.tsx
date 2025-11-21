@@ -106,46 +106,26 @@ export default function KhutbahPage() {
           </div>
         ) : (
           <ScrollArea className="flex-1 p-6" ref={scrollRef}>
-            <div className="max-w-3xl mx-auto space-y-6">
-              {translations.map((segment) => (
-                <Card key={segment.id} className="overflow-hidden" data-testid={`segment-${segment.id}`}>
-                  <CardContent className="p-6 space-y-4">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      <span>{formatDuration(segment.timestamp)}</span>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="bg-accent/30 rounded-lg p-4">
-                        <p
-                          className="text-2xl font-arabic leading-loose text-right"
-                          dir="rtl"
-                          data-testid="text-arabic"
-                        >
-                          {segment.arabic}
-                        </p>
-                      </div>
-
-                      <p className="text-lg leading-relaxed" data-testid="text-english">
-                        {segment.english}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              {isRecording && (
-                <Card className="border-primary/50">
-                  <CardContent className="p-6 flex items-center justify-center gap-2">
-                    <div className="animate-pulse flex gap-1">
-                      <div className="w-2 h-8 bg-primary rounded-full" />
-                      <div className="w-2 h-10 bg-primary rounded-full" />
-                      <div className="w-2 h-6 bg-primary rounded-full" />
-                    </div>
-                    <span className="text-muted-foreground">Listening...</span>
-                  </CardContent>
-                </Card>
-              )}
+            <div className="max-w-4xl mx-auto">
+              <div className="space-y-1 text-lg leading-relaxed">
+                {translations.map((segment, index) => (
+                  <span 
+                    key={segment.id}
+                    data-testid={`segment-${segment.id}`}
+                  >
+                    {segment.english}{' '}
+                  </span>
+                ))}
+                {isRecording && (
+                  <span className="inline-flex items-center gap-2 align-middle">
+                    <span className="inline-flex gap-1">
+                      <span className="inline-block w-1 h-4 bg-primary rounded-full animate-pulse" />
+                      <span className="inline-block w-1 h-5 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                      <span className="inline-block w-1 h-3 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                    </span>
+                  </span>
+                )}
+              </div>
             </div>
           </ScrollArea>
         )}
