@@ -150,8 +150,11 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
-          // Send chunk for real-time transcription
-          sendAudioChunkForTranscription(event.data, chunkSequenceNumber++);
+          // Only send chunk for transcription if it has sufficient audio data
+          // Skip chunks smaller than 10KB (likely silence or corrupted)
+          if (event.data.size > 10000) {
+            sendAudioChunkForTranscription(event.data, chunkSequenceNumber++);
+          }
         }
       };
 
