@@ -22,26 +22,41 @@ We create **three separate apps** for different markets:
 
 ## Building Each Variant
 
+**IMPORTANT:** You must manually change `DEFAULT_LANGUAGE` in `shared/language-config.ts` before each build. Double-check this setting to avoid building the wrong variant!
+
 ### 1. English Variant (Default)
 
 **Target Markets:** USA, UK, Canada, Australia, New Zealand
 
 ```bash
-# Step 1: Set the language in shared/language-config.ts
-# Change line 46 to:
+# Step 1: CRITICAL - Set the language in shared/language-config.ts
+# Open shared/language-config.ts and change line 46 to:
 export const DEFAULT_LANGUAGE: SupportedLanguage = "english";
 
-# Step 2: Build the web app
+# Step 2: Verify the setting is correct
+grep "DEFAULT_LANGUAGE" shared/language-config.ts
+# Should output: export const DEFAULT_LANGUAGE: SupportedLanguage = "english";
+
+# Step 3: Build the web app
 npm run build
 
-# Step 3: Sync Capacitor with English config
+# Step 4: Sync Capacitor with English config
 npx cap sync --config capacitor.config.english.ts
 
-# Step 4: Open native projects
+# Step 5: Regenerate app icons/splash for this bundle ID (if needed)
+npx @capacitor/assets generate --config capacitor.config.english.ts
+
+# Step 6: Verify native config files are correct
+# iOS: Check ios/App/App/Info.plist for correct bundle ID and app name
+# Android: Check android/app/src/main/AndroidManifest.xml for correct package name
+
+# Step 7: Open native projects
 npx cap open ios --config capacitor.config.english.ts
 npx cap open android --config capacitor.config.english.ts
 
-# Now build for App Store / Play Store from Xcode / Android Studio
+# Step 8: Build for App Store / Play Store from Xcode / Android Studio
+# iOS: Product > Archive in Xcode
+# Android: Build > Generate Signed Bundle in Android Studio
 ```
 
 ### 2. Hindi/Urdu Variant
@@ -49,21 +64,34 @@ npx cap open android --config capacitor.config.english.ts
 **Target Markets:** India, Pakistan, Bangladesh
 
 ```bash
-# Step 1: Set the language in shared/language-config.ts
-# Change line 46 to:
+# Step 1: CRITICAL - Set the language in shared/language-config.ts
+# Open shared/language-config.ts and change line 46 to:
 export const DEFAULT_LANGUAGE: SupportedLanguage = "hindi";
 
-# Step 2: Build the web app
+# Step 2: Verify the setting is correct
+grep "DEFAULT_LANGUAGE" shared/language-config.ts
+# Should output: export const DEFAULT_LANGUAGE: SupportedLanguage = "hindi";
+
+# Step 3: Build the web app
 npm run build
 
-# Step 3: Sync Capacitor with Hindi config
+# Step 4: Sync Capacitor with Hindi config
 npx cap sync --config capacitor.config.hindi.ts
 
-# Step 4: Open native projects
+# Step 5: Regenerate app icons/splash for this bundle ID (if needed)
+npx @capacitor/assets generate --config capacitor.config.hindi.ts
+
+# Step 6: Verify native config files are correct
+# iOS: Check ios/App/App/Info.plist for correct bundle ID and app name
+# Android: Check android/app/src/main/AndroidManifest.xml for correct package name
+
+# Step 7: Open native projects
 npx cap open ios --config capacitor.config.hindi.ts
 npx cap open android --config capacitor.config.hindi.ts
 
-# Now build for App Store / Play Store from Xcode / Android Studio
+# Step 8: Build for App Store / Play Store from Xcode / Android Studio
+# iOS: Product > Archive in Xcode
+# Android: Build > Generate Signed Bundle in Android Studio
 ```
 
 ### 3. French Variant
@@ -71,21 +99,34 @@ npx cap open android --config capacitor.config.hindi.ts
 **Target Markets:** France, Morocco, Algeria, Tunisia, Senegal, Belgium
 
 ```bash
-# Step 1: Set the language in shared/language-config.ts
-# Change line 46 to:
+# Step 1: CRITICAL - Set the language in shared/language-config.ts
+# Open shared/language-config.ts and change line 46 to:
 export const DEFAULT_LANGUAGE: SupportedLanguage = "french";
 
-# Step 2: Build the web app
+# Step 2: Verify the setting is correct
+grep "DEFAULT_LANGUAGE" shared/language-config.ts
+# Should output: export const DEFAULT_LANGUAGE: SupportedLanguage = "french";
+
+# Step 3: Build the web app
 npm run build
 
-# Step 3: Sync Capacitor with French config
+# Step 4: Sync Capacitor with French config
 npx cap sync --config capacitor.config.french.ts
 
-# Step 4: Open native projects
+# Step 5: Regenerate app icons/splash for this bundle ID (if needed)
+npx @capacitor/assets generate --config capacitor.config.french.ts
+
+# Step 6: Verify native config files are correct
+# iOS: Check ios/App/App/Info.plist for correct bundle ID and app name
+# Android: Check android/app/src/main/AndroidManifest.xml for correct package name
+
+# Step 7: Open native projects
 npx cap open ios --config capacitor.config.french.ts
 npx cap open android --config capacitor.config.french.ts
 
-# Now build for App Store / Play Store from Xcode / Android Studio
+# Step 8: Build for App Store / Play Store from Xcode / Android Studio
+# iOS: Product > Archive in Xcode
+# Android: Build > Generate Signed Bundle in Android Studio
 ```
 
 ## App Store Submission
@@ -157,14 +198,18 @@ npx @capacitor/assets generate --config capacitor.config.french.ts
 
 Before releasing each variant:
 
-- [ ] Set `DEFAULT_LANGUAGE` correctly in `shared/language-config.ts`
+- [ ] **VERIFY** `DEFAULT_LANGUAGE` in `shared/language-config.ts` matches the variant you're building
+- [ ] **RUN VERIFICATION**: `grep "DEFAULT_LANGUAGE" shared/language-config.ts` and confirm output
 - [ ] Build the web app: `npm run build`
-- [ ] Sync Capacitor with correct config file
-- [ ] Test translation quality with real Arabic audio
+- [ ] Sync Capacitor with correct config file: `npx cap sync --config capacitor.config.{variant}.ts`
+- [ ] **VERIFY NATIVE CONFIGS**: Check Info.plist and AndroidManifest.xml for correct bundle IDs
+- [ ] Regenerate assets if needed: `npx @capacitor/assets generate --config capacitor.config.{variant}.ts`
+- [ ] **TEST TRANSLATION**: Open the app and test with sample Arabic audio to verify it translates to the correct language
+- [ ] Verify app name and bundle ID in native projects
 - [ ] Update App Store listing with localized description
 - [ ] Set regional pricing
 - [ ] Submit for App Store / Play Store review
-- [ ] Reset `DEFAULT_LANGUAGE` before building next variant
+- [ ] **RESET** `DEFAULT_LANGUAGE` to "english" after completing build (to avoid accidental mixed builds)
 
 ## Questions?
 

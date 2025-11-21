@@ -12,8 +12,9 @@ export interface TranscriptionResult {
 }
 
 export interface TranslationResult {
-  english: string;
+  translatedText: string; // Language-agnostic - could be English, Hindi, French, etc.
   arabicOriginal: string;
+  targetLanguage: string; // Which language this was translated to
 }
 
 export interface ActionPoint {
@@ -128,8 +129,9 @@ Respond in JSON: { "translation": "the translation only - no other text" }`;
     translation = translation.replace(/^[,.\s]+|[,.\s]+$/g, '').trim();
     
     return {
-      english: translation,
+      translatedText: translation,
       arabicOriginal: arabicText,
+      targetLanguage: languageConfig.displayName,
     };
   } catch (error: any) {
     throw new Error("Failed to translate: " + error.message);

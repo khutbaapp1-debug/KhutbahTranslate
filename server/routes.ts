@@ -156,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createTranscript({
           sermonId: req.body.sermonId,
           arabicText: translation.arabicOriginal,
-          englishTranslation: translation.english,
+          englishTranslation: translation.translatedText,
           sequenceNumber: parseInt(req.body.sequenceNumber || "0"),
           timestampSeconds: req.body.timestampSeconds || "0",
         });
@@ -164,7 +164,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         arabic: translation.arabicOriginal,
-        english: translation.english,
+        translation: translation.translatedText,
+        targetLanguage: translation.targetLanguage,
         duration: transcription.duration,
       });
     } catch (error: any) {

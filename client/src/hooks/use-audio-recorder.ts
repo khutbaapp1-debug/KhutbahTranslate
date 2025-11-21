@@ -100,11 +100,11 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       
       const result = await response.json();
       
-      if (result.arabic && result.english) {
+      if (result.arabic && result.translation) {
         const segment: TranslationSegment = {
           id: Date.now() + sequenceNumber,
           arabic: result.arabic,
-          english: result.english,
+          english: result.translation, // Keep "english" property name for backward compatibility in frontend
           timestamp: sequenceNumber * CHUNK_DURATION,
         };
         
