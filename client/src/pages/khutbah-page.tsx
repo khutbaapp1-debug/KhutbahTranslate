@@ -17,6 +17,8 @@ interface TranscriptSegment {
 
 export default function KhutbahPage() {
   const [segments, setSegments] = useState<TranscriptSegment[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingError, setProcessingError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const {
@@ -42,6 +44,7 @@ export default function KhutbahPage() {
   const handleStartRecording = async () => {
     clearRecording();
     setSegments([]);
+    setProcessingError(null);
     await startRecording();
   };
 
@@ -49,24 +52,46 @@ export default function KhutbahPage() {
     stopRecording();
   };
 
-  const handleSaveRecording = () => {
-    if (audioBlob) {
-      // TODO: Send audioBlob to backend for transcription using OpenAI Whisper
-      console.log("Audio blob ready for upload:", {
-        size: audioBlob.size,
-        type: audioBlob.type,
-        duration: recordingTime,
+  const handleSaveRecording = async () => {
+    if (!audioBlob) return;
+    
+    setIsProcessing(true);
+    setProcessingError(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioBlob);
+      
+      const response = await fetch("/api/transcribe", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
       });
       
-      // Placeholder: Show a sample transcript segment
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to transcribe audio");
+      }
+      
+      const result = await response.json();
+      
+      // Add the transcribed segment
       setSegments([
         {
           id: Date.now(),
-          arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
-          english: "All praise is due to Allah, Lord of the worlds.",
+          arabic: result.arabic,
+          english: result.english,
           timestamp: 0,
         },
       ]);
+      
+      // Clear the recording after successful transcription
+      clearRecording();
+    } catch (err: any) {
+      setProcessingError(err.message || "Failed to process recording");
+      console.error("Transcription error:", err);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -167,10 +192,10 @@ export default function KhutbahPage() {
 
         <div className="sticky bottom-0 bg-background/95 backdrop-blur-lg border-t border-border p-6">
           <div className="max-w-3xl mx-auto">
-            {error && (
+            {(error || processingError) && (
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 h-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{error || processingError}</AlertDescription>
               </Alert>
             )}
             
@@ -192,13 +217,13 @@ export default function KhutbahPage() {
               <div className="flex gap-2">
                 {!isRecording && audioBlob && (
                   <>
-                    <Button variant="outline" onClick={clearRecording} data-testid="button-clear">
+                    <Button variant="outline" onClick={clearRecording} data-testid="button-clear" disabled={isProcessing}>
                       <X className="w-4 h-4 mr-2" />
                       Clear
                     </Button>
-                    <Button variant="default" onClick={handleSaveRecording} data-testid="button-save">
+                    <Button variant="default" onClick={handleSaveRecording} data-testid="button-save" disabled={isProcessing}>
                       <Save className="w-4 h-4 mr-2" />
-                      Process
+                      {isProcessing ? "Processing..." : "Process"}
                     </Button>
                   </>
                 )}
