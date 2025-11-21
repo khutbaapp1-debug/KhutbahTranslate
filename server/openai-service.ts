@@ -102,6 +102,8 @@ Respond in JSON: { "translation": "the translation only - no other text" }`;
       /I need more context/gi,
       /could you provide more/gi,
       /this is incomplete/gi,
+      /^thank you\.?$/gi,
+      /^thanks\.?$/gi,
     ];
     
     for (const regex of unwantedPhrases) {
