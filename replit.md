@@ -6,6 +6,16 @@ Khutbah Translate is a full-stack Islamic companion web application that provide
 
 ## Recent Updates (Nov 21, 2025)
 
+**Auto-Detection of Source Language**
+- Removed hardcoded Arabic-only transcription - now supports 99+ languages
+- Whisper auto-detects source language (Arabic, Urdu, Hindi, French, English, etc.)
+- UK use case: Khutbahs can be in Arabic, Urdu, Hindi, or French → Auto-detect → Translate to English
+- India use case: Khutbahs can be in Arabic or English → Auto-detect → Translate to Hindi/Urdu
+- France use case: Khutbahs typically in Arabic → Auto-detect → Translate to French
+- Updated translation prompts to handle any detected source language
+- GPT-4o handles all language pairs excellently
+- Frontend now shows "Automatically detects Arabic, Urdu, Hindi, French, and other languages"
+
 **Translation Usage Limits (2 Hours/Month for Free Users)**
 - Added monthly translation usage tracking to users table (`monthlyTranslationMinutesUsed`, `translationUsageResetDate`)
 - Free users limited to 120 minutes (2 hours) of translation per month
