@@ -169,7 +169,7 @@ export default function KhutbahPage() {
                 </div>
                 {audioBlob && (
                   <Badge variant="secondary">
-                    {(audioBlob.size / 1024 / 1024).toFixed(2)} MB • {audioBlob.type.split("/")[1].toUpperCase()}
+                    {(audioBlob.size / 1024 / 1024).toFixed(2)} MB
                   </Badge>
                 )}
               </div>
