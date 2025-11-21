@@ -138,8 +138,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ AUDIO TRANSCRIPTION & TRANSLATION ============
   
-  // Transcribe and translate audio chunk
-  app.post("/api/transcribe", requireAuth, upload.single("audio"), async (req, res) => {
+  // Transcribe and translate audio chunk (no auth required for public access)
+  app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No audio file provided" });
