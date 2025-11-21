@@ -206,31 +206,31 @@ export default function PrayerTimesPage() {
       name: "Fajr", 
       time: prayerData.fajr, 
       isNext: prayerData.nextPrayer?.nextPrayer === "Fajr" && !isAfterIsha, 
-      isPassed: isTimePassed(prayerData.fajr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Fajr"
+      isPassed: isAfterIsha || (isTimePassed(prayerData.fajr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Fajr")
     },
     { 
       name: isFriday ? "Jummah" : "Dhuhr", 
       time: prayerData.dhuhr, 
-      isNext: prayerData.nextPrayer?.nextPrayer === "Dhuhr", 
-      isPassed: isTimePassed(prayerData.dhuhr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Dhuhr"
+      isNext: prayerData.nextPrayer?.nextPrayer === "Dhuhr" && !isAfterIsha, 
+      isPassed: isAfterIsha || (isTimePassed(prayerData.dhuhr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Dhuhr")
     },
     { 
       name: "Asr", 
       time: prayerData.asr, 
-      isNext: prayerData.nextPrayer?.nextPrayer === "Asr", 
-      isPassed: isTimePassed(prayerData.asr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Asr"
+      isNext: prayerData.nextPrayer?.nextPrayer === "Asr" && !isAfterIsha, 
+      isPassed: isAfterIsha || (isTimePassed(prayerData.asr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Asr")
     },
     { 
       name: "Maghrib", 
       time: prayerData.maghrib, 
-      isNext: prayerData.nextPrayer?.nextPrayer === "Maghrib", 
-      isPassed: isTimePassed(prayerData.maghrib, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Maghrib"
+      isNext: prayerData.nextPrayer?.nextPrayer === "Maghrib" && !isAfterIsha, 
+      isPassed: isAfterIsha || (isTimePassed(prayerData.maghrib, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Maghrib")
     },
     { 
       name: "Isha", 
       time: prayerData.isha, 
-      isNext: isAfterIsha, // Isha becomes "next" (current) after it passes until midnight
-      isPassed: false // Never mark Isha as passed - keeps it highlighted until midnight
+      isNext: prayerData.nextPrayer?.nextPrayer === "Isha", 
+      isPassed: false // Never mark Isha as passed - keeps it highlighted as "Now" until midnight
     },
   ] : [];
 
