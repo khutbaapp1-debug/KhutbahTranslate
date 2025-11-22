@@ -88,7 +88,7 @@ ${sourceText}
 Respond in JSON: { "translation": "the translation only - no other text", "detectedLanguage": "detected source language name" }`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini", // 16x cheaper than GPT-4o, excellent for translation
       messages: [
         {
           role: "system",

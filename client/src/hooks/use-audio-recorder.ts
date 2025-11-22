@@ -16,6 +16,7 @@ export interface AudioRecorderState {
   audioUrl: string | null;
   error: string | null;
   translations: TranslationSegment[];
+  nextTranslationIn: number; // Countdown timer: seconds until next translation
 }
 
 export interface AudioRecorderControls {
@@ -28,7 +29,7 @@ export interface AudioRecorderControls {
 }
 
 const SAMPLE_RATE = 16000; // 16kHz is optimal for speech recognition
-const CHUNK_DURATION = 5; // seconds
+const CHUNK_DURATION = 10; // seconds - longer chunks provide better context and reduce costs by 50%
 
 export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const [isRecording, setIsRecording] = useState(false);
@@ -38,6 +39,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [translations, setTranslations] = useState<TranslationSegment[]>([]);
+  const [nextTranslationIn, setNextTranslationIn] = useState(CHUNK_DURATION);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -46,6 +48,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const pcmBufferRef = useRef<Float32Array[]>([]);
   const timerRef = useRef<number | null>(null);
   const chunkTimerRef = useRef<number | null>(null);
+  const countdownTimerRef = useRef<number | null>(null);
   const sequenceNumberRef = useRef(0);
   const isPausedRef = useRef(false);
 
@@ -55,10 +58,29 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     }, 1000);
   }, []);
 
+  const startCountdownTimer = useCallback(() => {
+    setNextTranslationIn(CHUNK_DURATION); // Reset to 10 seconds
+    countdownTimerRef.current = window.setInterval(() => {
+      setNextTranslationIn((prev) => {
+        if (prev <= 1) {
+          return CHUNK_DURATION; // Reset when it hits 0
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
+    }
+  }, []);
+
+  const stopCountdownTimer = useCallback(() => {
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
     }
   }, []);
 
@@ -186,18 +208,19 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       source.connect(processor);
       processor.connect(audioContext.destination);
 
-      // Process chunks every 5 seconds
+      // Process chunks every 10 seconds
       chunkTimerRef.current = window.setInterval(processChunk, CHUNK_DURATION * 1000);
 
       setIsRecording(true);
       setRecordingTime(0);
       startTimer();
+      startCountdownTimer(); // Start countdown for next translation
     } catch (err: any) {
       console.error("Error starting recording:", err);
       stopMediaTracks();
       setError(err.message || "Failed to start recording. Please allow microphone access.");
     }
-  }, [startTimer, stopMediaTracks, processChunk]);
+  }, [startTimer, startCountdownTimer, stopMediaTracks, processChunk]);
 
   const stopRecording = useCallback(() => {
     if (chunkTimerRef.current) {
@@ -219,23 +242,26 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     setIsRecording(false);
     setIsPaused(false);
     stopTimer();
-  }, [processChunk, stopMediaTracks, stopTimer]);
+    stopCountdownTimer();
+  }, [processChunk, stopMediaTracks, stopTimer, stopCountdownTimer]);
 
   const pauseRecording = useCallback(() => {
     if (isRecording && !isPaused) {
       setIsPaused(true);
       isPausedRef.current = true;
       stopTimer();
+      stopCountdownTimer();
     }
-  }, [isRecording, isPaused, stopTimer]);
+  }, [isRecording, isPaused, stopTimer, stopCountdownTimer]);
 
   const resumeRecording = useCallback(() => {
     if (isRecording && isPaused) {
       setIsPaused(false);
       isPausedRef.current = false;
       startTimer();
+      startCountdownTimer();
     }
-  }, [isRecording, isPaused, startTimer]);
+  }, [isRecording, isPaused, startTimer, startCountdownTimer]);
 
   const clearRecording = useCallback(() => {
     stopMediaTracks();
@@ -260,6 +286,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     audioUrl,
     error,
     translations,
+    nextTranslationIn,
     startRecording,
     stopRecording,
     pauseRecording,
