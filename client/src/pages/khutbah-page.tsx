@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ export default function KhutbahPage() {
   const [watchingAd, setWatchingAd] = useState(false);
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   const {
     isRecording,
@@ -43,6 +45,7 @@ export default function KhutbahPage() {
     audioBlob,
     audioUrl,
     error,
+    transcriptionError,
     translations,
     nextTranslationIn,
     startRecording,
@@ -70,6 +73,18 @@ export default function KhutbahPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
       setWatchingAd(false);
       setShowLimitModal(false);
+      toast({
+        title: "Success!",
+        description: "+30 minutes added to your account",
+      });
+    },
+    onError: (error: any) => {
+      setWatchingAd(false);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to redeem ad credit. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -79,6 +94,34 @@ export default function KhutbahPage() {
       endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [translations]);
+
+  // Watch for limit reached or approaching limit (proactive gating)
+  useEffect(() => {
+    if (user && !showLimitModal) {
+      // Proactive gating: if less than 1 minute remaining, pause and show modal BEFORE hitting limit
+      if (isRecording && usageInfo && usageInfo.minutesRemaining < 1 && !usageInfo.isLimitReached) {
+        pauseRecording();
+        setShowLimitModal(true);
+        queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
+      }
+      // Immediate detection: transcription error indicates 429 from server
+      else if (transcriptionError === "limit_reached") {
+        if (isRecording) {
+          pauseRecording();
+        }
+        setShowLimitModal(true);
+        // Invalidate usage query to update UI immediately
+        queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
+      }
+      // Fallback detection: periodic usage poll detects limit
+      else if (usageInfo?.isLimitReached) {
+        if (isRecording) {
+          pauseRecording();
+        }
+        setShowLimitModal(true);
+      }
+    }
+  }, [user, isRecording, transcriptionError, usageInfo?.isLimitReached, usageInfo?.minutesRemaining, showLimitModal, pauseRecording]);
 
   const handleStartRecording = async () => {
     // Check if user has hit limit before allowing recording
@@ -92,12 +135,22 @@ export default function KhutbahPage() {
   };
 
   const handleWatchAd = () => {
+    setProcessingError(null); // Clear any previous errors
     setWatchingAd(true);
     // Simulate watching a 30-second ad
     // In production, this would integrate with Google AdSense/AdMob
     setTimeout(() => {
       redeemAdMutation.mutate();
     }, 3000); // Shortened to 3 seconds for testing (would be 30 seconds in production)
+  };
+
+  const handleModalClose = (open: boolean) => {
+    // Only close when open is false (per Shadcn dialog pattern)
+    if (!open) {
+      setShowLimitModal(false);
+      setWatchingAd(false);
+      setProcessingError(null);
+    }
   };
 
   const handleStopRecording = () => {
@@ -142,10 +195,18 @@ export default function KhutbahPage() {
           </div>
           
           {user && usageInfo && !usageInfo.isLimitReached && usageInfo.monthlyLimit !== Infinity && (
-            <Alert className="bg-muted/50" data-testid="alert-usage-info">
+            <Alert 
+              className={usageInfo.minutesRemaining < 10 ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900" : "bg-muted/50"} 
+              data-testid="alert-usage-info"
+            >
               <Clock className="h-4 w-4" />
               <AlertDescription className="text-sm">
                 <span className="font-medium">{Math.floor(usageInfo.minutesRemaining)} minutes</span> of free translation remaining this month
+                {usageInfo.minutesRemaining < 10 && usageInfo.canEarnAdCredits && (
+                  <span className="text-yellow-700 dark:text-yellow-400 ml-2">
+                    — Running low! Watch an ad for +30 minutes
+                  </span>
+                )}
                 {user.subscriptionTier === "free" && (
                   <Button 
                     variant="link" 
@@ -168,19 +229,38 @@ export default function KhutbahPage() {
               <AlertDescription>
                 <p className="font-medium">Translation limit reached</p>
                 <p className="text-sm mt-1">
-                  You've used all {usageInfo.monthlyLimit} minutes this month. 
+                  You've used all {usageInfo.totalAvailable} minutes this month. 
                   Resets on {new Date(usageInfo.resetDate).toLocaleDateString()}.
                 </p>
-                <Button 
-                  size="sm" 
-                  className="mt-2"
-                  onClick={() => navigate("/premium")}
-                  data-testid="button-upgrade-now"
-                >
-                  <Crown className="w-4 h-4 mr-2" />
-                  Upgrade to Premium
-                </Button>
+                <div className="flex gap-2 mt-2">
+                  {usageInfo.canEarnAdCredits && (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setShowLimitModal(true)}
+                      data-testid="button-watch-ad-header"
+                    >
+                      <PlayCircle className="w-3 h-3 mr-1" />
+                      Watch Ad
+                    </Button>
+                  )}
+                  <Button 
+                    size="sm" 
+                    onClick={() => navigate("/premium")}
+                    data-testid="button-upgrade-now"
+                  >
+                    <Crown className="w-4 h-4 mr-2" />
+                    Upgrade to Premium
+                  </Button>
+                </div>
               </AlertDescription>
+            </Alert>
+          )}
+          
+          {processingError && (
+            <Alert variant="destructive" data-testid="alert-error">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{processingError}</AlertDescription>
             </Alert>
           )}
         </div>
@@ -324,7 +404,7 @@ export default function KhutbahPage() {
       <BottomNav />
       
       {/* Limit Reached Modal - Watch Ad or Upgrade */}
-      <Dialog open={showLimitModal} onOpenChange={setShowLimitModal}>
+      <Dialog open={showLimitModal} onOpenChange={handleModalClose}>
         <DialogContent className="sm:max-w-md" data-testid="dialog-limit-reached">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

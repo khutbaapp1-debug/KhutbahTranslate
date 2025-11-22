@@ -15,6 +15,7 @@ export interface AudioRecorderState {
   audioBlob: Blob | null;
   audioUrl: string | null;
   error: string | null;
+  transcriptionError: string | null; // API errors from transcription (e.g., 429 limit reached)
   translations: TranslationSegment[];
   nextTranslationIn: number; // Countdown timer: seconds until next translation
 }
@@ -38,6 +39,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
   const [translations, setTranslations] = useState<TranslationSegment[]>([]);
   const [nextTranslationIn, setNextTranslationIn] = useState(CHUNK_DURATION);
 
@@ -113,12 +115,18 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       
       if (!response.ok) {
         const errorData = await response.json();
-        // Only log non-format errors
-        if (!errorData.error?.includes("could not be decoded")) {
+        // Set transcription error for 429 (limit reached) or other API errors
+        if (response.status === 429) {
+          setTranscriptionError("limit_reached");
+        } else if (!errorData.error?.includes("could not be decoded")) {
+          setTranscriptionError(errorData.error || "Transcription failed");
           console.error("Transcription error:", errorData);
         }
         return;
       }
+      
+      // Clear transcription error on successful response
+      setTranscriptionError(null);
       
       const result = await response.json();
       
@@ -285,6 +293,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     audioBlob,
     audioUrl,
     error,
+    transcriptionError,
     translations,
     nextTranslationIn,
     startRecording,
