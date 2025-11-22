@@ -14,9 +14,11 @@ export const users = pgTable("users", {
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
-  // Translation usage tracking (free tier: 120 minutes/month)
+  // Translation usage tracking (free tier: 60 minutes/month base + ad credits)
   monthlyTranslationMinutesUsed: integer("monthly_translation_minutes_used").notNull().default(0),
   translationUsageResetDate: timestamp("translation_usage_reset_date").notNull().defaultNow(),
+  // Ad credits system: watch 30-sec video to earn +30 minutes (max 2 hours/month)
+  adCreditsMinutes: integer("ad_credits_minutes").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
