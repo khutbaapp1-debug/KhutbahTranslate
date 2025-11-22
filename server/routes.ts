@@ -13,7 +13,7 @@ import {
 import { insertSermonSchema, insertNoteSchema, insertJournalEntrySchema, duas, favoriteDuas } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
-import { checkTranslationLimit, addTranslationMinutes, getUserUsageInfo } from "./translation-limits";
+import { checkTranslationLimit, addTranslationMinutes, getUserUsageInfo, redeemAdCredit } from "./translation-limits";
 
 // Middleware for authenticated routes
 function requireAuth(req: any, res: any, next: any) {
@@ -149,8 +149,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Redeem ad credit: +30 minutes after watching ad (authenticated users only)
+  app.post("/api/translation/redeem-ad", requireAuth, async (req, res) => {
+    try {
+      const usage = await redeemAdCredit(req.user!.id);
+      res.json({
+        success: true,
+        message: "+30 minutes added to your account!",
+        usage,
+      });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  
   // Transcribe and translate audio chunk
-  // Free tier: 2 hours per month (120 minutes)
+  // Free tier: 1 hour per month base (60 minutes) + up to 2 hours from ads (120 minutes)
   // Premium: unlimited
   // Anonymous users: unlimited (no tracking)
   app.post("/api/transcribe", upload.single("audio"), checkTranslationLimit, async (req, res) => {
