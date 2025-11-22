@@ -165,9 +165,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Translate from detected language to target language
       const translation = await translateArabicToEnglish(transcription.text);
 
-      // Track usage for authenticated users (5 seconds per chunk = 0.083 minutes)
+      // Track usage for authenticated users (10 seconds per chunk = 0.167 minutes)
       if (req.user) {
-        const chunkDurationMinutes = 5 / 60; // 5 seconds = 0.083 minutes
+        const chunkDurationMinutes = 10 / 60; // 10 seconds = 0.167 minutes
         await addTranslationMinutes(req.user.id, chunkDurationMinutes);
       }
 

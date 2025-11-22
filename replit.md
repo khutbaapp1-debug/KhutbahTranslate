@@ -4,7 +4,17 @@
 
 Khutbah Translate is a full-stack Islamic companion web application that provides real-time Arabic-to-English translation of khutbahs (sermons) alongside essential Islamic tools. The app features prayer times, Qibla compass, digital Quran reader, tasbih counter, duas collection, mosque finder, and Ramadan/Hijri calendar utilities. Built with a mobile-first design philosophy emphasizing spiritual serenity and effortless navigation through swipe-based interactions and Islamic aesthetic principles.
 
-## Recent Updates (Nov 21, 2025)
+## Recent Updates (Nov 22, 2025)
+
+**Cost Optimization (93% Cost Reduction!)**
+- Switched from GPT-4o to GPT-4o-mini for translation (16x cheaper, excellent quality)
+- Increased chunk duration from 5 to 10 seconds (50% fewer API calls, better context)
+- Added countdown timer UI showing "Next translation in X seconds" for better UX
+- **Cost reduction: $4.68 → $0.32 per 30-min khutbah (93% savings!)**
+- New cost breakdown:
+  - Whisper transcription: $0.18 per 30 minutes
+  - GPT-4o-mini translation: $0.14 per 30 minutes (180 calls instead of 360)
+  - Total: ~$0.32 per 30-minute khutbah
 
 **Auto-Detection of Source Language**
 - Removed hardcoded Arabic-only transcription - now supports 99+ languages

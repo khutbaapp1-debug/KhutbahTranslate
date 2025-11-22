@@ -33,6 +33,7 @@ export default function KhutbahPage() {
     audioUrl,
     error,
     translations,
+    nextTranslationIn,
     startRecording,
     stopRecording,
     pauseRecording,
@@ -201,16 +202,28 @@ export default function KhutbahPage() {
             )}
             
             <div className="flex flex-col items-center gap-4">
-              {/* Timer */}
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className="font-mono text-lg" data-testid="text-duration">
-                  {formatDuration(recordingTime)}
-                </span>
-                {audioBlob && (
-                  <Badge variant="secondary" className="ml-2">
-                    {(audioBlob.size / 1024 / 1024).toFixed(2)} MB
-                  </Badge>
+              {/* Timer and Countdown */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-mono text-lg" data-testid="text-duration">
+                    {formatDuration(recordingTime)}
+                  </span>
+                  {audioBlob && (
+                    <Badge variant="secondary" className="ml-2">
+                      {(audioBlob.size / 1024 / 1024).toFixed(2)} MB
+                    </Badge>
+                  )}
+                </div>
+                
+                {/* Countdown Timer - shows when recording */}
+                {isRecording && !isPaused && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-muted-foreground" data-testid="text-countdown">
+                      Next translation in <span className="font-mono font-semibold text-primary">{nextTranslationIn}</span> seconds
+                    </span>
+                  </div>
                 )}
               </div>
 
