@@ -26,16 +26,18 @@ Khutbah Translate is a full-stack Islamic companion web application that provide
 - GPT-4o handles all language pairs excellently
 - Frontend now shows "Automatically detects Arabic, Urdu, Hindi, French, and other languages"
 
-**Translation Usage Limits (2 Hours/Month for Free Users)**
-- Added monthly translation usage tracking to users table (`monthlyTranslationMinutesUsed`, `translationUsageResetDate`)
-- Free users limited to 120 minutes (2 hours) of translation per month
-- Premium users get unlimited translation
-- Anonymous users (no login) get unlimited translation for mosque use cases
-- Created `server/translation-limits.ts` with usage tracking functions and middleware
-- Frontend displays remaining time and upgrade CTA when approaching/hitting limit
-- Usage resets automatically every month
-- `/api/translation/usage` endpoint provides current usage info for authenticated users
-- Each 5-second audio chunk tracked as ~0.083 minutes
+**Translation Usage Limits & Rewarded Video Ads**
+- Free tier: 60 minutes (1 hour) base + up to 120 minutes (2 hours) earned from ads = max 3 hours/month
+- Rewarded video ads: Watch 30-second ad → earn +30 minutes (max 4 ads = 120 minutes)
+- Premium users: Unlimited translation ($9.99/month)
+- Anonymous users (no login): Unlimited translation for mosque congregations
+- Created `server/translation-limits.ts` with usage tracking, ad credit redemption
+- Database schema: `monthlyTranslationMinutesUsed`, `adCreditsMinutes`, `translationUsageResetDate`
+- Modal UI: Shows "Watch Ad" and "Upgrade to Premium" options when limit reached
+- Ad placement strategy: Only before starting translation or when limit hit (never mid-khutbah)
+- `/api/translation/usage` endpoint provides current usage info
+- `/api/translation/redeem-ad` endpoint adds +30 minutes after watching ad
+- Each 10-second audio chunk tracked as ~0.167 minutes
 
 **Multi-Language App Variants with Auto-Detection**
 - **Auto-detects source language**: Whisper automatically detects Arabic, Urdu, Hindi, French, English, and 99+ other languages
@@ -84,11 +86,14 @@ Khutbah Translate is a full-stack Islamic companion web application that provide
 Preferred communication style: Simple, everyday language.
 
 **Monetization Strategy**
-- Free tier: 2 hours (120 minutes) of translation per month - encourages premium upgrades
-- Premium subscriptions: $9.99/month via Stripe (to be fully implemented with Stripe integration)
-- Anonymous users (no login): Unlimited translation access for mosque congregations
-- Google Ads: Non-intrusive placements (homepage banner, inline on long pages)
-- Never interrupt worship features (Tasbih, Qibla, live Khutbah translation) with ads
+- Free tier: 1 hour base + up to 2 hours from ads = max 3 hours/month total
+- Rewarded video ads: $10-50 CPM (30-second ads, +30 minutes per view, max 4 ads/month)
+- Premium subscriptions: $9.99/month unlimited translation via Stripe
+- Anonymous users (no login): Unlimited translation for mosque congregations
+- Google AdSense: Homepage banner, inline ads on long pages (Prayer Times, Duas)
+- Ad placement rules: Never interrupt mid-khutbah, only before starting or when limit hit
+- Target: 10-15% premium conversion rate + rewarded video revenue
+- Cost per 30-min khutbah: $0.32 (Whisper $0.18 + GPT-4o-mini $0.14)
 
 ## System Architecture
 
