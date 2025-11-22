@@ -34,33 +34,31 @@ export default function KhutbahPage() {
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [watchingAd, setWatchingAd] = useState(false);
+  const [clientSideMinutesUsed, setClientSideMinutesUsed] = useState(0); // Client-side usage tracker
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const {
-    isRecording,
-    isPaused,
-    recordingTime,
-    audioBlob,
-    audioUrl,
-    error,
-    transcriptionError,
-    translations,
-    nextTranslationIn,
-    startRecording,
-    stopRecording,
-    pauseRecording,
-    resumeRecording,
-    clearRecording,
-  } = useAudioRecorder();
-
-  // Fetch translation usage info for authenticated users
+  // Fetch translation usage info for authenticated users (MUST be before useAudioRecorder)
   const { data: usageInfo } = useQuery({
     queryKey: ['/api/translation/usage'],
     enabled: !!user,
     refetchInterval: 30000, // Refresh every 30 seconds while recording
   });
+
+  // Calculate real-time minutes remaining using client-side tracking
+  const effectiveMinutesRemaining = usageInfo 
+    ? Math.max(0, usageInfo.minutesRemaining - clientSideMinutesUsed)
+    : undefined;
+
+  // Reset client-side tracker whenever backend data refreshes (to avoid double-subtraction)
+  // The tracker should only represent unflushed optimistic usage
+  useEffect(() => {
+    if (usageInfo) {
+      console.log(`[USAGE SYNC] Backend refreshed - resetting client tracker (was: ${clientSideMinutesUsed.toFixed(3)} min)`);
+      setClientSideMinutesUsed(0);
+    }
+  }, [usageInfo]);
 
   // Mutation to redeem ad credit
   const redeemAdMutation = useMutation({
@@ -73,6 +71,8 @@ export default function KhutbahPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
       setWatchingAd(false);
       setShowLimitModal(false);
+      setClientSideMinutesUsed(0); // Reset client-side tracker after ad redemption
+      clearErrors(); // Clear error states without losing translations
       toast({
         title: "Success!",
         description: "+30 minutes added to your account",
@@ -88,6 +88,39 @@ export default function KhutbahPage() {
     },
   });
 
+  // Audio recorder hook with usage-aware hard gating (uses client-side tracked minutes)
+  const {
+    isRecording,
+    isPaused,
+    recordingTime,
+    audioBlob,
+    audioUrl,
+    error,
+    transcriptionError,
+    translations,
+    nextTranslationIn,
+    startRecording,
+    stopRecording,
+    pauseRecording,
+    resumeRecording,
+    clearRecording,
+    clearErrors,
+  } = useAudioRecorder({
+    minutesRemaining: effectiveMinutesRemaining, // Use real-time client-side tracked value
+    onLimitReached: () => {
+      setShowLimitModal(true);
+      queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
+    },
+    onChunkSent: () => {
+      // Refresh usage info after every successful chunk to keep minutesRemaining fresh
+      queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
+    },
+    onUsageDecrement: (minutesUsed) => {
+      // Track client-side usage BEFORE chunk is sent (optimistic update)
+      setClientSideMinutesUsed(prev => prev + minutesUsed);
+    }
+  });
+
   useEffect(() => {
     // Auto-scroll to bottom when new translations arrive
     if (endOfMessagesRef.current) {
@@ -95,33 +128,26 @@ export default function KhutbahPage() {
     }
   }, [translations]);
 
-  // Watch for limit reached or approaching limit (proactive gating)
+  // Watch for limit reached - FULLY DECOUPLED from recording state
   useEffect(() => {
-    if (user && !showLimitModal) {
-      // Proactive gating: if less than 1 minute remaining, pause and show modal BEFORE hitting limit
-      if (isRecording && usageInfo && usageInfo.minutesRemaining < 1 && !usageInfo.isLimitReached) {
-        pauseRecording();
-        setShowLimitModal(true);
-        queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
-      }
-      // Immediate detection: transcription error indicates 429 from server
-      else if (transcriptionError === "limit_reached") {
+    if (user && !showLimitModal && usageInfo) {
+      // Condition 1: Hook blocked a chunk (transcriptionError = "limit_reached")
+      const hookBlockedChunk = transcriptionError === "limit_reached";
+      
+      // Condition 2: Backend reports limit reached (isLimitReached = true)
+      const backendReportsLimit = usageInfo.isLimitReached === true;
+      
+      // Show modal if EITHER condition is true
+      if (hookBlockedChunk || backendReportsLimit) {
+        // Pause recording ONLY if currently active
         if (isRecording) {
           pauseRecording();
         }
         setShowLimitModal(true);
-        // Invalidate usage query to update UI immediately
         queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
-      }
-      // Fallback detection: periodic usage poll detects limit
-      else if (usageInfo?.isLimitReached) {
-        if (isRecording) {
-          pauseRecording();
-        }
-        setShowLimitModal(true);
       }
     }
-  }, [user, isRecording, transcriptionError, usageInfo?.isLimitReached, usageInfo?.minutesRemaining, showLimitModal, pauseRecording]);
+  }, [user, transcriptionError, usageInfo?.isLimitReached, showLimitModal, isRecording, pauseRecording, usageInfo]);
 
   const handleStartRecording = async () => {
     // Check if user has hit limit before allowing recording
@@ -150,6 +176,8 @@ export default function KhutbahPage() {
       setShowLimitModal(false);
       setWatchingAd(false);
       setProcessingError(null);
+      // Clear error states only - preserve translations and audio
+      clearErrors();
     }
   };
 
@@ -196,13 +224,13 @@ export default function KhutbahPage() {
           
           {user && usageInfo && !usageInfo.isLimitReached && usageInfo.monthlyLimit !== Infinity && (
             <Alert 
-              className={usageInfo.minutesRemaining < 10 ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900" : "bg-muted/50"} 
+              className={effectiveMinutesRemaining && effectiveMinutesRemaining < 10 ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900" : "bg-muted/50"} 
               data-testid="alert-usage-info"
             >
               <Clock className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                <span className="font-medium">{Math.floor(usageInfo.minutesRemaining)} minutes</span> of free translation remaining this month
-                {usageInfo.minutesRemaining < 10 && usageInfo.canEarnAdCredits && (
+                <span className="font-medium">{Math.floor(effectiveMinutesRemaining || usageInfo.minutesRemaining)} minutes</span> of free translation remaining this month
+                {effectiveMinutesRemaining && effectiveMinutesRemaining < 10 && usageInfo.canEarnAdCredits && (
                   <span className="text-yellow-700 dark:text-yellow-400 ml-2">
                     — Running low! Watch an ad for +30 minutes
                   </span>

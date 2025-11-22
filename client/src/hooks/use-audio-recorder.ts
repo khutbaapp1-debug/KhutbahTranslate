@@ -26,13 +26,25 @@ export interface AudioRecorderControls {
   pauseRecording: () => void;
   resumeRecording: () => void;
   clearRecording: () => void;
+  clearErrors: () => void; // Clear error states without losing translations/audio
   onTranslation?: (segment: TranslationSegment) => void;
+}
+
+export interface AudioRecorderOptions {
+  minutesRemaining?: number; // Remaining translation minutes for proactive gating
+  onLimitReached?: () => void; // Callback when limit is hit mid-chunk
+  onChunkSent?: () => void; // Callback after successful chunk transcription (for refreshing usage)
+  onUsageDecrement?: (minutesUsed: number) => void; // Callback BEFORE chunk is sent (for client-side usage tracking)
 }
 
 const SAMPLE_RATE = 16000; // 16kHz is optimal for speech recognition
 const CHUNK_DURATION = 10; // seconds - longer chunks provide better context and reduce costs by 50%
+const CHUNK_COST_MINUTES = CHUNK_DURATION / 60; // ~0.167 minutes per chunk
+const SAFETY_BUFFER_CHUNKS = 2; // Stop recording with buffer for 2 chunks to prevent overage
+const MINIMUM_MINUTES_REQUIRED = CHUNK_COST_MINUTES * SAFETY_BUFFER_CHUNKS; // ~0.33 minutes minimum
 
-export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
+export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderState & AudioRecorderControls {
+  const { minutesRemaining, onLimitReached, onChunkSent, onUsageDecrement } = options || {};
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -102,6 +114,22 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   }, []);
 
   const sendAudioChunkForTranscription = useCallback(async (blob: Blob, sequenceNumber: number) => {
+    // Hard gate with safety buffer: Check if we have enough minutes remaining PLUS buffer before sending chunk
+    if (minutesRemaining !== undefined && minutesRemaining < MINIMUM_MINUTES_REQUIRED) {
+      console.log(`[CHUNK BLOCKED] ${minutesRemaining.toFixed(3)} min remaining < ${MINIMUM_MINUTES_REQUIRED.toFixed(3)} min required (buffer: ${SAFETY_BUFFER_CHUNKS} chunks)`);
+      setTranscriptionError("limit_reached");
+      if (onLimitReached) {
+        onLimitReached();
+      }
+      return;
+    }
+    
+    // Optimistic client-side usage decrement BEFORE sending chunk
+    if (onUsageDecrement) {
+      console.log(`[CHUNK SENDING] Decrementing client-side usage by ${CHUNK_COST_MINUTES.toFixed(3)} minutes BEFORE dispatch`);
+      onUsageDecrement(CHUNK_COST_MINUTES);
+    }
+    
     try {
       const formData = new FormData();
       formData.append("audio", blob, "audio.wav");
@@ -118,6 +146,9 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
         // Set transcription error for 429 (limit reached) or other API errors
         if (response.status === 429) {
           setTranscriptionError("limit_reached");
+          if (onLimitReached) {
+            onLimitReached();
+          }
         } else if (!errorData.error?.includes("could not be decoded")) {
           setTranscriptionError(errorData.error || "Transcription failed");
           console.error("Transcription error:", errorData);
@@ -139,11 +170,16 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
         };
         
         setTranslations(prev => [...prev, segment]);
+        
+        // Notify parent that chunk was successfully sent (so usage can be refreshed)
+        if (onChunkSent) {
+          onChunkSent();
+        }
       }
     } catch (err) {
       console.error("Failed to transcribe chunk:", err);
     }
-  }, []);
+  }, [minutesRemaining, onLimitReached, onChunkSent, onUsageDecrement]);
 
   const processChunk = useCallback(() => {
     if (pcmBufferRef.current.length === 0) return;
@@ -280,11 +316,18 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     setAudioUrl(null);
     setRecordingTime(0);
     setError(null);
+    setTranscriptionError(null); // Clear transcription errors on reset
     setTranslations([]);
     audioChunksRef.current = [];
     pcmBufferRef.current = [];
     sequenceNumberRef.current = 0;
   }, [audioUrl, stopMediaTracks]);
+
+  const clearErrors = useCallback(() => {
+    // Clear error states only - preserve translations and audio
+    setError(null);
+    setTranscriptionError(null);
+  }, []);
 
   return {
     isRecording,
@@ -301,5 +344,6 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     pauseRecording,
     resumeRecording,
     clearRecording,
+    clearErrors,
   };
 }
