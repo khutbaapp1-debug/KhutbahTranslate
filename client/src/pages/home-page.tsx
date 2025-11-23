@@ -29,7 +29,7 @@ export default function HomePage() {
 
   const features = [
     {
-      title: "Khutbah Translate",
+      title: "Live Translation",
       description: "Real-time translation of Friday sermons from Arabic to English",
       icon: Mic,
       backgroundImage: khutbahImage,
@@ -137,12 +137,12 @@ export default function HomePage() {
     },
   ];
 
-  const khutbahFeature = features[0]; // Khutbah Translate is first
+  const khutbahFeature = features[0]; // Live Translation is first
   const otherFeatures = features.slice(1); // All other features
 
   const renderAppGridLayout = () => (
     <div className="px-6 space-y-5">
-      {/* Featured: Khutbah Translate - Full Width Banner */}
+      {/* Featured: Live Translation - Full Width Banner */}
       <button
         onClick={() => setLocation(khutbahFeature.path)}
         className="w-full hover-elevate active-elevate-2 transition-all"
@@ -218,7 +218,7 @@ export default function HomePage() {
         <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto gap-4">
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-semibold text-foreground truncate" data-testid="text-app-title">
-              Khutbah Translate
+              Khutbah Companion
             </h1>
             <p className="text-xs text-muted-foreground">Your Islamic Companion</p>
           </div>

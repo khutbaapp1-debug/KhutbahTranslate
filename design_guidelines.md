@@ -1,4 +1,4 @@
-# Khutbah Translate Islamic App - Design Guidelines
+# Khutbah Companion - Design Guidelines
 
 ## Design Approach
 

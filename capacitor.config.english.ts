@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // English variant for USA, UK, Canada, Australia markets
 const config: CapacitorConfig = {
   appId: 'com.khutbahtranslate.english',
-  appName: 'Khutbah Translate',
+  appName: 'Khutbah Companion',
   webDir: 'dist/public',
   server: {
     androidScheme: 'https',

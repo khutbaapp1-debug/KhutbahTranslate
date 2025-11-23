@@ -1,6 +1,6 @@
 # Building Language-Specific App Variants
 
-This guide explains how to build different language variants of Khutbah Translate for different regional markets.
+This guide explains how to build different language variants of Khutbah Companion for different regional markets.
 
 ## Overview
 
@@ -139,21 +139,21 @@ npx cap open android --config capacitor.config.french.ts
 ## App Store Submission
 
 ### English Variant
-- **App Name:** "Khutbah Translate"
+- **App Name:** "Khutbah Companion"
 - **Subtitle:** "Real-time Friday Sermon Translation"
 - **Description:** Focus on English-speaking Muslims in mosques
 - **Keywords:** khutbah, sermon, translation, Friday, mosque, Islamic, prayer
 - **Countries:** USA, UK, Canada, Australia, New Zealand
 
 ### Hindi/Urdu Variant
-- **App Name:** "Khutbah Translate - हिन्दी"
+- **App Name:** "Khutbah Companion - हिन्दी"
 - **Subtitle:** "जुमा के ख़ुतबे का अनुवाद" (Friday Khutbah Translation)
 - **Description:** Focus on Hindi/Urdu speaking Muslims
 - **Keywords:** khutbah, خطبہ, नमाज़, jumma, masjid, Islamic
 - **Countries:** India, Pakistan, Bangladesh
 
 ### French Variant
-- **App Name:** "Khutbah Translate - Français"
+- **App Name:** "Khutbah Companion - Français"
 - **Subtitle:** "Traduction du sermon du vendredi"
 - **Description:** Focus on French-speaking Muslims in mosques
 - **Keywords:** khutbah, sermon, traduction, vendredi, mosquée, islamique

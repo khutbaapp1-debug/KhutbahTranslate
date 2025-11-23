@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // Hindi/Urdu variant for India, Pakistan markets
 const config: CapacitorConfig = {
   appId: 'com.khutbahtranslate.hindi',
-  appName: 'Khutbah Translate - हिन्दी',
+  appName: 'Khutbah Companion - हिन्दी',
   webDir: 'dist/public',
   server: {
     androidScheme: 'https',

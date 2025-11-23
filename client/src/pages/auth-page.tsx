@@ -77,7 +77,7 @@ export default function AuthPage() {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-primary/70" />
         </div>
         <div className="relative h-full flex flex-col justify-center p-12 text-white">
-          <h1 className="text-5xl font-bold mb-4">Khutbah Translate</h1>
+          <h1 className="text-5xl font-bold mb-4">Khutbah Companion</h1>
           <p className="text-xl mb-8 opacity-90">
             Your complete Islamic companion
           </p>
@@ -105,7 +105,7 @@ export default function AuthPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden text-center">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Khutbah Translate</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Khutbah Companion</h1>
             <p className="text-muted-foreground">Your Islamic Companion</p>
           </div>
 

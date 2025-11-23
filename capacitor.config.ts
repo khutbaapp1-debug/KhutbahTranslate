@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.khutbahtranslate.app',
-  appName: 'Khutbah Translate',
+  appName: 'Khutbah Companion',
   webDir: 'dist/public',
   server: {
     androidScheme: 'https',

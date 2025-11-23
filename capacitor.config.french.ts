@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // French variant for France, Morocco, Algeria, Tunisia, Senegal markets
 const config: CapacitorConfig = {
   appId: 'com.khutbahtranslate.french',
-  appName: 'Khutbah Translate - Français',
+  appName: 'Khutbah Companion - Français',
   webDir: 'dist/public',
   server: {
     androidScheme: 'https',

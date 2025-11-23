@@ -1,8 +1,8 @@
-# Khutbah Translate - App Store Deployment Guide
+# Khutbah Companion - App Store Deployment Guide
 
 ## 📱 Your App is Ready for iOS and Android!
 
-This guide will walk you through publishing your Khutbah Translate app to the App Store and Google Play Store.
+This guide will walk you through publishing your Khutbah Companion app to the App Store and Google Play Store.
 
 ---
 
@@ -78,7 +78,7 @@ This opens your app in Xcode.
 ### Step 3: Update App Information
 
 In Xcode:
-- **Display Name**: Already set to "Khutbah Translate"
+- **Display Name**: Already set to "Khutbah Companion"
 - **Bundle Identifier**: `com.khutbahtranslate.app` (already configured)
 - **Version**: 1.0.0 (already set)
 - **Build Number**: 1 (already set)
@@ -154,7 +154,7 @@ This creates an `.aab` file (Android App Bundle) in:
 1. Go to https://play.google.com/console
 2. Create a new app
 3. Fill in app details:
-   - App name: Khutbah Translate
+   - App name: Khutbah Companion
    - Category: Education or Lifestyle
    - Content rating: Everyone
 4. Upload your `.aab` file
@@ -298,6 +298,6 @@ When you make changes:
 
 ## 🎉 You're Ready to Launch!
 
-Your Khutbah Translate app is fully configured and ready for the app stores. Good luck with your launch!
+Your Khutbah Companion app is fully configured and ready for the app stores. Good luck with your launch!
 
 For questions about Capacitor, visit: https://capacitorjs.com/docs
