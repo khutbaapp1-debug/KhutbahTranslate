@@ -31,20 +31,20 @@ export interface AudioRecorderControls {
 }
 
 export interface AudioRecorderOptions {
-  minutesRemaining?: number; // Remaining translation minutes for proactive gating
-  onLimitReached?: () => void; // Callback when limit is hit mid-chunk
+  minutesRemaining?: number; // Latest backend minutes - used for proactive limit check
+  onLimitReached?: () => void; // Callback when about to hit limit
+  onBeforeChunkSent?: () => void; // Callback BEFORE sending chunk (for unflushed counter)
   onChunkSent?: () => void; // Callback after successful chunk transcription (for refreshing usage)
-  onUsageDecrement?: (minutesUsed: number) => void; // Callback BEFORE chunk is sent (for client-side usage tracking)
 }
 
 const SAMPLE_RATE = 16000; // 16kHz is optimal for speech recognition
 const CHUNK_DURATION = 10; // seconds - longer chunks provide better context and reduce costs by 50%
 const CHUNK_COST_MINUTES = CHUNK_DURATION / 60; // ~0.167 minutes per chunk
-const SAFETY_BUFFER_CHUNKS = 2; // Stop recording with buffer for 2 chunks to prevent overage
-const MINIMUM_MINUTES_REQUIRED = CHUNK_COST_MINUTES * SAFETY_BUFFER_CHUNKS; // ~0.33 minutes minimum
+const SAFETY_BUFFER_CHUNKS = 3; // Stop recording with buffer for 3 chunks (0.5 min) to prevent mid-khutbah interruption
+const MINIMUM_MINUTES_REQUIRED = CHUNK_COST_MINUTES * SAFETY_BUFFER_CHUNKS; // ~0.5 minutes minimum
 
 export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderState & AudioRecorderControls {
-  const { minutesRemaining, onLimitReached, onChunkSent, onUsageDecrement } = options || {};
+  const { minutesRemaining, onLimitReached, onBeforeChunkSent, onChunkSent } = options || {};
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -114,9 +114,8 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
   }, []);
 
   const sendAudioChunkForTranscription = useCallback(async (blob: Blob, sequenceNumber: number) => {
-    // Hard gate with safety buffer: Check if we have enough minutes remaining PLUS buffer before sending chunk
+    // Proactive limit check: Stop sending chunks when approaching limit to prevent mid-khutbah interruption
     if (minutesRemaining !== undefined && minutesRemaining < MINIMUM_MINUTES_REQUIRED) {
-      console.log(`[CHUNK BLOCKED] ${minutesRemaining.toFixed(3)} min remaining < ${MINIMUM_MINUTES_REQUIRED.toFixed(3)} min required (buffer: ${SAFETY_BUFFER_CHUNKS} chunks)`);
       setTranscriptionError("limit_reached");
       if (onLimitReached) {
         onLimitReached();
@@ -124,10 +123,9 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
       return;
     }
     
-    // Optimistic client-side usage decrement BEFORE sending chunk
-    if (onUsageDecrement) {
-      console.log(`[CHUNK SENDING] Decrementing client-side usage by ${CHUNK_COST_MINUTES.toFixed(3)} minutes BEFORE dispatch`);
-      onUsageDecrement(CHUNK_COST_MINUTES);
+    // Increment unflushed chunk counter BEFORE sending
+    if (onBeforeChunkSent) {
+      onBeforeChunkSent();
     }
     
     try {
@@ -179,7 +177,7 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
     } catch (err) {
       console.error("Failed to transcribe chunk:", err);
     }
-  }, [minutesRemaining, onLimitReached, onChunkSent, onUsageDecrement]);
+  }, [minutesRemaining, onLimitReached, onBeforeChunkSent, onChunkSent]);
 
   const processChunk = useCallback(() => {
     if (pcmBufferRef.current.length === 0) return;

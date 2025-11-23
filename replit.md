@@ -4,7 +4,20 @@
 
 Khutbah Translate is a full-stack Islamic companion web application that provides real-time Arabic-to-English translation of khutbahs (sermons) alongside essential Islamic tools. The app features prayer times, Qibla compass, digital Quran reader, tasbih counter, duas collection, mosque finder, and Ramadan/Hijri calendar utilities. Built with a mobile-first design philosophy emphasizing spiritual serenity and effortless navigation through swipe-based interactions and Islamic aesthetic principles.
 
-## Recent Updates (Nov 22, 2025)
+## Recent Updates (Nov 23, 2025)
+
+**Simplified Rewarded Video Ad System**
+- Refactored from complex 200+ line optimistic tracking to simple 50-line implementation
+- Minimal unflushed chunks counter (~20 lines) handles refetch delays
+- Pre-flight check fetches fresh usage before recording (shows modal if < 5 minutes)
+- Proactive gate with 0.5-minute buffer (3 chunks) prevents mid-khutbah interruptions
+- Effective minutes = backend minutes - (unflushed chunks × 0.167)
+- Counter resets automatically when backend data refreshes
+- No complex state synchronization, no double-subtraction bugs
+- Backend remains single source of truth
+- **Code reduction: 150+ lines removed while maintaining safety guarantees**
+
+## Previous Updates (Nov 22, 2025)
 
 **Cost Optimization (93% Cost Reduction!)**
 - Switched from GPT-4o to GPT-4o-mini for translation (16x cheaper, excellent quality)

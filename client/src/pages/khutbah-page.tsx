@@ -28,50 +28,57 @@ interface TranscriptSegment {
   timestamp: number;
 }
 
+interface UsageInfo {
+  minutesUsed: number;
+  minutesRemaining: number;
+  monthlyLimit: number;
+  adCreditsAvailable: number;
+  totalAvailable: number;
+  resetDate: string | Date;
+  isLimitReached: boolean;
+  canEarnAdCredits: boolean;
+}
+
 export default function KhutbahPage() {
   const [processingError, setProcessingError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [watchingAd, setWatchingAd] = useState(false);
-  const [clientSideMinutesUsed, setClientSideMinutesUsed] = useState(0); // Client-side usage tracker
+  const [chunksInFlight, setChunksInFlight] = useState(0); // Count unflushed chunks to handle refetch delays
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Fetch translation usage info for authenticated users (MUST be before useAudioRecorder)
-  const { data: usageInfo } = useQuery({
+  // Fetch translation usage info for authenticated users
+  const { data: usageInfo, refetch: refetchUsage } = useQuery<UsageInfo>({
     queryKey: ['/api/translation/usage'],
     enabled: !!user,
-    refetchInterval: 30000, // Refresh every 30 seconds while recording
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
-
-  // Calculate real-time minutes remaining using client-side tracking
-  const effectiveMinutesRemaining = usageInfo 
-    ? Math.max(0, usageInfo.minutesRemaining - clientSideMinutesUsed)
-    : undefined;
-
-  // Reset client-side tracker whenever backend data refreshes (to avoid double-subtraction)
-  // The tracker should only represent unflushed optimistic usage
+  
+  // Reset chunks counter when backend data refreshes
   useEffect(() => {
     if (usageInfo) {
-      console.log(`[USAGE SYNC] Backend refreshed - resetting client tracker (was: ${clientSideMinutesUsed.toFixed(3)} min)`);
-      setClientSideMinutesUsed(0);
+      setChunksInFlight(0);
     }
   }, [usageInfo]);
+  
+  // Calculate effective minutes accounting for unflushed chunks
+  const effectiveMinutesRemaining = usageInfo
+    ? Math.max(0, usageInfo.minutesRemaining - (chunksInFlight * 0.167))
+    : undefined;
 
   // Mutation to redeem ad credit
   const redeemAdMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/translation/redeem-ad', {
-        method: 'POST',
-      });
+      const res = await apiRequest('POST', '/api/translation/redeem-ad');
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
       setWatchingAd(false);
       setShowLimitModal(false);
-      setClientSideMinutesUsed(0); // Reset client-side tracker after ad redemption
       clearErrors(); // Clear error states without losing translations
       toast({
         title: "Success!",
@@ -88,7 +95,7 @@ export default function KhutbahPage() {
     },
   });
 
-  // Audio recorder hook with usage-aware hard gating (uses client-side tracked minutes)
+  // Audio recorder hook with simple proactive gate using latest backend data
   const {
     isRecording,
     isPaused,
@@ -106,18 +113,17 @@ export default function KhutbahPage() {
     clearRecording,
     clearErrors,
   } = useAudioRecorder({
-    minutesRemaining: effectiveMinutesRemaining, // Use real-time client-side tracked value
+    minutesRemaining: effectiveMinutesRemaining, // Use effective minutes (backend - unflushed chunks)
     onLimitReached: () => {
       setShowLimitModal(true);
-      queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
+    },
+    onBeforeChunkSent: () => {
+      // Increment counter BEFORE sending chunk
+      setChunksInFlight(prev => prev + 1);
     },
     onChunkSent: () => {
-      // Refresh usage info after every successful chunk to keep minutesRemaining fresh
+      // Refresh usage after each chunk (counter resets when usageInfo updates)
       queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
-    },
-    onUsageDecrement: (minutesUsed) => {
-      // Track client-side usage BEFORE chunk is sent (optimistic update)
-      setClientSideMinutesUsed(prev => prev + minutesUsed);
     }
   });
 
@@ -128,33 +134,36 @@ export default function KhutbahPage() {
     }
   }, [translations]);
 
-  // Watch for limit reached - FULLY DECOUPLED from recording state
+  // Watch for 429 errors from backend
   useEffect(() => {
-    if (user && !showLimitModal && usageInfo) {
-      // Condition 1: Hook blocked a chunk (transcriptionError = "limit_reached")
-      const hookBlockedChunk = transcriptionError === "limit_reached";
-      
-      // Condition 2: Backend reports limit reached (isLimitReached = true)
-      const backendReportsLimit = usageInfo.isLimitReached === true;
-      
-      // Show modal if EITHER condition is true
-      if (hookBlockedChunk || backendReportsLimit) {
-        // Pause recording ONLY if currently active
-        if (isRecording) {
-          pauseRecording();
-        }
-        setShowLimitModal(true);
-        queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
+    if (transcriptionError === "limit_reached" && !showLimitModal) {
+      // 429 error hit - pause recording and show modal
+      if (isRecording) {
+        pauseRecording();
       }
+      setShowLimitModal(true);
+      queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
     }
-  }, [user, transcriptionError, usageInfo?.isLimitReached, showLimitModal, isRecording, pauseRecording, usageInfo]);
+  }, [transcriptionError, showLimitModal, isRecording, pauseRecording]);
 
   const handleStartRecording = async () => {
-    // Check if user has hit limit before allowing recording
-    if (user && usageInfo?.isLimitReached) {
-      setShowLimitModal(true);
-      return;
+    // Pre-flight check: Fetch fresh usage data before starting
+    if (user) {
+      const { data: freshUsage } = await refetchUsage();
+      
+      // Check if limit reached
+      if (freshUsage?.isLimitReached) {
+        setShowLimitModal(true);
+        return;
+      }
+      
+      // Warn if low on minutes (< 5 minutes)
+      if (freshUsage && freshUsage.minutesRemaining < 5) {
+        setShowLimitModal(true);
+        return;
+      }
     }
+    
     clearRecording();
     setProcessingError(null);
     await startRecording();
@@ -224,22 +233,22 @@ export default function KhutbahPage() {
           
           {user && usageInfo && !usageInfo.isLimitReached && usageInfo.monthlyLimit !== Infinity && (
             <Alert 
-              className={effectiveMinutesRemaining && effectiveMinutesRemaining < 10 ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900" : "bg-muted/50"} 
+              className={usageInfo.minutesRemaining < 10 ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900" : "bg-muted/50"} 
               data-testid="alert-usage-info"
             >
               <Clock className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                <span className="font-medium">{Math.floor(effectiveMinutesRemaining || usageInfo.minutesRemaining)} minutes</span> of free translation remaining this month
-                {effectiveMinutesRemaining && effectiveMinutesRemaining < 10 && usageInfo.canEarnAdCredits && (
+                <span className="font-medium">{Math.floor(usageInfo.minutesRemaining)} minutes</span> of free translation remaining this month
+                {usageInfo.minutesRemaining < 10 && usageInfo.canEarnAdCredits && (
                   <span className="text-yellow-700 dark:text-yellow-400 ml-2">
                     — Running low! Watch an ad for +30 minutes
                   </span>
                 )}
                 {user.subscriptionTier === "free" && (
                   <Button 
-                    variant="link" 
+                    variant="ghost" 
                     size="sm" 
-                    className="h-auto p-0 ml-2"
+                    className="h-auto p-0 ml-2 underline"
                     onClick={() => navigate("/premium")}
                     data-testid="link-upgrade"
                   >
