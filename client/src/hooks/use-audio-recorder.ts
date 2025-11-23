@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { encodeWAV } from "@/utils/wav-encoder";
 
 export interface TranslationSegment {
@@ -33,7 +33,6 @@ export interface AudioRecorderControls {
 export interface AudioRecorderOptions {
   minutesRemaining?: number; // Latest backend minutes - used for proactive limit check
   onLimitReached?: () => void; // Callback when about to hit limit
-  onBeforeChunkSent?: () => void; // Callback BEFORE sending chunk (for unflushed counter)
   onChunkSent?: () => void; // Callback after successful chunk transcription (for refreshing usage)
 }
 
@@ -44,7 +43,13 @@ const SAFETY_BUFFER_CHUNKS = 3; // Stop recording with buffer for 3 chunks (0.5 
 const MINIMUM_MINUTES_REQUIRED = CHUNK_COST_MINUTES * SAFETY_BUFFER_CHUNKS; // ~0.5 minutes minimum
 
 export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderState & AudioRecorderControls {
-  const { minutesRemaining, onLimitReached, onBeforeChunkSent, onChunkSent } = options || {};
+  const { minutesRemaining, onLimitReached, onChunkSent } = options || {};
+  
+  // Local optimistic usage guard - tracks pending consumption before backend confirms
+  const pendingConsumptionRef = useRef(0);
+  const prevMinutesRemainingRef = useRef<number | undefined>(minutesRemaining);
+  const lastKnownMinutesRef = useRef<number | undefined>(minutesRemaining);
+  
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -65,6 +70,16 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
   const countdownTimerRef = useRef<number | null>(null);
   const sequenceNumberRef = useRef(0);
   const isPausedRef = useRef(false);
+  
+  // Reconcile pending consumption when backend data refreshes
+  useEffect(() => {
+    if (minutesRemaining !== prevMinutesRemainingRef.current && minutesRemaining !== undefined) {
+      // Backend value updated - reset pending consumption and update last known value
+      pendingConsumptionRef.current = 0;
+      prevMinutesRemainingRef.current = minutesRemaining;
+      lastKnownMinutesRef.current = minutesRemaining;
+    }
+  }, [minutesRemaining]);
 
   const startTimer = useCallback(() => {
     timerRef.current = window.setInterval(() => {
@@ -114,18 +129,46 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
   }, []);
 
   const sendAudioChunkForTranscription = useCallback(async (blob: Blob, sequenceNumber: number) => {
-    // Proactive limit check: Stop sending chunks when approaching limit to prevent mid-khutbah interruption
-    if (minutesRemaining !== undefined && minutesRemaining < MINIMUM_MINUTES_REQUIRED) {
-      setTranscriptionError("limit_reached");
-      if (onLimitReached) {
-        onLimitReached();
-      }
-      return;
-    }
+    // Only enforce quota system if we've seen usage data before (authenticated free-tier user)
+    // Anonymous users and premium unlimited users will never have minutesRemaining set
+    const hasQuotaSystem = lastKnownMinutesRef.current !== undefined;
     
-    // Increment unflushed chunk counter BEFORE sending
-    if (onBeforeChunkSent) {
-      onBeforeChunkSent();
+    if (hasQuotaSystem) {
+      // Use last known minutes (fallback) when current value is undefined (query loading/error)
+      // This ensures safety buffer even during refetch delays or failures
+      const serverMinutes = minutesRemaining ?? lastKnownMinutesRef.current;
+      
+      // Calculate effective minutes using local pending consumption guard
+      const effectiveMinutes = serverMinutes !== undefined 
+        ? serverMinutes - pendingConsumptionRef.current
+        : undefined;
+      
+      // CRITICAL SAFETY CHECK: Block chunks when usage data unavailable (unsafe state)
+      // This handles edge case where lastKnownMinutesRef could theoretically be reset
+      if (effectiveMinutes === undefined) {
+        setTranscriptionError("limit_reached");
+        if (onLimitReached) {
+          onLimitReached();
+        }
+        return;
+      }
+      
+      // Proactive limit check: Stop sending chunks when next chunk would drop to or below safety buffer
+      // This prevents mid-khutbah interruption by maintaining MORE THAN 0.5-minute minimum
+      // Use <= to ensure we preserve the buffer (not just reach it exactly)
+      if (effectiveMinutes - CHUNK_COST_MINUTES <= MINIMUM_MINUTES_REQUIRED) {
+        setTranscriptionError("limit_reached");
+        if (onLimitReached) {
+          onLimitReached();
+        }
+        return;
+      }
+    }
+    // For anonymous/unlimited users (no quota system), allow all chunks through
+    
+    // Increment pending consumption BEFORE sending (only for quota system users)
+    if (hasQuotaSystem) {
+      pendingConsumptionRef.current += CHUNK_COST_MINUTES;
     }
     
     try {
@@ -141,6 +184,12 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
       
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Rollback pending consumption on failure (only for quota system users)
+        if (hasQuotaSystem) {
+          pendingConsumptionRef.current = Math.max(0, pendingConsumptionRef.current - CHUNK_COST_MINUTES);
+        }
+        
         // Set transcription error for 429 (limit reached) or other API errors
         if (response.status === 429) {
           setTranscriptionError("limit_reached");
@@ -175,9 +224,13 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
         }
       }
     } catch (err) {
+      // Rollback pending consumption on exception (only for quota system users)
+      if (hasQuotaSystem) {
+        pendingConsumptionRef.current = Math.max(0, pendingConsumptionRef.current - CHUNK_COST_MINUTES);
+      }
       console.error("Failed to transcribe chunk:", err);
     }
-  }, [minutesRemaining, onLimitReached, onBeforeChunkSent, onChunkSent]);
+  }, [minutesRemaining, onLimitReached, onChunkSent]);
 
   const processChunk = useCallback(() => {
     if (pcmBufferRef.current.length === 0) return;

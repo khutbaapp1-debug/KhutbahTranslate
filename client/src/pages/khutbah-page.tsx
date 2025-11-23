@@ -45,7 +45,6 @@ export default function KhutbahPage() {
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [watchingAd, setWatchingAd] = useState(false);
-  const [chunksInFlight, setChunksInFlight] = useState(0); // Count unflushed chunks to handle refetch delays
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -56,18 +55,6 @@ export default function KhutbahPage() {
     enabled: !!user,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
-  
-  // Reset chunks counter when backend data refreshes
-  useEffect(() => {
-    if (usageInfo) {
-      setChunksInFlight(0);
-    }
-  }, [usageInfo]);
-  
-  // Calculate effective minutes accounting for unflushed chunks
-  const effectiveMinutesRemaining = usageInfo
-    ? Math.max(0, usageInfo.minutesRemaining - (chunksInFlight * 0.167))
-    : undefined;
 
   // Mutation to redeem ad credit
   const redeemAdMutation = useMutation({
@@ -95,7 +82,7 @@ export default function KhutbahPage() {
     },
   });
 
-  // Audio recorder hook with simple proactive gate using latest backend data
+  // Audio recorder hook with local optimistic usage guard (handles refetch delays)
   const {
     isRecording,
     isPaused,
@@ -113,16 +100,12 @@ export default function KhutbahPage() {
     clearRecording,
     clearErrors,
   } = useAudioRecorder({
-    minutesRemaining: effectiveMinutesRemaining, // Use effective minutes (backend - unflushed chunks)
+    minutesRemaining: usageInfo?.minutesRemaining, // Hook handles pending consumption internally
     onLimitReached: () => {
       setShowLimitModal(true);
     },
-    onBeforeChunkSent: () => {
-      // Increment counter BEFORE sending chunk
-      setChunksInFlight(prev => prev + 1);
-    },
     onChunkSent: () => {
-      // Refresh usage after each chunk (counter resets when usageInfo updates)
+      // Refresh usage after each chunk (hook reconciles pending consumption on update)
       queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
     }
   });
