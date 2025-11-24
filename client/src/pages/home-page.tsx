@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Moon, BookOpen, Calendar, Crown, BarChart3, BookMarked } from "lucide-react";
+import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Moon, BookOpen, Calendar, Crown, BarChart3, BookMarked, ScrollText } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { HomepageBannerAd } from "@/components/google-ad";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,14 @@ export default function HomePage() {
       icon: Heart,
       backgroundImage: duasImage,
       path: "/duas",
+      category: "knowledge",
+    },
+    {
+      title: "Daily Hadith",
+      description: "Receive daily authentic hadiths with translations",
+      icon: ScrollText,
+      backgroundImage: quranImage, // Reusing Quran image for now
+      path: "/hadith",
       category: "knowledge",
     },
     {

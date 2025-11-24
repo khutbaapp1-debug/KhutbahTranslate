@@ -12,6 +12,7 @@ import TasbihPage from "@/pages/tasbih-page";
 import QiblaPage from "@/pages/qibla-page";
 import QuranPage from "@/pages/quran-page";
 import DuasPage from "@/pages/duas-page";
+import DailyHadithPage from "@/pages/daily-hadith-page";
 import NamesOfAllahPage from "@/pages/names-of-allah-page";
 import KhutbahPage from "@/pages/khutbah-page";
 import SermonHistoryPage from "@/pages/sermon-history-page";
@@ -24,6 +25,7 @@ import AnalyticsPage from "@/pages/analytics-page";
 import JournalPage from "@/pages/journal-page";
 import ProfilePage from "@/pages/profile-page";
 import PremiumPage from "@/pages/premium-page";
+import NotificationSettingsPage from "@/pages/notification-settings-page";
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
 
@@ -39,6 +41,7 @@ function Router() {
       
       <Route path="/quran" component={QuranPage} />
       <Route path="/duas" component={DuasPage} />
+      <Route path="/hadith" component={DailyHadithPage} />
       <Route path="/names-of-allah" component={NamesOfAllahPage} />
       
       <Route path="/khutbah" component={KhutbahPage} />
@@ -55,6 +58,7 @@ function Router() {
       
       <Route path="/profile" component={ProfilePage} />
       <Route path="/premium" component={PremiumPage} />
+      <Route path="/notifications" component={NotificationSettingsPage} />
       
       <Route component={NotFound} />
     </Switch>
