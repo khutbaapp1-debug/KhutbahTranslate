@@ -164,9 +164,17 @@ export default function QuranPage() {
     };
 
     const handleEnded = () => {
-      // Only reset if this audio is still current
+      // Only proceed if this audio is still current
       if (audioRef.current === audio) {
         setPlayingVerse(null);
+        
+        // Auto-play next verse if available
+        if (surahDetails && verseNumber < surahDetails.total_verses) {
+          // Small delay before playing next verse
+          setTimeout(() => {
+            toggleVerseAudio(verseNumber + 1);
+          }, 500);
+        }
       }
     };
 
@@ -222,37 +230,24 @@ export default function QuranPage() {
     return (
       <div className="min-h-screen bg-background pb-20">
         <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
-          <div className="flex items-center gap-4 p-4 max-w-screen-xl mx-auto">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSelectedSurah(null)}
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-semibold text-foreground truncate" data-testid="text-surah-name">
-                {surahDetails.transliteration}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {surahDetails.translation} • {surahDetails.total_verses} verses
-              </p>
-            </div>
-            <div className="flex gap-2 items-center">
-              <Select value={selectedReciter} onValueChange={setSelectedReciter}>
-                <SelectTrigger className="w-[180px]" data-testid="select-reciter">
-                  <Volume2 className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Select Reciter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {RECITERS.map((reciter) => (
-                    <SelectItem key={reciter.id} value={reciter.id}>
-                      {reciter.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="max-w-screen-xl mx-auto">
+            <div className="flex items-center gap-3 p-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSelectedSurah(null)}
+                data-testid="button-back"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl font-semibold text-foreground truncate" data-testid="text-surah-name">
+                  {surahDetails.transliteration}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {surahDetails.translation} • {surahDetails.total_verses} verses
+                </p>
+              </div>
               <div className="flex gap-1">
                 <Button
                   variant="ghost"
@@ -273,6 +268,21 @@ export default function QuranPage() {
                   <ChevronRight className="w-5 h-5" />
                 </Button>
               </div>
+            </div>
+            <div className="px-4 pb-3">
+              <Select value={selectedReciter} onValueChange={setSelectedReciter}>
+                <SelectTrigger className="w-full" data-testid="select-reciter">
+                  <Volume2 className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Select Reciter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RECITERS.map((reciter) => (
+                    <SelectItem key={reciter.id} value={reciter.id}>
+                      {reciter.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </header>
