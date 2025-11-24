@@ -5,7 +5,14 @@ Khutbah Companion is a full-stack Islamic companion web application designed to 
 
 ## Recent Updates (Nov 24, 2025)
 
-**Enhanced Quran Reader UX**
+**Qur'an Reader: Complete Feature Set**
+- **Audio Recitation System**: Streaming audio playback using EveryAyah.com CDN (zero storage footprint)
+  - 7 world-famous reciters: Mishary Al-Afasy, Abu Bakr Al Shatri, Abdul Basit, Sudais, Yasser Al Dosari, Maher Al-Muaiqly, Mahmoud Khalil Al-Husary
+  - Play/pause buttons on every verse
+  - Reciter selection dropdown in header
+  - Smart loading states with Loader2 spinner
+  - Auto-cleanup on surah navigation
+  - HTML5 Audio API for reliable cross-platform playback
 - **Previous/Next Navigation**: Added header icons and bottom buttons to seamlessly browse between surahs without returning to list
 - **Automatic Bookmarking**: localStorage-based auto-save remembers last read surah; automatically resumes where user left off on return
 - **Smart UX**: Smooth scroll to top on surah change, disabled navigation at boundaries (Surah 1 & 114), and friendly "Continuing from where you left off" message
