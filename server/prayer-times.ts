@@ -1,5 +1,7 @@
 // Prayer times calculation using the Adhan library
 import { Coordinates, CalculationMethod, PrayerTimes, Prayer, Madhab } from 'adhan';
+import { toZonedTime } from 'date-fns-tz';
+import { find } from 'geo-tz';
 
 interface PrayerTimesResult {
   fajr: string;
@@ -33,7 +35,7 @@ interface PrayerTimesOptions {
   asrMethod?: 'standard' | 'hanafi';
 }
 
-function getAdhanCalculationMethod(method: CalculationMethodType): CalculationMethod {
+function getAdhanCalculationMethod(method: CalculationMethodType): ReturnType<typeof CalculationMethod.NorthAmerica> {
   switch (method) {
     case 'ISNA':
       return CalculationMethod.NorthAmerica();
@@ -71,9 +73,15 @@ export function calculatePrayerTimes(options: PrayerTimesOptions): PrayerTimesRe
 
   const prayerTimes = new PrayerTimes(coordinates, date, params);
 
+  // Get timezone for the coordinates
+  const timezones = find(latitude, longitude);
+  const timezone = timezones[0] || 'UTC';
+
+  // Format time in the local timezone of the coordinates
   function formatTime(date: Date): string {
-    let hours = date.getHours();
-    const minutes = date.getMinutes();
+    const zonedDate = toZonedTime(date, timezone);
+    let hours = zonedDate.getHours();
+    const minutes = zonedDate.getMinutes();
     const period = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12 || 12;
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}`;

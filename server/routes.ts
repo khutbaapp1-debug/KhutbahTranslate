@@ -423,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         latitude, 
         longitude,
         method: method as any,
-        asrMethod: asrMethod as 1 | 2,
+        asrMethod: asrMethod === 2 ? 'hanafi' : 'standard',
       });
       const nextPrayerInfo = getTimeUntilNextPrayer(prayerTimes);
       
