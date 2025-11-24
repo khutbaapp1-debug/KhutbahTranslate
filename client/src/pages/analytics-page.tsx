@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,11 @@ import { isPremiumUser } from "@/lib/premium";
 export default function AnalyticsPage() {
   const { user } = useAuth();
   const isPremium = isPremiumUser(user);
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const stats = [
     { label: "Sermons Attended", value: 12, icon: Book, trend: "+3 this month" },

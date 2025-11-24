@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Crown, Check, BookMarked, BookOpen, BarChart3, Sparkles, TrendingUp, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,6 +11,11 @@ export default function PremiumPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const isPremium = isPremiumUser(user);
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const premiumFeatures = [
     {

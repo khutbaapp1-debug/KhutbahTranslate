@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, Calendar, MapPin, Eye, Crown } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { isPremiumUser } from "@/lib/premium";
 
@@ -42,6 +42,11 @@ export default function KhutbahDatabasePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
   const isPremium = isPremiumUser(user);
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   if (!isPremium) {
     return (

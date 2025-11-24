@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { BookOpen, Plus, Crown, Calendar } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { isPremiumUser } from "@/lib/premium";
 
@@ -31,6 +31,11 @@ export default function JournalPage() {
   const [isCreating, setIsCreating] = useState(false);
   const { user } = useAuth();
   const isPremium = isPremiumUser(user);
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   if (!isPremium) {
     return (
