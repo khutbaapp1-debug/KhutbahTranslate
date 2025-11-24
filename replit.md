@@ -3,6 +3,13 @@
 ## Overview
 Khutbah Companion is a full-stack Islamic companion web application designed to provide real-time Arabic-to-English translation of khutbahs (sermons). Beyond translation, it offers a suite of essential Islamic tools including prayer times, Qibla compass, a digital Quran reader, tasbih counter, duas collection, mosque finder, and a Ramadan/Hijri calendar. The project aims for spiritual serenity and effortless navigation through a mobile-first design, swipe-based interactions, and Islamic aesthetic principles. The business vision includes offering a valuable service to Muslim communities worldwide, with a flexible monetization strategy that balances free access with premium features and ad-supported usage to ensure sustainability and broad accessibility.
 
+## Recent Updates (Nov 24, 2025)
+
+**Enhanced Quran Reader UX**
+- **Previous/Next Navigation**: Added header icons and bottom buttons to seamlessly browse between surahs without returning to list
+- **Automatic Bookmarking**: localStorage-based auto-save remembers last read surah; automatically resumes where user left off on return
+- **Smart UX**: Smooth scroll to top on surah change, disabled navigation at boundaries (Surah 1 & 114), and friendly "Continuing from where you left off" message
+
 ## Recent Updates (Nov 23, 2025)
 
 **Simplified Rewarded Video Ad System with Local Optimistic Guard**

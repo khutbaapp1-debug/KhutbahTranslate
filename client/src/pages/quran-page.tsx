@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Surah {
   id: number;
@@ -32,10 +33,32 @@ interface SurahDetails extends Surah {
 export default function QuranPage() {
   const [selectedSurah, setSelectedSurah] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showResumeMessage, setShowResumeMessage] = useState(false);
 
   const { data: surahs, isLoading: loadingSurahs } = useQuery<Surah[]>({
     queryKey: ["/api/quran/surahs"],
   });
+
+  // Load last read surah from localStorage on mount
+  useEffect(() => {
+    const lastReadSurah = localStorage.getItem('lastReadSurah');
+    if (lastReadSurah) {
+      const surahId = parseInt(lastReadSurah, 10);
+      if (surahId >= 1 && surahId <= 114) {
+        setSelectedSurah(surahId);
+        setShowResumeMessage(true);
+        // Hide message after 5 seconds
+        setTimeout(() => setShowResumeMessage(false), 5000);
+      }
+    }
+  }, []);
+
+  // Save current surah to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedSurah) {
+      localStorage.setItem('lastReadSurah', selectedSurah.toString());
+    }
+  }, [selectedSurah]);
 
   const surahDetailsQuery = useQuery<SurahDetails>({
     queryKey: [`/api/quran/surah/${selectedSurah}`],
@@ -55,6 +78,7 @@ export default function QuranPage() {
   const goToPreviousSurah = () => {
     if (selectedSurah && selectedSurah > 1) {
       setSelectedSurah(selectedSurah - 1);
+      setShowResumeMessage(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -62,6 +86,7 @@ export default function QuranPage() {
   const goToNextSurah = () => {
     if (selectedSurah && selectedSurah < 114) {
       setSelectedSurah(selectedSurah + 1);
+      setShowResumeMessage(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -119,6 +144,15 @@ export default function QuranPage() {
 
         <ScrollArea className="h-[calc(100vh-80px)]">
           <main className="p-6 space-y-6 max-w-screen-lg mx-auto">
+            {showResumeMessage && (
+              <Alert className="bg-primary/10 border-primary/20">
+                <BookMarked className="h-4 w-4" />
+                <AlertDescription>
+                  Continuing from where you left off
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <Card className="bg-primary text-primary-foreground">
               <CardContent className="p-6 text-center">
                 <h2 className="text-4xl mb-2 font-arabic" dir="rtl" data-testid="text-surah-arabic">
