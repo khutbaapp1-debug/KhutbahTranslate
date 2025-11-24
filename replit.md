@@ -9,9 +9,11 @@ Khutbah Companion is a full-stack Islamic companion web application designed to 
 - **Audio Recitation System**: Streaming audio playback using EveryAyah.com CDN (zero storage footprint)
   - 7 world-famous reciters: Mishary Al-Afasy, Abu Bakr Al Shatri, Abdul Basit, Sudais, Yasser Al Dosari, Maher Al-Muaiqly, Mahmoud Khalil Al-Husary
   - Play/pause buttons on every verse
-  - Reciter selection dropdown in header
+  - **Continuous playback**: Automatically plays entire surah verse-by-verse with 500ms pause between verses
+  - Reciter selection dropdown in full-width responsive layout
   - Smart loading states with Loader2 spinner
-  - Auto-cleanup on surah navigation
+  - Auto-cleanup on surah navigation and reciter changes
+  - Timeout cancellation system prevents race conditions during user interactions
   - HTML5 Audio API for reliable cross-platform playback
 - **Previous/Next Navigation**: Added header icons and bottom buttons to seamlessly browse between surahs without returning to list
 - **Automatic Bookmarking**: localStorage-based auto-save remembers last read surah; automatically resumes where user left off on return
