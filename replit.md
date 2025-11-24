@@ -5,6 +5,42 @@ Khutbah Companion is a full-stack Islamic companion web application designed to 
 
 ## Recent Updates (Nov 24, 2025)
 
+**Complimentary Premium Access System**
+- **Purpose**: Allows granting free premium access to up to 15 friends/special users without payment
+- **Database Schema**: Added `hasComplimentaryAccess` boolean field to `users` table
+  - Users with this flag bypass premium subscription requirements
+  - Works alongside paid premium subscriptions
+- **Admin API Endpoints**: Secure endpoints protected by `ADMIN_API_KEY` environment variable
+  - `POST /api/admin/grant-complimentary-access` - Grant complimentary access to a user by username
+  - `POST /api/admin/revoke-complimentary-access` - Revoke complimentary access from a user
+  - `GET /api/admin/complimentary-users` - List all users with complimentary access
+  - **15-User Limit**: Enforced atomically via database transaction to prevent over-allocation
+  - **Zod Validation**: All inputs validated (username required, max 50 characters)
+  - **Atomic Transactions**: Grant endpoint uses transaction to ensure count limit is never exceeded
+- **Security**:
+  - Admin endpoints require `ADMIN_API_KEY` in Authorization header (`Bearer YOUR_KEY`)
+  - No database-based admin flags to prevent privilege escalation
+  - Frontend and backend both check `hasComplimentaryAccess` flag for premium feature access
+- **Usage**: Set `ADMIN_API_KEY` environment variable to a strong secret, then use admin endpoints with curl:
+  ```bash
+  # Grant complimentary access
+  curl -X POST https://your-app.replit.app/api/admin/grant-complimentary-access \
+    -H "Authorization: Bearer YOUR_ADMIN_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{"username": "friend_username"}'
+  
+  # List complimentary users
+  curl -X GET https://your-app.replit.app/api/admin/complimentary-users \
+    -H "Authorization: Bearer YOUR_ADMIN_API_KEY"
+  
+  # Revoke access
+  curl -X POST https://your-app.replit.app/api/admin/revoke-complimentary-access \
+    -H "Authorization: Bearer YOUR_ADMIN_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{"username": "friend_username"}'
+  ```
+- **Development Bypass**: In development mode (`NODE_ENV !== 'production'`), all authenticated users have premium access for testing
+
 **Daily Hadith & Push Notifications System**
 - **Database Schema**: Created tables for `hadiths`, `favoriteHadiths`, and added notification preferences to `userPreferences`
   - Hadiths table stores Arabic text, English translation, collection, narrator, category, reference, and grade

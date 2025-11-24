@@ -6,5 +6,10 @@ export function isPremiumUser(user: User | null | undefined): boolean {
     return !!user;
   }
   
+  // Check for complimentary access (for friends/special users)
+  if (user?.hasComplimentaryAccess) {
+    return true;
+  }
+  
   return user?.subscriptionTier === "premium";
 }

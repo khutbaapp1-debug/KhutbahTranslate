@@ -14,6 +14,9 @@ export const users = pgTable("users", {
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  // Complimentary premium access (for friends/special users, bypasses payment)
+  // Admin grants this via secure API endpoints using ADMIN_API_KEY environment variable
+  hasComplimentaryAccess: boolean("has_complimentary_access").notNull().default(false),
   // Translation usage tracking (free tier: 60 minutes/month base + ad credits)
   monthlyTranslationMinutesUsed: integer("monthly_translation_minutes_used").notNull().default(0),
   translationUsageResetDate: timestamp("translation_usage_reset_date").notNull().defaultNow(),

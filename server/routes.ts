@@ -10,9 +10,9 @@ import {
   generateSermonSummary,
   generateJournalPrompt,
 } from "./openai-service";
-import { insertSermonSchema, insertNoteSchema, insertJournalEntrySchema, duas, favoriteDuas, hadiths, favoriteHadiths, userPreferences } from "@shared/schema";
+import { insertSermonSchema, insertNoteSchema, insertJournalEntrySchema, duas, favoriteDuas, hadiths, favoriteHadiths, userPreferences, users } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { checkTranslationLimit, addTranslationMinutes, getUserUsageInfo, redeemAdCredit } from "./translation-limits";
 
@@ -24,11 +24,40 @@ function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
+// Middleware for admin users only (requires admin API key)
+function requireAdmin(req: any, res: any, next: any) {
+  const adminApiKey = process.env.ADMIN_API_KEY;
+  
+  // If no admin API key is set, deny all admin requests for security
+  if (!adminApiKey) {
+    return res.status(403).json({ error: "Admin functionality not configured" });
+  }
+  
+  // Check for admin API key in Authorization header
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: "Admin authentication required. Provide admin API key in Authorization header." });
+  }
+  
+  const providedKey = authHeader.slice(7); // Remove 'Bearer ' prefix
+  
+  if (providedKey !== adminApiKey) {
+    return res.status(403).json({ error: "Invalid admin API key" });
+  }
+  
+  next();
+}
+
 // Middleware for premium users
 function requirePremium(req: any, res: any, next: any) {
   // In development (non-production), allow testing of premium features without payment
   // This allows authenticated users to test all premium features locally
   if (process.env.NODE_ENV !== 'production') {
+    return next();
+  }
+  
+  // Check for complimentary access (for friends/special users)
+  if (req.user?.hasComplimentaryAccess) {
     return next();
   }
   
@@ -892,6 +921,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(userPreferences.userId, userId));
       
       res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============ ADMIN ROUTES ============
+  
+  // Grant complimentary premium access to a user
+  app.post("/api/admin/grant-complimentary-access", requireAdmin, async (req, res) => {
+    try {
+      // Validate input with Zod
+      const inputSchema = z.object({
+        username: z.string().min(1, "Username is required").max(50, "Username too long")
+      });
+      
+      const validated = inputSchema.parse(req.body);
+      const { username } = validated;
+      
+      // Use transaction to ensure atomic operation
+      const result = await db.transaction(async (tx) => {
+        // Find user by username (case-insensitive for consistency)
+        const [user] = await tx
+          .select()
+          .from(users)
+          .where(sql`LOWER(${users.username}) = LOWER(${username})`);
+        
+        if (!user) {
+          throw new Error("User not found");
+        }
+        
+        if (user.hasComplimentaryAccess) {
+          throw new Error("User already has complimentary access");
+        }
+        
+        // Atomically grant access only if count is below 15
+        // This subquery ensures the limit is never exceeded even with concurrent requests
+        const updateResult = await tx.execute(sql`
+          UPDATE ${users}
+          SET has_complimentary_access = true
+          WHERE id = ${user.id}
+          AND (
+            SELECT COUNT(*) FROM ${users} WHERE has_complimentary_access = true
+          ) < 15
+          RETURNING *
+        `);
+        
+        if (!updateResult.rows || updateResult.rows.length === 0) {
+          throw new Error("Complimentary access limit reached. Maximum 15 users allowed.");
+        }
+        
+        const updated = updateResult.rows[0] as any;
+        
+        // Get final count for response
+        const [countResult] = await tx
+          .select({ count: sql<number>`count(*)::int` })
+          .from(users)
+          .where(eq(users.hasComplimentaryAccess, true));
+        
+        const newCount = countResult?.count || 0;
+        
+        return { updated, newCount };
+      });
+      
+      res.json({ 
+        success: true, 
+        message: `Granted complimentary access to ${username}`,
+        user: {
+          id: result.updated.id,
+          username: result.updated.username,
+          hasComplimentaryAccess: result.updated.hasComplimentaryAccess
+        },
+        remainingSlots: 15 - result.newCount
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Revoke complimentary premium access from a user
+  app.post("/api/admin/revoke-complimentary-access", requireAdmin, async (req, res) => {
+    try {
+      // Validate input with Zod
+      const inputSchema = z.object({
+        username: z.string().min(1, "Username is required").max(50, "Username too long")
+      });
+      
+      const validated = inputSchema.parse(req.body);
+      const { username } = validated;
+      
+      // Find user by username (case-insensitive for consistency)
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(sql`LOWER(${users.username}) = LOWER(${username})`);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      if (!user.hasComplimentaryAccess) {
+        return res.status(400).json({ error: "User does not have complimentary access" });
+      }
+      
+      // Revoke complimentary access
+      const [updated] = await db
+        .update(users)
+        .set({ hasComplimentaryAccess: false })
+        .where(eq(users.id, user.id))
+        .returning();
+      
+      res.json({ 
+        success: true, 
+        message: `Revoked complimentary access from ${username}`,
+        user: {
+          id: updated.id,
+          username: updated.username,
+          hasComplimentaryAccess: updated.hasComplimentaryAccess
+        }
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // List all users with complimentary access
+  app.get("/api/admin/complimentary-users", requireAdmin, async (req, res) => {
+    try {
+      const complimentaryUsers = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          email: users.email,
+          hasComplimentaryAccess: users.hasComplimentaryAccess,
+          createdAt: users.createdAt
+        })
+        .from(users)
+        .where(eq(users.hasComplimentaryAccess, true));
+      
+      res.json({ 
+        users: complimentaryUsers,
+        count: complimentaryUsers.length,
+        remainingSlots: 15 - complimentaryUsers.length
+      });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
