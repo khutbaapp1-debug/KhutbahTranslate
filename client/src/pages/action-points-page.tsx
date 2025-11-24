@@ -6,6 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Target, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { isPremiumUser } from "@/lib/premium";
 
 const actionPoints = [
   {
@@ -49,7 +51,8 @@ export default function ActionPointsPage() {
   const [completed, setCompleted] = useState<string[]>(
     actionPoints.filter((ap) => ap.completed).map((ap) => ap.id)
   );
-  const isPremium = true;
+  const { user } = useAuth();
+  const isPremium = isPremiumUser(user);
 
   const toggleComplete = (id: string) => {
     setCompleted((prev) =>

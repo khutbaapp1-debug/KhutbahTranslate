@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, Calendar, MapPin, Eye, Crown } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { isPremiumUser } from "@/lib/premium";
 
 const publicKhutbahs = [
   {
@@ -38,7 +40,8 @@ const publicKhutbahs = [
 
 export default function KhutbahDatabasePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const isPremium = false;
+  const { user } = useAuth();
+  const isPremium = isPremiumUser(user);
 
   if (!isPremium) {
     return (

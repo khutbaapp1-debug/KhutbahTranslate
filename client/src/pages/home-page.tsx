@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-provider";
 import { Sun, Moon as MoonIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isPremiumUser } from "@/lib/premium";
 
 import mosqueImage from "@assets/generated_images/Mosque_at_dawn_prayer_time_1c06498c.png";
 import kaabaImage from "@assets/generated_images/Kaaba_aerial_view_Makkah_b34ddcc4.png";
@@ -25,7 +26,7 @@ export default function HomePage() {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   
-  const isPremium = user?.subscriptionTier === "premium";
+  const isPremium = isPremiumUser(user);
 
   const features = [
     {

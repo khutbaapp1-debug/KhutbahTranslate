@@ -3,9 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Book, Activity, Clock, Crown } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { isPremiumUser } from "@/lib/premium";
 
 export default function AnalyticsPage() {
-  const isPremium = true;
+  const { user } = useAuth();
+  const isPremium = isPremiumUser(user);
 
   const stats = [
     { label: "Sermons Attended", value: 12, icon: Book, trend: "+3 this month" },

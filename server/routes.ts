@@ -26,6 +26,12 @@ function requireAuth(req: any, res: any, next: any) {
 
 // Middleware for premium users
 function requirePremium(req: any, res: any, next: any) {
+  // In development (non-production), allow testing of premium features without payment
+  // This allows authenticated users to test all premium features locally
+  if (process.env.NODE_ENV !== 'production') {
+    return next();
+  }
+  
   if (!req.user || req.user.subscriptionTier !== "premium") {
     return res.status(403).json({ error: "Premium subscription required" });
   }

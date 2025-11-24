@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { BookOpen, Plus, Crown, Calendar } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { isPremiumUser } from "@/lib/premium";
 
 const journalEntries = [
   {
@@ -27,7 +29,8 @@ const journalEntries = [
 
 export default function JournalPage() {
   const [isCreating, setIsCreating] = useState(false);
-  const isPremium = true;
+  const { user } = useAuth();
+  const isPremium = isPremiumUser(user);
 
   if (!isPremium) {
     return (

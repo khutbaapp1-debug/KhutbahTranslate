@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { BottomNav } from "@/components/bottom-nav";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { isPremiumUser } from "@/lib/premium";
 
 export default function PremiumPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const isPremium = user?.subscriptionTier === "premium";
+  const isPremium = isPremiumUser(user);
 
   const premiumFeatures = [
     {
