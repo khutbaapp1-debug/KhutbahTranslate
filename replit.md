@@ -1,124 +1,7 @@
 # Khutbah Companion
 
 ## Overview
-Khutbah Companion is a full-stack Islamic companion web application designed to provide real-time Arabic-to-English translation of khutbahs (sermons). Beyond translation, it offers a suite of essential Islamic tools including prayer times, Qibla compass, a digital Quran reader, tasbih counter, duas collection, mosque finder, and a Ramadan/Hijri calendar. The project aims for spiritual serenity and effortless navigation through a mobile-first design, swipe-based interactions, and Islamic aesthetic principles. The business vision includes offering a valuable service to Muslim communities worldwide, with a flexible monetization strategy that balances free access with premium features and ad-supported usage to ensure sustainability and broad accessibility.
-
-## Recent Updates (Nov 24, 2025)
-
-**Authentication & UX Improvements**
-- **Sign In Button**: Added visible "Sign In" button to home page header for unauthenticated users
-- **Profile Page Redirect**: Profile page now automatically redirects to `/auth` when accessed without authentication
-- **Upgrade Button Fixes**: All upgrade buttons now properly navigate to premium page or auth page as needed
-- **Scroll-to-Top Fix**: All premium feature pages (Analytics, Journal, Action Points, Khutbah Database, Premium) now scroll to top on load
-- **Development Premium Access**: All authenticated users automatically get premium access in development mode for easy testing
-- **Prayer Time Countdown Fix**: Fixed timezone bug causing incorrect countdown to next prayer - now uses user's local timezone instead of server timezone for accurate remaining time calculation
-
-**Complimentary Premium Access System**
-- **Purpose**: Allows granting free premium access to up to 15 friends/special users without payment
-- **Database Schema**: Added `hasComplimentaryAccess` boolean field to `users` table
-  - Users with this flag bypass premium subscription requirements
-  - Works alongside paid premium subscriptions
-- **Admin API Endpoints**: Secure endpoints protected by `ADMIN_API_KEY` environment variable
-  - `POST /api/admin/grant-complimentary-access` - Grant complimentary access to a user by username
-  - `POST /api/admin/revoke-complimentary-access` - Revoke complimentary access from a user
-  - `GET /api/admin/complimentary-users` - List all users with complimentary access
-  - **15-User Limit**: Enforced atomically via database transaction to prevent over-allocation
-  - **Zod Validation**: All inputs validated (username required, max 50 characters)
-  - **Atomic Transactions**: Grant endpoint uses transaction to ensure count limit is never exceeded
-- **Security**:
-  - Admin endpoints require `ADMIN_API_KEY` in Authorization header (`Bearer YOUR_KEY`)
-  - No database-based admin flags to prevent privilege escalation
-  - Frontend and backend both check `hasComplimentaryAccess` flag for premium feature access
-- **Usage**: Set `ADMIN_API_KEY` environment variable to a strong secret, then use admin endpoints with curl:
-  ```bash
-  # Grant complimentary access
-  curl -X POST https://your-app.replit.app/api/admin/grant-complimentary-access \
-    -H "Authorization: Bearer YOUR_ADMIN_API_KEY" \
-    -H "Content-Type: application/json" \
-    -d '{"username": "friend_username"}'
-  
-  # List complimentary users
-  curl -X GET https://your-app.replit.app/api/admin/complimentary-users \
-    -H "Authorization: Bearer YOUR_ADMIN_API_KEY"
-  
-  # Revoke access
-  curl -X POST https://your-app.replit.app/api/admin/revoke-complimentary-access \
-    -H "Authorization: Bearer YOUR_ADMIN_API_KEY" \
-    -H "Content-Type: application/json" \
-    -d '{"username": "friend_username"}'
-  ```
-- **Development Bypass**: In development mode (`NODE_ENV !== 'production'`), all authenticated users have premium access for testing
-
-**Daily Hadith & Push Notifications System**
-- **Database Schema**: Created tables for `hadiths`, `favoriteHadiths`, and added notification preferences to `userPreferences`
-  - Hadiths table stores Arabic text, English translation, collection, narrator, category, reference, and grade
-  - User notification preferences include Daily Hadith, prayer reminders, and Jummah reminders with customizable times
-  - **Security**: Unique constraint on `favoriteHadiths (userId, hadithId)` prevents duplicate favorites
-- **Authentic Hadith Collection**: Seeded 20 authentic hadiths from major collections (Sahih Bukhari, Sahih Muslim, Jami' at-Tirmidhi, Sunan Ibn Majah)
-  - Categories: faith, character, prayer, charity, knowledge, purification, justice, taqwa
-  - All hadiths are graded (sahih/hasan) with complete references
-- **Daily Hadith Page**: 
-  - **UTC-based deterministic rotation**: Uses UTC day-of-year to ensure same hadith globally regardless of server timezone
-  - Beautiful Arabic text display with English translation
-  - Share functionality (native share API or clipboard fallback)
-  - Heart icon to favorite hadiths (true toggle: removes if favorited, adds if not)
-  - Category badges and narrator information
-  - Reference display with hadith grade
-- **Notification Settings Page**:
-  - Master notifications toggle
-  - Daily Hadith: Enable/disable with customizable time (HH:MM format)
-  - Prayer Reminders: Enable/disable with customizable minutes before prayer (0-60)
-  - Jummah Reminder: Enable/disable with customizable time on Fridays
-  - **Zod validation**: All inputs validated server-side (time format, minute range)
-  - Real-time updates to user preferences
-- **Backend API Routes** (with security fixes):
-  - `GET /api/hadiths/daily` - Get today's hadith (public, validates req.user before exposing favorite status)
-  - `GET /api/hadiths` - Get all hadiths with optional category filter (validates req.user for favorites)
-  - `GET /api/hadiths/favorites` - Get user's favorited hadiths (requireAuth)
-  - `POST /api/hadiths/:id/favorite` - Toggle favorite status (requireAuth, true toggle with delete/insert)
-  - `GET /api/notifications/settings` - Get user notification preferences (requireAuth)
-  - `PATCH /api/notifications/settings` - Update notification preferences (requireAuth, Zod validation)
-  - `POST /api/notifications/register-token` - Register push notification token (requireAuth)
-- **Navigation**: Daily Hadith added to home screen grid, Notification Settings accessible from Profile page
-- **Security Improvements**:
-  - Fixed potential data leak: favorite status only exposed for authenticated users with valid req.user
-  - Added Zod schema validation for notification settings PATCH (prevents invalid times/negative minutes)
-  - Unique database constraint prevents race condition duplicate favorites
-  - UTC-based hadith selection ensures global consistency across all server deployments
-
-**Qur'an Reader: Complete Feature Set**
-- **Audio Recitation System**: Streaming audio playback using EveryAyah.com CDN (zero storage footprint)
-  - 7 world-famous reciters: Mishary Al-Afasy, Abu Bakr Al Shatri, Abdul Basit, Sudais, Yasser Al Dosari, Maher Al-Muaiqly, Mahmoud Khalil Al-Husary
-  - Play/pause buttons on every verse
-  - **Continuous playback**: Automatically plays entire surah verse-by-verse with 500ms pause between verses
-  - Reciter selection dropdown in full-width responsive layout
-  - Smart loading states with Loader2 spinner
-  - Auto-cleanup on surah navigation and reciter changes
-  - Timeout cancellation system prevents race conditions during user interactions
-  - HTML5 Audio API for reliable cross-platform playback
-- **Previous/Next Navigation**: Added header icons and bottom buttons to seamlessly browse between surahs without returning to list
-- **Automatic Bookmarking**: localStorage-based auto-save remembers last read surah; automatically resumes where user left off on return
-- **Smart UX**: Smooth scroll to top on surah change, disabled navigation at boundaries (Surah 1 & 114), and friendly "Continuing from where you left off" message
-
-## Recent Updates (Nov 23, 2025)
-
-**Simplified Rewarded Video Ad System with Local Optimistic Guard**
-- **Massive Simplification**: Refactored from 200+ line complex tracking to 50-line ref-based guard (~150 lines removed)
-- **Local Optimistic Guard** inside `useAudioRecorder` hook:
-  - `pendingConsumptionRef` tracks unflushed usage (increments before send, rolls back on failure)
-  - `lastKnownMinutesRef` provides fallback during refetch delays/failures
-  - `hasQuotaSystem` auto-detects user type (anonymous/unlimited vs free tier)
-  - Uses `effectiveMinutes = serverMinutes - pendingConsumption` for proactive gating
-  - Gate condition: `effectiveMinutes - chunkCost <= 0.5` ensures > 0.5 min buffer preserved
-- **Pre-Flight Check**: Fetches fresh usage before recording (shows modal if < 5 minutes)
-- **Robust Edge Case Handling**:
-  - ✅ Refetch stalls: Uses last known value + pending consumption
-  - ✅ Refetch failures: Continues safely with fallback
-  - ✅ Anonymous users: Bypasses quota system (unlimited)
-  - ✅ Premium unlimited: Bypasses quota system (unlimited)
-  - ✅ Free tier: Full enforcement with 0.5-minute safety buffer
-- **Safety Guarantees**: No mid-khutbah interruptions, maintains buffer even with network issues
-- **Code Quality**: No complex state synchronization, no double-subtraction bugs, single source of truth
+Khutbah Companion is a full-stack Islamic companion web application providing real-time Arabic-to-English khutbah (sermon) translation, alongside essential Islamic tools such as prayer times, Qibla compass, digital Quran reader, tasbih counter, duas collection, mosque finder, and a Ramadan/Hijri calendar. The project aims to offer spiritual serenity and effortless navigation through a mobile-first design, swipe-based interactions, and Islamic aesthetic principles. The business vision focuses on serving Muslim communities globally with a flexible monetization strategy balancing free access, premium features, and ad-supported usage for sustainability and broad accessibility.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -126,32 +9,32 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
-The frontend is built with React 18 and TypeScript, using Vite for fast development and optimized builds. UI components are sourced from Shadcn/ui (New York style) leveraging Radix UI primitives for accessibility, styled with Tailwind CSS and CVA for type-safe variants. State management is handled by TanStack Query for server state and React Hook Form with Zod for validation. The design system is mobile-first, featuring touch-optimized interactions, horizontal scroll cards, fixed bottom navigation, and an Islamic aesthetic with Arabic typography (Noto Naskh Arabic) and respectful color treatment.
+The frontend is built with React 18, TypeScript, and Vite. UI components utilize Shadcn/ui (New York style) with Radix UI primitives for accessibility, styled using Tailwind CSS and CVA. State management is handled by TanStack Query for server state and React Hook Form with Zod for validation. The design is mobile-first, featuring touch-optimized interactions, horizontal scroll cards, fixed bottom navigation, and an Islamic aesthetic with Arabic typography and respectful color treatment.
 
 ### Backend Architecture
-The backend is an Express.js application running on Node.js, providing RESTful API endpoints organized by feature domain (e.g., `/api/sermons`, `/api/transcripts`). Authentication uses Passport.js with a local strategy and session management, backed by `express-session` and `connect-pg-simple`. Multer handles audio file uploads, and role-based access control (`requireAuth`, `requirePremium`) manages feature access based on user subscription tiers (Free/Premium).
+The backend is an Express.js application on Node.js, providing RESTful API endpoints. Authentication uses Passport.js with a local strategy and session management (express-session, connect-pg-simple). Multer handles audio file uploads, and role-based access control (`requireAuth`, `requirePremium`) manages feature access.
 
 ### Data Storage
-PostgreSQL serves as the primary database, utilizing Neon for serverless capabilities and Drizzle ORM for type-safe queries. The schema includes tables for `users`, `sermons`, `transcript_segments`, `notes`, `journal_entries`, `user_analytics`, `hadiths`, `favoriteHadiths`, `duas`, and `favoriteDuas`, with UUID primary keys and appropriate relationships to ensure data integrity and user-owned content management. User preferences are stored in the `userPreferences` table, including notification settings for Daily Hadith, prayer reminders, and Jummah reminders.
+PostgreSQL serves as the primary database, utilizing Neon for serverless capabilities and Drizzle ORM for type-safe queries. The schema includes tables for users, sermons, transcript_segments, notes, journal_entries, user_analytics, hadiths, favoriteHadiths, duas, favoriteDuas, and userPreferences, including comprehensive notification settings.
 
 ### Key Architectural Decisions
-The project adopts a monorepo structure with `/client`, `/server`, and `/shared` directories for clear separation and type safety. Real-time translation involves capturing audio chunks, sending them to the backend, transcribing with Whisper, translating with GPT-4o, and storing segments for real-time display. Session-based authentication was chosen for enhanced security. Premium feature gating is implemented via middleware and UI flags. A mobile-first design prioritizes thumb-friendly interactions and gesture-driven navigation. Islamic content handling includes dedicated Arabic fonts, RTL support, and custom translation logic to preserve terminology and add honorifics. A multi-language variant system allows building English, Hindi/Urdu, and French app versions from a single codebase using Capacitor for native mobile deployment.
+The project adopts a monorepo structure with `/client`, `/server`, and `/shared` directories. Real-time translation involves audio chunk capture, backend processing with Whisper for transcription, and GPT-4o-mini for translation, with segments stored for real-time display. Session-based authentication is used for security. Premium feature gating is implemented via middleware and UI flags. A mobile-first design prioritizes thumb-friendly interactions. Islamic content handling includes dedicated Arabic fonts, RTL support, and custom translation logic. Multi-language support is built-in, with Capacitor enabling native mobile deployment.
 
 ## External Dependencies
 
 ### AI Services
-- **OpenAI Whisper API**: For Arabic audio transcription and source language auto-detection (supports 99+ languages).
-- **GPT-4o-mini**: For cost-effective and high-quality Arabic-to-English (and other language pairs) translation, maintaining Islamic context, terminology, and cultural sensitivity. Also used for AI-generated features like action point extraction, sermon summaries, and reflection prompts.
+- **OpenAI Whisper API**: For Arabic audio transcription and source language auto-detection.
+- **GPT-4o-mini**: For cost-effective and high-quality Arabic-to-English translation, maintaining Islamic context, and for AI-generated features like action point extraction, sermon summaries, and reflection prompts.
 
 ### Payment Processing
-- **Stripe**: For managing premium subscriptions, handling payments, and processing webhooks for subscription lifecycle events.
+- **Stripe**: For managing premium subscriptions, handling payments, and processing webhooks.
 - **Stripe.js and React Stripe.js**: For frontend payment integration.
 
 ### Third-Party UI Libraries
 - **Radix UI**: Primitives for accessible UI components.
-- **Lucide React**: For consistent iconography.
+- **Lucide React**: For iconography.
 - **date-fns**: For date manipulation.
 - **Embla Carousel**: For swipeable UI components.
 
 ### Native Mobile Platform
-- **Capacitor**: For deploying the web application as native iOS and Android apps, configured with platform-specific permissions and assets.
+- **Capacitor**: For deploying the web application as native iOS and Android apps.
