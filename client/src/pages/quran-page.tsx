@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked, Play, Pause, Loader2, Volume2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -61,6 +62,7 @@ export default function QuranPage() {
   const [playingVerse, setPlayingVerse] = useState<number | null>(null);
   const [loadingVerse, setLoadingVerse] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { toast } = useToast();
 
   const { data: surahs, isLoading: loadingSurahs } = useQuery<Surah[]>({
     queryKey: ["/api/quran/surahs"],
@@ -112,22 +114,29 @@ export default function QuranPage() {
     return `https://everyayah.com/data/${reciter.folder}/${surahPadded}${versePadded}.mp3`;
   };
 
+  // Clean up audio completely
+  const cleanupAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = ''; // Force release resources
+      audioRef.current = null;
+    }
+    setPlayingVerse(null);
+    setLoadingVerse(null);
+  };
+
   // Play or pause a verse
   const toggleVerseAudio = async (verseNumber: number) => {
     if (!selectedSurah) return;
 
     // If same verse is playing, pause it
     if (playingVerse === verseNumber) {
-      audioRef.current?.pause();
-      setPlayingVerse(null);
+      cleanupAudio();
       return;
     }
 
     // Stop current audio if any
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
+    cleanupAudio();
 
     // Start new audio
     setLoadingVerse(verseNumber);
@@ -136,34 +145,55 @@ export default function QuranPage() {
     const audio = new Audio(audioUrl);
     audioRef.current = audio;
 
-    audio.addEventListener('loadeddata', () => {
-      setLoadingVerse(null);
-      setPlayingVerse(verseNumber);
-      audio.play();
-    });
+    // Use event handlers that check if this audio is still current
+    const handleLoadedData = () => {
+      // Only proceed if this audio is still the current one
+      if (audioRef.current === audio) {
+        setLoadingVerse(null);
+        setPlayingVerse(verseNumber);
+        audio.play().catch((err) => {
+          console.error('Playback failed:', err);
+          toast({
+            title: "Playback Error",
+            description: "Unable to play recitation. Please try again.",
+            variant: "destructive",
+          });
+          cleanupAudio();
+        });
+      }
+    };
 
-    audio.addEventListener('ended', () => {
-      setPlayingVerse(null);
-    });
+    const handleEnded = () => {
+      // Only reset if this audio is still current
+      if (audioRef.current === audio) {
+        setPlayingVerse(null);
+      }
+    };
 
-    audio.addEventListener('error', () => {
-      setLoadingVerse(null);
-      setPlayingVerse(null);
-      console.error('Failed to load audio');
-    });
+    const handleError = () => {
+      // Only show error if this audio is still current
+      if (audioRef.current === audio) {
+        setLoadingVerse(null);
+        setPlayingVerse(null);
+        toast({
+          title: "Audio Load Error",
+          description: "Could not load recitation. Please check your internet connection.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    audio.addEventListener('loadeddata', handleLoadedData);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
   };
 
-  // Clean up audio when changing surahs
+  // Clean up audio when changing surahs or reciter
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      setPlayingVerse(null);
-      setLoadingVerse(null);
+      cleanupAudio();
     };
-  }, [selectedSurah]);
+  }, [selectedSurah, selectedReciter]);
 
   const goToPreviousSurah = () => {
     if (selectedSurah && selectedSurah > 1) {
