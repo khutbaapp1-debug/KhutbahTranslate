@@ -5,6 +5,13 @@ Khutbah Companion is a full-stack Islamic companion web application designed to 
 
 ## Recent Updates (Nov 24, 2025)
 
+**Authentication & UX Improvements**
+- **Sign In Button**: Added visible "Sign In" button to home page header for unauthenticated users
+- **Profile Page Redirect**: Profile page now automatically redirects to `/auth` when accessed without authentication
+- **Upgrade Button Fixes**: All upgrade buttons now properly navigate to premium page or auth page as needed
+- **Scroll-to-Top Fix**: All premium feature pages (Analytics, Journal, Action Points, Khutbah Database, Premium) now scroll to top on load
+- **Development Premium Access**: All authenticated users automatically get premium access in development mode for easy testing
+
 **Complimentary Premium Access System**
 - **Purpose**: Allows granting free premium access to up to 15 friends/special users without payment
 - **Database Schema**: Added `hasComplimentaryAccess` boolean field to `users` table

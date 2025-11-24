@@ -83,7 +83,10 @@ export default function ProfilePage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Get access to the khutbah database, AI action points, analytics, and more
                   </p>
-                  <Button data-testid="button-upgrade">
+                  <Button 
+                    onClick={() => setLocation("/premium")}
+                    data-testid="button-upgrade"
+                  >
                     Upgrade Now
                   </Button>
                 </div>
