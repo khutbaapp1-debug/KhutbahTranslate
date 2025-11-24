@@ -864,12 +864,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate input with Zod schema
       const updateSchema = z.object({
         notificationsEnabled: z.boolean().optional(),
+        // Daily Hadith
         dailyHadithEnabled: z.boolean().optional(),
         dailyHadithTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format. Use HH:MM").optional(),
+        // Prayer reminders
         prayerRemindersEnabled: z.boolean().optional(),
-        prayerReminderMinutes: z.number().int().min(0).max(60).optional(),
+        prayerReminderMinutes: z.number().int().min(0).max(60, "Minutes must be between 0 and 60").optional(),
+        fajrReminderEnabled: z.boolean().optional(),
+        dhuhrReminderEnabled: z.boolean().optional(),
+        asrReminderEnabled: z.boolean().optional(),
+        maghribReminderEnabled: z.boolean().optional(),
+        ishaReminderEnabled: z.boolean().optional(),
+        // Jummah
         jummahReminderEnabled: z.boolean().optional(),
         jummahReminderTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format. Use HH:MM").optional(),
+        // Quran
+        quranReminderEnabled: z.boolean().optional(),
+        quranReminderTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format. Use HH:MM").optional(),
+        quranDailyGoalPages: z.number().int().min(1).max(30, "Daily goal must be between 1 and 30 pages").optional(),
+        // Tasbih/Dhikr
+        tasbihReminderEnabled: z.boolean().optional(),
+        tasbihReminderTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format. Use HH:MM").optional(),
+        // Duas
+        duaRemindersEnabled: z.boolean().optional(),
+        duaMorningTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format. Use HH:MM").optional(),
+        duaEveningTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format. Use HH:MM").optional(),
       });
       
       const validated = updateSchema.parse(req.body);

@@ -97,12 +97,33 @@ export const userPreferences = pgTable("user_preferences", {
   language: text("language").notNull().default("en"), // en, ar, ur, etc.
   // Notification preferences
   notificationsEnabled: boolean("notifications_enabled").notNull().default(true),
+  // Daily Hadith notifications
   dailyHadithEnabled: boolean("daily_hadith_enabled").notNull().default(true),
   dailyHadithTime: text("daily_hadith_time").notNull().default("08:00"), // HH:MM format
+  // Prayer reminders (general - applies to all prayers unless individual prayer is disabled)
   prayerRemindersEnabled: boolean("prayer_reminders_enabled").notNull().default(true),
   prayerReminderMinutes: integer("prayer_reminder_minutes").notNull().default(15), // remind X minutes before
+  // Individual prayer reminders (allows users to disable specific prayers)
+  fajrReminderEnabled: boolean("fajr_reminder_enabled").notNull().default(true),
+  dhuhrReminderEnabled: boolean("dhuhr_reminder_enabled").notNull().default(true),
+  asrReminderEnabled: boolean("asr_reminder_enabled").notNull().default(true),
+  maghribReminderEnabled: boolean("maghrib_reminder_enabled").notNull().default(true),
+  ishaReminderEnabled: boolean("isha_reminder_enabled").notNull().default(true),
+  // Jummah specific reminder
   jummahReminderEnabled: boolean("jummah_reminder_enabled").notNull().default(true),
   jummahReminderTime: text("jummah_reminder_time").notNull().default("12:00"), // HH:MM format
+  // Quran reading reminders
+  quranReminderEnabled: boolean("quran_reminder_enabled").notNull().default(true),
+  quranReminderTime: text("quran_reminder_time").notNull().default("21:00"), // HH:MM format
+  quranDailyGoalPages: integer("quran_daily_goal_pages").notNull().default(2), // pages per day
+  // Tasbih/Dhikr reminders
+  tasbihReminderEnabled: boolean("tasbih_reminder_enabled").notNull().default(false),
+  tasbihReminderTime: text("tasbih_reminder_time").notNull().default("10:00"), // HH:MM format
+  // Dua reminders (morning/evening)
+  duaRemindersEnabled: boolean("dua_reminders_enabled").notNull().default(true),
+  duaMorningTime: text("dua_morning_time").notNull().default("07:00"), // HH:MM format
+  duaEveningTime: text("dua_evening_time").notNull().default("18:00"), // HH:MM format
+  // Push notification token
   pushToken: text("push_token"), // for push notifications
 });
 

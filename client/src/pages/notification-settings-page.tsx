@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, Clock, BookOpen, Calendar } from "lucide-react";
+import { Bell, Clock, BookOpen, Calendar, Moon, Sun, Sparkles } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 
@@ -14,12 +14,31 @@ interface NotificationSettings {
   id: string;
   userId: string;
   notificationsEnabled: boolean;
+  // Daily Hadith
   dailyHadithEnabled: boolean;
   dailyHadithTime: string;
+  // Prayer reminders
   prayerRemindersEnabled: boolean;
   prayerReminderMinutes: number;
+  fajrReminderEnabled: boolean;
+  dhuhrReminderEnabled: boolean;
+  asrReminderEnabled: boolean;
+  maghribReminderEnabled: boolean;
+  ishaReminderEnabled: boolean;
+  // Jummah
   jummahReminderEnabled: boolean;
   jummahReminderTime: string;
+  // Quran
+  quranReminderEnabled: boolean;
+  quranReminderTime: string;
+  quranDailyGoalPages: number;
+  // Tasbih/Dhikr
+  tasbihReminderEnabled: boolean;
+  tasbihReminderTime: string;
+  // Duas
+  duaRemindersEnabled: boolean;
+  duaMorningTime: string;
+  duaEveningTime: string;
   pushToken?: string;
 }
 
@@ -66,14 +85,32 @@ export default function NotificationSettingsPage() {
     updateMutation.mutate({ [field]: value });
   };
 
-  const handleTimeChange = (field: "dailyHadithTime" | "jummahReminderTime", value: string) => {
+  const handleTimeChange = (
+    field: "dailyHadithTime" | "jummahReminderTime" | "quranReminderTime" | "tasbihReminderTime" | "duaMorningTime" | "duaEveningTime",
+    value: string
+  ) => {
     if (!localSettings) return;
     
     const updated = { ...localSettings, [field]: value };
     setLocalSettings(updated);
   };
 
-  const handleTimeBlur = (field: "dailyHadithTime" | "jummahReminderTime") => {
+  const handleTimeBlur = (
+    field: "dailyHadithTime" | "jummahReminderTime" | "quranReminderTime" | "tasbihReminderTime" | "duaMorningTime" | "duaEveningTime"
+  ) => {
+    if (!localSettings) return;
+    updateMutation.mutate({ [field]: localSettings[field] });
+  };
+
+  const handleNumberChange = (field: "quranDailyGoalPages", value: string) => {
+    if (!localSettings) return;
+    
+    const number = parseInt(value) || 1;
+    const updated = { ...localSettings, [field]: number };
+    setLocalSettings(updated);
+  };
+
+  const handleNumberBlur = (field: "quranDailyGoalPages") => {
     if (!localSettings) return;
     updateMutation.mutate({ [field]: localSettings[field] });
   };
@@ -207,21 +244,79 @@ export default function NotificationSettingsPage() {
                 </div>
 
                 {localSettings.prayerRemindersEnabled && (
-                  <div className="space-y-2">
-                    <Label htmlFor="prayer-reminder-minutes">
-                      Remind me (minutes before prayer)
-                    </Label>
-                    <Input
-                      id="prayer-reminder-minutes"
-                      type="number"
-                      min="0"
-                      max="60"
-                      value={localSettings.prayerReminderMinutes}
-                      onChange={(e) => handleReminderMinutesChange(e.target.value)}
-                      onBlur={handleReminderMinutesBlur}
-                      data-testid="input-prayer-reminder-minutes"
-                    />
-                  </div>
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="prayer-reminder-minutes">
+                        Remind me (minutes before prayer)
+                      </Label>
+                      <Input
+                        id="prayer-reminder-minutes"
+                        type="number"
+                        min="0"
+                        max="60"
+                        value={localSettings.prayerReminderMinutes}
+                        onChange={(e) => handleReminderMinutesChange(e.target.value)}
+                        onBlur={handleReminderMinutesBlur}
+                        data-testid="input-prayer-reminder-minutes"
+                      />
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      <Label className="text-sm font-semibold">Choose which prayers to be reminded about:</Label>
+                      
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="fajr-reminder" className="flex-1">Fajr (Dawn)</Label>
+                        <Switch
+                          id="fajr-reminder"
+                          checked={localSettings.fajrReminderEnabled}
+                          onCheckedChange={(checked) => handleToggle("fajrReminderEnabled", checked)}
+                          data-testid="switch-fajr-reminder"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="dhuhr-reminder" className="flex-1">Dhuhr (Noon)</Label>
+                        <Switch
+                          id="dhuhr-reminder"
+                          checked={localSettings.dhuhrReminderEnabled}
+                          onCheckedChange={(checked) => handleToggle("dhuhrReminderEnabled", checked)}
+                          data-testid="switch-dhuhr-reminder"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="asr-reminder" className="flex-1">Asr (Afternoon)</Label>
+                        <Switch
+                          id="asr-reminder"
+                          checked={localSettings.asrReminderEnabled}
+                          onCheckedChange={(checked) => handleToggle("asrReminderEnabled", checked)}
+                          data-testid="switch-asr-reminder"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="maghrib-reminder" className="flex-1">Maghrib (Sunset)</Label>
+                        <Switch
+                          id="maghrib-reminder"
+                          checked={localSettings.maghribReminderEnabled}
+                          onCheckedChange={(checked) => handleToggle("maghribReminderEnabled", checked)}
+                          data-testid="switch-maghrib-reminder"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="isha-reminder" className="flex-1">Isha (Night)</Label>
+                        <Switch
+                          id="isha-reminder"
+                          checked={localSettings.ishaReminderEnabled}
+                          onCheckedChange={(checked) => handleToggle("ishaReminderEnabled", checked)}
+                          data-testid="switch-isha-reminder"
+                        />
+                      </div>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -264,6 +359,170 @@ export default function NotificationSettingsPage() {
                       data-testid="input-jummah-reminder-time"
                     />
                   </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5" />
+                  Quran Reading Reminder
+                </CardTitle>
+                <CardDescription>
+                  Daily reminder to read Quran
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="quran-reminder-enabled" className="flex-1">
+                    Enable Quran Reminder
+                  </Label>
+                  <Switch
+                    id="quran-reminder-enabled"
+                    checked={localSettings.quranReminderEnabled}
+                    onCheckedChange={(checked) => handleToggle("quranReminderEnabled", checked)}
+                    data-testid="switch-quran-reminder-enabled"
+                  />
+                </div>
+
+                {localSettings.quranReminderEnabled && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="quran-reminder-time" className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        Reminder Time
+                      </Label>
+                      <Input
+                        id="quran-reminder-time"
+                        type="time"
+                        value={localSettings.quranReminderTime}
+                        onChange={(e) => handleTimeChange("quranReminderTime", e.target.value)}
+                        onBlur={() => handleTimeBlur("quranReminderTime")}
+                        data-testid="input-quran-reminder-time"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="quran-daily-goal">
+                        Daily Goal (pages)
+                      </Label>
+                      <Input
+                        id="quran-daily-goal"
+                        type="number"
+                        min="1"
+                        max="30"
+                        value={localSettings.quranDailyGoalPages}
+                        onChange={(e) => handleNumberChange("quranDailyGoalPages", e.target.value)}
+                        onBlur={() => handleNumberBlur("quranDailyGoalPages")}
+                        data-testid="input-quran-daily-goal"
+                      />
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Tasbih & Dhikr Reminder
+                </CardTitle>
+                <CardDescription>
+                  Daily reminder for remembrance of Allah
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="tasbih-reminder-enabled" className="flex-1">
+                    Enable Tasbih Reminder
+                  </Label>
+                  <Switch
+                    id="tasbih-reminder-enabled"
+                    checked={localSettings.tasbihReminderEnabled}
+                    onCheckedChange={(checked) => handleToggle("tasbihReminderEnabled", checked)}
+                    data-testid="switch-tasbih-reminder-enabled"
+                  />
+                </div>
+
+                {localSettings.tasbihReminderEnabled && (
+                  <div className="space-y-2">
+                    <Label htmlFor="tasbih-reminder-time" className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Reminder Time
+                    </Label>
+                    <Input
+                      id="tasbih-reminder-time"
+                      type="time"
+                      value={localSettings.tasbihReminderTime}
+                      onChange={(e) => handleTimeChange("tasbihReminderTime", e.target.value)}
+                      onBlur={() => handleTimeBlur("tasbihReminderTime")}
+                      data-testid="input-tasbih-reminder-time"
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Sun className="w-4 h-4" />
+                    <Moon className="w-4 h-4" />
+                  </div>
+                  Morning & Evening Duas
+                </CardTitle>
+                <CardDescription>
+                  Daily reminders for morning and evening supplications
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="dua-reminders-enabled" className="flex-1">
+                    Enable Dua Reminders
+                  </Label>
+                  <Switch
+                    id="dua-reminders-enabled"
+                    checked={localSettings.duaRemindersEnabled}
+                    onCheckedChange={(checked) => handleToggle("duaRemindersEnabled", checked)}
+                    data-testid="switch-dua-reminders-enabled"
+                  />
+                </div>
+
+                {localSettings.duaRemindersEnabled && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="dua-morning-time" className="flex items-center gap-2">
+                        <Sun className="w-4 h-4" />
+                        Morning Dua Time
+                      </Label>
+                      <Input
+                        id="dua-morning-time"
+                        type="time"
+                        value={localSettings.duaMorningTime}
+                        onChange={(e) => handleTimeChange("duaMorningTime", e.target.value)}
+                        onBlur={() => handleTimeBlur("duaMorningTime")}
+                        data-testid="input-dua-morning-time"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="dua-evening-time" className="flex items-center gap-2">
+                        <Moon className="w-4 h-4" />
+                        Evening Dua Time
+                      </Label>
+                      <Input
+                        id="dua-evening-time"
+                        type="time"
+                        value={localSettings.duaEveningTime}
+                        onChange={(e) => handleTimeChange("duaEveningTime", e.target.value)}
+                        onBlur={() => handleTimeBlur("duaEveningTime")}
+                        data-testid="input-dua-evening-time"
+                      />
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
