@@ -62,6 +62,7 @@ export default function QuranPage() {
   const [playingVerse, setPlayingVerse] = useState<number | null>(null);
   const [loadingVerse, setLoadingVerse] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const autoPlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   const { data: surahs, isLoading: loadingSurahs } = useQuery<Surah[]>({
@@ -116,6 +117,12 @@ export default function QuranPage() {
 
   // Clean up audio completely
   const cleanupAudio = () => {
+    // Cancel any pending auto-play
+    if (autoPlayTimeoutRef.current) {
+      clearTimeout(autoPlayTimeoutRef.current);
+      autoPlayTimeoutRef.current = null;
+    }
+    
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = ''; // Force release resources
@@ -170,10 +177,19 @@ export default function QuranPage() {
         
         // Auto-play next verse if available
         if (surahDetails && verseNumber < surahDetails.total_verses) {
+          // Clear any existing timeout before scheduling new one
+          if (autoPlayTimeoutRef.current) {
+            clearTimeout(autoPlayTimeoutRef.current);
+          }
+          
           // Small delay before playing next verse
-          setTimeout(() => {
+          autoPlayTimeoutRef.current = setTimeout(() => {
+            autoPlayTimeoutRef.current = null;
             toggleVerseAudio(verseNumber + 1);
           }, 500);
+        } else {
+          // Last verse of surah - clean up audio resources
+          cleanupAudio();
         }
       }
     };
