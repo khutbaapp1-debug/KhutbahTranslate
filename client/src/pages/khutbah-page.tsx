@@ -502,7 +502,7 @@ export default function KhutbahPage() {
                     <p className="text-sm text-muted-foreground">
                       Unlimited translation + exclusive features
                     </p>
-                    <p className="text-lg font-bold text-primary mt-2">$9.99/month</p>
+                    <p className="text-lg font-bold text-primary mt-2">$4.99/month</p>
                   </div>
                 </div>
                 <Button 

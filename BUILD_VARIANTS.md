@@ -23,7 +23,7 @@ The app **auto-detects the source language** using OpenAI Whisper (supports 99+ 
 
 ✅ **Simpler UX** - App opens in the user's language, no selector needed  
 ✅ **Regional Marketing** - Target specific communities with localized App Store listings  
-✅ **Regional Pricing** - Different subscription prices for different markets (e.g., $9.99 in USA, ₹299 in India)  
+✅ **Regional Pricing** - Different subscription prices for different markets (e.g., $4.99 in USA, ₹149 in India)  
 ✅ **Better SEO** - App store keywords and descriptions in local languages  
 ✅ **Same codebase** - All variants built from the same code
 
@@ -165,12 +165,12 @@ Adjust subscription prices based on purchasing power:
 
 | Market | Monthly Price | Annual Price |
 |--------|--------------|--------------|
-| 🇺🇸 USA | $9.99 | $79.99 |
-| 🇬🇧 UK | £8.99 | £69.99 |
-| 🇮🇳 India | ₹299 | ₹2,399 |
-| 🇵🇰 Pakistan | Rs 999 | Rs 7,999 |
-| 🇫🇷 France | €9.99 | €79.99 |
-| 🇲🇦 Morocco | MAD 99 | MAD 799 |
+| 🇺🇸 USA | $4.99 | $39.99 |
+| 🇬🇧 UK | £4.49 | £34.99 |
+| 🇮🇳 India | ₹149 | ₹1,199 |
+| 🇵🇰 Pakistan | Rs 499 | Rs 3,999 |
+| 🇫🇷 France | €4.99 | €39.99 |
+| 🇲🇦 Morocco | MAD 49 | MAD 399 |
 
 ## Important Notes
 

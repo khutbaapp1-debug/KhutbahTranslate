@@ -133,7 +133,7 @@ export default function PremiumPage() {
             </div>
             <div>
               <h2 className="text-3xl font-bold mb-2">Premium Membership</h2>
-              <p className="text-4xl font-bold text-primary">$9.99<span className="text-lg text-muted-foreground">/month</span></p>
+              <p className="text-4xl font-bold text-primary">$4.99<span className="text-lg text-muted-foreground">/month</span></p>
             </div>
             <p className="text-muted-foreground max-w-md mx-auto">
               Deepen your understanding of Islam with AI-powered insights, comprehensive sermon archives, and personalized spiritual growth tracking
