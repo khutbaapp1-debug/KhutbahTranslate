@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,9 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked } from "lucide-react";
+import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked, Play, Pause, Loader2, Volume2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Surah {
   id: number;
@@ -30,10 +37,30 @@ interface SurahDetails extends Surah {
   verses: Verse[];
 }
 
+interface Reciter {
+  id: string;
+  name: string;
+  folder: string;
+}
+
+const RECITERS: Reciter[] = [
+  { id: "alafasy", name: "Mishary Rashid Al-Afasy", folder: "Alafasy_128kbps" },
+  { id: "shatri", name: "Abu Bakr Al Shatri", folder: "Abu_Bakr_Ash-Shaatree_128kbps" },
+  { id: "abdulbasit", name: "Abdul Basit (Murattal)", folder: "AbdulBaset_Murattal_192kbps" },
+  { id: "sudais", name: "Abdurrahmaan As-Sudais", folder: "Abdurrahmaan_As-Sudais_192kbps" },
+  { id: "dosari", name: "Yasser Al Dosari", folder: "Yasser_Ad-Dussary_128kbps" },
+  { id: "muaiqly", name: "Maher Al-Muaiqly", folder: "MaherAlMuaiqly128kbps" },
+  { id: "husary", name: "Mahmoud Khalil Al-Husary", folder: "Husary_128kbps" },
+];
+
 export default function QuranPage() {
   const [selectedSurah, setSelectedSurah] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showResumeMessage, setShowResumeMessage] = useState(false);
+  const [selectedReciter, setSelectedReciter] = useState<string>("alafasy");
+  const [playingVerse, setPlayingVerse] = useState<number | null>(null);
+  const [loadingVerse, setLoadingVerse] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const { data: surahs, isLoading: loadingSurahs } = useQuery<Surah[]>({
     queryKey: ["/api/quran/surahs"],
@@ -75,6 +102,69 @@ export default function QuranPage() {
   const surahDetails = surahDetailsQuery.data;
   const loadingDetails = surahDetailsQuery.isLoading;
 
+  // Generate audio URL for a specific verse
+  const getAudioUrl = (surahNumber: number, verseNumber: number): string => {
+    const reciter = RECITERS.find(r => r.id === selectedReciter);
+    if (!reciter) return "";
+    
+    const surahPadded = String(surahNumber).padStart(3, '0');
+    const versePadded = String(verseNumber).padStart(3, '0');
+    return `https://everyayah.com/data/${reciter.folder}/${surahPadded}${versePadded}.mp3`;
+  };
+
+  // Play or pause a verse
+  const toggleVerseAudio = async (verseNumber: number) => {
+    if (!selectedSurah) return;
+
+    // If same verse is playing, pause it
+    if (playingVerse === verseNumber) {
+      audioRef.current?.pause();
+      setPlayingVerse(null);
+      return;
+    }
+
+    // Stop current audio if any
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    // Start new audio
+    setLoadingVerse(verseNumber);
+    const audioUrl = getAudioUrl(selectedSurah, verseNumber);
+    
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+
+    audio.addEventListener('loadeddata', () => {
+      setLoadingVerse(null);
+      setPlayingVerse(verseNumber);
+      audio.play();
+    });
+
+    audio.addEventListener('ended', () => {
+      setPlayingVerse(null);
+    });
+
+    audio.addEventListener('error', () => {
+      setLoadingVerse(null);
+      setPlayingVerse(null);
+      console.error('Failed to load audio');
+    });
+  };
+
+  // Clean up audio when changing surahs
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setPlayingVerse(null);
+      setLoadingVerse(null);
+    };
+  }, [selectedSurah]);
+
   const goToPreviousSurah = () => {
     if (selectedSurah && selectedSurah > 1) {
       setSelectedSurah(selectedSurah - 1);
@@ -111,33 +201,48 @@ export default function QuranPage() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="flex-1">
-              <h1 className="text-xl font-semibold text-foreground" data-testid="text-surah-name">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-semibold text-foreground truncate" data-testid="text-surah-name">
                 {surahDetails.transliteration}
               </h1>
               <p className="text-sm text-muted-foreground">
                 {surahDetails.translation} • {surahDetails.total_verses} verses
               </p>
             </div>
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goToPreviousSurah}
-                disabled={selectedSurah === 1}
-                data-testid="button-previous-surah"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goToNextSurah}
-                disabled={selectedSurah === 114}
-                data-testid="button-next-surah"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </Button>
+            <div className="flex gap-2 items-center">
+              <Select value={selectedReciter} onValueChange={setSelectedReciter}>
+                <SelectTrigger className="w-[180px]" data-testid="select-reciter">
+                  <Volume2 className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Select Reciter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RECITERS.map((reciter) => (
+                    <SelectItem key={reciter.id} value={reciter.id}>
+                      {reciter.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToPreviousSurah}
+                  disabled={selectedSurah === 1}
+                  data-testid="button-previous-surah"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToNextSurah}
+                  disabled={selectedSurah === 114}
+                  data-testid="button-next-surah"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
           </div>
         </header>
@@ -193,9 +298,29 @@ export default function QuranPage() {
                           <p className="text-sm text-muted-foreground italic mb-2" data-testid={`verse-transliteration-${verse.id}`}>
                             {verse.transliteration}
                           </p>
-                          <p className="text-base text-foreground" data-testid={`verse-translation-${verse.id}`}>
+                          <p className="text-base text-foreground mb-3" data-testid={`verse-translation-${verse.id}`}>
                             {verse.translation}
                           </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleVerseAudio(verse.id)}
+                            disabled={loadingVerse === verse.id}
+                            data-testid={`button-play-verse-${verse.id}`}
+                          >
+                            {loadingVerse === verse.id ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : playingVerse === verse.id ? (
+                              <Pause className="w-4 h-4 mr-2" />
+                            ) : (
+                              <Play className="w-4 h-4 mr-2" />
+                            )}
+                            {loadingVerse === verse.id
+                              ? "Loading..."
+                              : playingVerse === verse.id
+                              ? "Pause"
+                              : "Play Recitation"}
+                          </Button>
                         </div>
                         <Badge variant="outline" className="shrink-0">
                           {verse.id}
