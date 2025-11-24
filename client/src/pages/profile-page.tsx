@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, LogOut, Settings, Book, Activity } from "lucide-react";
+import { Crown, LogOut, Settings, Book, Activity, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 
@@ -109,6 +109,23 @@ export default function ProfilePage() {
                 </div>
               );
             })}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => setLocation("/notifications")}
+              data-testid="button-notifications"
+            >
+              <Bell className="w-4 h-4 mr-2" />
+              Notification Preferences
+            </Button>
           </CardContent>
         </Card>
 
