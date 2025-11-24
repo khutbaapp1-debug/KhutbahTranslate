@@ -92,6 +92,37 @@ export const userPreferences = pgTable("user_preferences", {
   fontSize: text("font_size").notNull().default("medium"), // small, medium, large
   theme: text("theme").notNull().default("light"), // light, dark
   language: text("language").notNull().default("en"), // en, ar, ur, etc.
+  // Notification preferences
+  notificationsEnabled: boolean("notifications_enabled").notNull().default(true),
+  dailyHadithEnabled: boolean("daily_hadith_enabled").notNull().default(true),
+  dailyHadithTime: text("daily_hadith_time").notNull().default("08:00"), // HH:MM format
+  prayerRemindersEnabled: boolean("prayer_reminders_enabled").notNull().default(true),
+  prayerReminderMinutes: integer("prayer_reminder_minutes").notNull().default(15), // remind X minutes before
+  jummahReminderEnabled: boolean("jummah_reminder_enabled").notNull().default(true),
+  jummahReminderTime: text("jummah_reminder_time").notNull().default("12:00"), // HH:MM format
+  pushToken: text("push_token"), // for push notifications
+});
+
+// Hadiths collection (Sahih Bukhari, Sahih Muslim, etc.)
+export const hadiths = pgTable("hadiths", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  arabicText: text("arabic_text").notNull(),
+  englishTranslation: text("english_translation").notNull(),
+  collection: text("collection").notNull(), // 'bukhari', 'muslim', 'tirmidhi', etc.
+  bookNumber: integer("book_number"),
+  hadithNumber: integer("hadith_number"),
+  narrator: text("narrator"), // e.g., "Abu Huraira"
+  category: text("category"), // 'faith', 'prayer', 'charity', 'character', etc.
+  reference: text("reference").notNull(), // full reference e.g., "Sahih Bukhari 1:2:8"
+  grade: text("grade"), // 'sahih', 'hasan', 'daif', etc.
+});
+
+// Favorited hadiths (user-specific)
+export const favoriteHadiths = pgTable("favorite_hadiths", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  hadithId: uuid("hadith_id").references(() => hadiths.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Duas (supplications) collection
@@ -133,6 +164,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   preferences: one(userPreferences),
   actionPoints: many(actionPoints),
   favoriteDuas: many(favoriteDuas),
+  favoriteHadiths: many(favoriteHadiths),
 }));
 
 export const sermonsRelations = relations(sermons, ({ one, many }) => ({
@@ -200,6 +232,21 @@ export const actionPointsRelations = relations(actionPoints, ({ one }) => ({
   }),
 }));
 
+export const hadithsRelations = relations(hadiths, ({ many }) => ({
+  favorites: many(favoriteHadiths),
+}));
+
+export const favoriteHadithsRelations = relations(favoriteHadiths, ({ one }) => ({
+  user: one(users, {
+    fields: [favoriteHadiths.userId],
+    references: [users.id],
+  }),
+  hadith: one(hadiths, {
+    fields: [favoriteHadiths.hadithId],
+    references: [hadiths.id],
+  }),
+}));
+
 export const duasRelations = relations(duas, ({ many }) => ({
   favorites: many(favoriteDuas),
 }));
@@ -262,6 +309,15 @@ export const insertDuaSchema = createInsertSchema(duas).omit({
   id: true,
 });
 
+export const insertHadithSchema = createInsertSchema(hadiths).omit({
+  id: true,
+});
+
+export const insertFavoriteHadithSchema = createInsertSchema(favoriteHadiths).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertFavoriteDuaSchema = createInsertSchema(favoriteDuas).omit({
   id: true,
   createdAt: true,
@@ -270,6 +326,12 @@ export const insertFavoriteDuaSchema = createInsertSchema(favoriteDuas).omit({
 // TypeScript types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type Hadith = typeof hadiths.$inferSelect;
+export type InsertHadith = z.infer<typeof insertHadithSchema>;
+
+export type FavoriteHadith = typeof favoriteHadiths.$inferSelect;
+export type InsertFavoriteHadith = z.infer<typeof insertFavoriteHadithSchema>;
 
 export type Sermon = typeof sermons.$inferSelect;
 export type InsertSermon = z.infer<typeof insertSermonSchema>;

@@ -10,7 +10,7 @@ import {
   generateSermonSummary,
   generateJournalPrompt,
 } from "./openai-service";
-import { insertSermonSchema, insertNoteSchema, insertJournalEntrySchema, duas, favoriteDuas } from "@shared/schema";
+import { insertSermonSchema, insertNoteSchema, insertJournalEntrySchema, duas, favoriteDuas, hadiths, favoriteHadiths, userPreferences } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 import { checkTranslationLimit, addTranslationMinutes, getUserUsageInfo, redeemAdCredit } from "./translation-limits";
@@ -645,6 +645,238 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ));
       
       res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============ HADITH ROUTES ============
+  
+  // Get daily hadith (rotates daily based on date)
+  app.get("/api/hadiths/daily", async (req, res) => {
+    try {
+      // Get all hadiths
+      const allHadiths = await db.select().from(hadiths);
+      
+      if (allHadiths.length === 0) {
+        return res.status(404).json({ error: "No hadiths available" });
+      }
+      
+      // Use current date to deterministically select a hadith
+      const today = new Date();
+      const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24);
+      const index = dayOfYear % allHadiths.length;
+      const dailyHadith = allHadiths[index];
+      
+      // If user is authenticated, check if it's favorited
+      let isFavorited = false;
+      if (req.isAuthenticated()) {
+        const userId = (req.user as any).id;
+        const favorite = await db
+          .select()
+          .from(favoriteHadiths)
+          .where(and(
+            eq(favoriteHadiths.userId, userId),
+            eq(favoriteHadiths.hadithId, dailyHadith.id)
+          ));
+        isFavorited = favorite.length > 0;
+      }
+      
+      res.json({ ...dailyHadith, isFavorited });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Get all hadiths
+  app.get("/api/hadiths", async (req, res) => {
+    try {
+      const category = req.query.category as string | undefined;
+      
+      let query = db.select().from(hadiths);
+      
+      if (category) {
+        query = query.where(eq(hadiths.category, category)) as any;
+      }
+      
+      const allHadiths = await query;
+      
+      // If user is authenticated, include favorite status
+      if (req.isAuthenticated()) {
+        const userId = (req.user as any).id;
+        const favorites = await db
+          .select()
+          .from(favoriteHadiths)
+          .where(eq(favoriteHadiths.userId, userId));
+        
+        const favoriteIds = new Set(favorites.map(f => f.hadithId));
+        const hadithsWithFavorites = allHadiths.map(h => ({
+          ...h,
+          isFavorited: favoriteIds.has(h.id),
+        }));
+        
+        return res.json(hadithsWithFavorites);
+      }
+      
+      res.json(allHadiths.map(h => ({ ...h, isFavorited: false })));
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Get user's favorited hadiths
+  app.get("/api/hadiths/favorites", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      
+      const favorites = await db
+        .select({
+          id: hadiths.id,
+          arabicText: hadiths.arabicText,
+          englishTranslation: hadiths.englishTranslation,
+          collection: hadiths.collection,
+          bookNumber: hadiths.bookNumber,
+          hadithNumber: hadiths.hadithNumber,
+          narrator: hadiths.narrator,
+          category: hadiths.category,
+          reference: hadiths.reference,
+          grade: hadiths.grade,
+          favoriteId: favoriteHadiths.id,
+          favoritedAt: favoriteHadiths.createdAt,
+        })
+        .from(favoriteHadiths)
+        .innerJoin(hadiths, eq(favoriteHadiths.hadithId, hadiths.id))
+        .where(eq(favoriteHadiths.userId, userId));
+      
+      res.json(favorites);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Toggle favorite hadith
+  app.post("/api/hadiths/:id/favorite", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const hadithId = req.params.id;
+      
+      // Check if already favorited
+      const existing = await db
+        .select()
+        .from(favoriteHadiths)
+        .where(and(
+          eq(favoriteHadiths.userId, userId),
+          eq(favoriteHadiths.hadithId, hadithId)
+        ));
+      
+      if (existing.length > 0) {
+        // Remove from favorites
+        await db
+          .delete(favoriteHadiths)
+          .where(and(
+            eq(favoriteHadiths.userId, userId),
+            eq(favoriteHadiths.hadithId, hadithId)
+          ));
+        
+        return res.json({ isFavorited: false });
+      }
+      
+      // Add to favorites
+      await db
+        .insert(favoriteHadiths)
+        .values({ userId, hadithId });
+      
+      res.json({ isFavorited: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============ NOTIFICATION SETTINGS ROUTES ============
+  
+  // Get user notification preferences
+  app.get("/api/notifications/settings", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      
+      const [prefs] = await db
+        .select()
+        .from(userPreferences)
+        .where(eq(userPreferences.userId, userId));
+      
+      if (!prefs) {
+        // Create default preferences if they don't exist
+        const [newPrefs] = await db
+          .insert(userPreferences)
+          .values({ userId })
+          .returning();
+        return res.json(newPrefs);
+      }
+      
+      res.json(prefs);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Update notification preferences
+  app.patch("/api/notifications/settings", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const updates = req.body;
+      
+      // Validate time formats if provided
+      if (updates.dailyHadithTime && !/^\d{2}:\d{2}$/.test(updates.dailyHadithTime)) {
+        return res.status(400).json({ error: "Invalid time format. Use HH:MM" });
+      }
+      if (updates.jummahReminderTime && !/^\d{2}:\d{2}$/.test(updates.jummahReminderTime)) {
+        return res.status(400).json({ error: "Invalid time format. Use HH:MM" });
+      }
+      
+      // Check if preferences exist
+      const [existing] = await db
+        .select()
+        .from(userPreferences)
+        .where(eq(userPreferences.userId, userId));
+      
+      if (!existing) {
+        // Create new preferences
+        const [newPrefs] = await db
+          .insert(userPreferences)
+          .values({ userId, ...updates })
+          .returning();
+        return res.json(newPrefs);
+      }
+      
+      // Update existing preferences
+      const [updated] = await db
+        .update(userPreferences)
+        .set(updates)
+        .where(eq(userPreferences.userId, userId))
+        .returning();
+      
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Register push notification token
+  app.post("/api/notifications/register-token", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { pushToken } = req.body;
+      
+      if (!pushToken) {
+        return res.status(400).json({ error: "Push token required" });
+      }
+      
+      await db
+        .update(userPreferences)
+        .set({ pushToken })
+        .where(eq(userPreferences.userId, userId));
+      
+      res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
