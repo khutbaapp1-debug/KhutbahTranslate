@@ -6,9 +6,29 @@ import { Progress } from "@/components/ui/progress";
 import { Sunrise, Sunset, Moon, Star } from "lucide-react";
 import ramadanImage from "@assets/generated_images/Ramadan_crescent_moon_lanterns_7acbaea8.png";
 
+interface ChecklistItem {
+  task: string;
+  completed: boolean;
+}
+
+const DEFAULT_CHECKLIST: ChecklistItem[] = [
+  { task: "Fasted today", completed: false },
+  { task: "Read Qur'an", completed: false },
+  { task: "Prayed Taraweeh", completed: false },
+  { task: "Gave charity", completed: false },
+];
+
 export default function RamadanPage() {
   const [timeToIftar, setTimeToIftar] = useState({ hours: 5, minutes: 32, seconds: 15 });
   const [timeToSuhoor, setTimeToSuhoor] = useState({ hours: 18, minutes: 25, seconds: 0 });
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('ramadan-checklist');
+      return saved ? JSON.parse(saved) : DEFAULT_CHECKLIST;
+    } catch {
+      return DEFAULT_CHECKLIST;
+    }
+  });
 
   const currentDay = 15;
   const totalDays = 30;
@@ -30,6 +50,16 @@ export default function RamadanPage() {
 
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('ramadan-checklist', JSON.stringify(checklist));
+  }, [checklist]);
+
+  const toggleChecklistItem = (index: number) => {
+    setChecklist(prev => prev.map((item, i) => 
+      i === index ? { ...item, completed: !item.completed } : item
+    ));
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -134,19 +164,15 @@ export default function RamadanPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {[
-              { task: "Fasted today", completed: true },
-              { task: "Read Qur'an", completed: true },
-              { task: "Prayed Taraweeh", completed: false },
-              { task: "Gave charity", completed: false },
-            ].map((item, index) => (
+            {checklist.map((item, index) => (
               <div
                 key={index}
-                className="flex items-center gap-3 p-3 rounded-lg hover-elevate cursor-pointer border border-border"
+                className="flex items-center gap-3 p-3 rounded-lg hover-elevate active-elevate-2 cursor-pointer border border-border"
+                onClick={() => toggleChecklistItem(index)}
                 data-testid={`checklist-${index}`}
               >
                 <div
-                  className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                     item.completed
                       ? "bg-primary border-primary"
                       : "border-muted-foreground"
@@ -168,9 +194,7 @@ export default function RamadanPage() {
                     </svg>
                   )}
                 </div>
-                <span
-                  className={item.completed ? "text-muted-foreground line-through" : ""}
-                >
+                <span className={item.completed ? "text-muted-foreground" : ""}>
                   {item.task}
                 </span>
               </div>
