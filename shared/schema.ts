@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, timestamp, integer, decimal, uuid, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, timestamp, integer, decimal, uuid, jsonb, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -123,7 +123,10 @@ export const favoriteHadiths = pgTable("favorite_hadiths", {
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   hadithId: uuid("hadith_id").references(() => hadiths.id, { onDelete: "cascade" }).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  // Unique constraint to prevent duplicate favorites
+  userHadithUnique: unique().on(table.userId, table.hadithId),
+}));
 
 // Duas (supplications) collection
 export const duas = pgTable("duas", {

@@ -13,6 +13,7 @@ import {
 import { insertSermonSchema, insertNoteSchema, insertJournalEntrySchema, duas, favoriteDuas, hadiths, favoriteHadiths, userPreferences } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
+import { z } from "zod";
 import { checkTranslationLimit, addTranslationMinutes, getUserUsageInfo, redeemAdCredit } from "./translation-limits";
 
 // Middleware for authenticated routes
@@ -662,15 +663,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "No hadiths available" });
       }
       
-      // Use current date to deterministically select a hadith
+      // Use UTC date to deterministically select a hadith (consistent globally)
       const today = new Date();
-      const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24);
+      const utcDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+      const dayOfYear = Math.floor((utcDate.getTime() - Date.UTC(today.getUTCFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
       const index = dayOfYear % allHadiths.length;
       const dailyHadith = allHadiths[index];
       
       // If user is authenticated, check if it's favorited
       let isFavorited = false;
-      if (req.isAuthenticated()) {
+      if (req.isAuthenticated() && req.user) {
         const userId = (req.user as any).id;
         const favorite = await db
           .select()
@@ -702,7 +704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allHadiths = await query;
       
       // If user is authenticated, include favorite status
-      if (req.isAuthenticated()) {
+      if (req.isAuthenticated() && req.user) {
         const userId = (req.user as any).id;
         const favorites = await db
           .select()
@@ -823,15 +825,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/notifications/settings", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
-      const updates = req.body;
       
-      // Validate time formats if provided
-      if (updates.dailyHadithTime && !/^\d{2}:\d{2}$/.test(updates.dailyHadithTime)) {
-        return res.status(400).json({ error: "Invalid time format. Use HH:MM" });
-      }
-      if (updates.jummahReminderTime && !/^\d{2}:\d{2}$/.test(updates.jummahReminderTime)) {
-        return res.status(400).json({ error: "Invalid time format. Use HH:MM" });
-      }
+      // Validate input with Zod schema
+      const updateSchema = z.object({
+        notificationsEnabled: z.boolean().optional(),
+        dailyHadithEnabled: z.boolean().optional(),
+        dailyHadithTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format. Use HH:MM").optional(),
+        prayerRemindersEnabled: z.boolean().optional(),
+        prayerReminderMinutes: z.number().int().min(0).max(60).optional(),
+        jummahReminderEnabled: z.boolean().optional(),
+        jummahReminderTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format. Use HH:MM").optional(),
+      });
+      
+      const validated = updateSchema.parse(req.body);
       
       // Check if preferences exist
       const [existing] = await db
@@ -843,7 +849,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create new preferences
         const [newPrefs] = await db
           .insert(userPreferences)
-          .values({ userId, ...updates })
+          .values({ userId, ...validated })
           .returning();
         return res.json(newPrefs);
       }
@@ -851,12 +857,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update existing preferences
       const [updated] = await db
         .update(userPreferences)
-        .set(updates)
+        .set(validated)
         .where(eq(userPreferences.userId, userId))
         .returning();
       
       res.json(updated);
     } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
       res.status(500).json({ error: error.message });
     }
   });
