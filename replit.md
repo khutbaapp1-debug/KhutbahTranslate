@@ -5,6 +5,36 @@ Khutbah Companion is a full-stack Islamic companion web application designed to 
 
 ## Recent Updates (Nov 24, 2025)
 
+**Daily Hadith & Push Notifications System**
+- **Database Schema**: Created tables for `hadiths`, `favoriteHadiths`, and added notification preferences to `userPreferences`
+  - Hadiths table stores Arabic text, English translation, collection, narrator, category, reference, and grade
+  - User notification preferences include Daily Hadith, prayer reminders, and Jummah reminders with customizable times
+- **Authentic Hadith Collection**: Seeded 20 authentic hadiths from major collections (Sahih Bukhari, Sahih Muslim, Jami' at-Tirmidhi, Sunan Ibn Majah)
+  - Categories: faith, character, prayer, charity, knowledge, purification, justice, taqwa
+  - All hadiths are graded (sahih/hasan) with complete references
+- **Daily Hadith Page**: 
+  - Deterministic daily rotation based on day of year (ensures same hadith for all users each day)
+  - Beautiful Arabic text display with English translation
+  - Share functionality (native share API or clipboard fallback)
+  - Heart icon to favorite hadiths (toggles favorite status)
+  - Category badges and narrator information
+  - Reference display with hadith grade
+- **Notification Settings Page**:
+  - Master notifications toggle
+  - Daily Hadith: Enable/disable with customizable time (HH:MM format)
+  - Prayer Reminders: Enable/disable with customizable minutes before prayer
+  - Jummah Reminder: Enable/disable with customizable time on Fridays
+  - Real-time updates to user preferences
+- **Backend API Routes**:
+  - `GET /api/hadiths/daily` - Get today's hadith (public, authenticated users see favorite status)
+  - `GET /api/hadiths` - Get all hadiths with optional category filter
+  - `GET /api/hadiths/favorites` - Get user's favorited hadiths
+  - `POST /api/hadiths/:id/favorite` - Toggle favorite status
+  - `GET /api/notifications/settings` - Get user notification preferences
+  - `PATCH /api/notifications/settings` - Update notification preferences
+  - `POST /api/notifications/register-token` - Register push notification token
+- **Navigation**: Daily Hadith added to home screen grid, Notification Settings accessible from Profile page
+
 **Qur'an Reader: Complete Feature Set**
 - **Audio Recitation System**: Streaming audio playback using EveryAyah.com CDN (zero storage footprint)
   - 7 world-famous reciters: Mishary Al-Afasy, Abu Bakr Al Shatri, Abdul Basit, Sudais, Yasser Al Dosari, Maher Al-Muaiqly, Mahmoud Khalil Al-Husary
@@ -51,7 +81,7 @@ The frontend is built with React 18 and TypeScript, using Vite for fast developm
 The backend is an Express.js application running on Node.js, providing RESTful API endpoints organized by feature domain (e.g., `/api/sermons`, `/api/transcripts`). Authentication uses Passport.js with a local strategy and session management, backed by `express-session` and `connect-pg-simple`. Multer handles audio file uploads, and role-based access control (`requireAuth`, `requirePremium`) manages feature access based on user subscription tiers (Free/Premium).
 
 ### Data Storage
-PostgreSQL serves as the primary database, utilizing Neon for serverless capabilities and Drizzle ORM for type-safe queries. The schema includes tables for `users`, `sermons`, `transcript_segments`, `notes`, `journal_entries`, and `user_analytics`, with UUID primary keys and appropriate relationships to ensure data integrity and user-owned content management.
+PostgreSQL serves as the primary database, utilizing Neon for serverless capabilities and Drizzle ORM for type-safe queries. The schema includes tables for `users`, `sermons`, `transcript_segments`, `notes`, `journal_entries`, `user_analytics`, `hadiths`, `favoriteHadiths`, `duas`, and `favoriteDuas`, with UUID primary keys and appropriate relationships to ensure data integrity and user-owned content management. User preferences are stored in the `userPreferences` table, including notification settings for Daily Hadith, prayer reminders, and Jummah reminders.
 
 ### Key Architectural Decisions
 The project adopts a monorepo structure with `/client`, `/server`, and `/shared` directories for clear separation and type safety. Real-time translation involves capturing audio chunks, sending them to the backend, transcribing with Whisper, translating with GPT-4o, and storing segments for real-time display. Session-based authentication was chosen for enhanced security. Premium feature gating is implemented via middleware and UI flags. A mobile-first design prioritizes thumb-friendly interactions and gesture-driven navigation. Islamic content handling includes dedicated Arabic fonts, RTL support, and custom translation logic to preserve terminology and add honorifics. A multi-language variant system allows building English, Hindi/Urdu, and French app versions from a single codebase using Capacitor for native mobile deployment.
