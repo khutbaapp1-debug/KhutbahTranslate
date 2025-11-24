@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Moon, BookOpen, Calendar, Crown, BarChart3, BookMarked, ScrollText } from "lucide-react";
+import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Moon, BookOpen, Calendar, Crown, BarChart3, BookMarked, ScrollText, LogIn } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { HomepageBannerAd } from "@/components/google-ad";
 import { Button } from "@/components/ui/button";
@@ -231,18 +231,31 @@ export default function HomePage() {
             </h1>
             <p className="text-xs text-muted-foreground">Your Islamic Companion</p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            data-testid="button-theme-toggle"
-          >
-            {theme === "light" ? (
-              <MoonIcon className="w-5 h-5" />
-            ) : (
-              <Sun className="w-5 h-5" />
+          <div className="flex items-center gap-2">
+            {!user && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setLocation("/auth")}
+                data-testid="button-login"
+              >
+                <LogIn className="w-4 h-4 mr-1" />
+                Sign In
+              </Button>
             )}
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              data-testid="button-theme-toggle"
+            >
+              {theme === "light" ? (
+                <MoonIcon className="w-5 h-5" />
+              ) : (
+                <Sun className="w-5 h-5" />
+              )}
+            </Button>
+          </div>
         </div>
       </header>
 

@@ -11,7 +11,9 @@ export default function ProfilePage() {
   const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
 
+  // Redirect to auth page if not logged in
   if (!user) {
+    setLocation("/auth");
     return null;
   }
 
