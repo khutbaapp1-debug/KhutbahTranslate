@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Surah {
@@ -52,6 +52,20 @@ export default function QuranPage() {
   const surahDetails = surahDetailsQuery.data;
   const loadingDetails = surahDetailsQuery.isLoading;
 
+  const goToPreviousSurah = () => {
+    if (selectedSurah && selectedSurah > 1) {
+      setSelectedSurah(selectedSurah - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const goToNextSurah = () => {
+    if (selectedSurah && selectedSurah < 114) {
+      setSelectedSurah(selectedSurah + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const filteredSurahs = surahs?.filter(
     (surah) =>
       surah.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -72,13 +86,33 @@ export default function QuranPage() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div>
+            <div className="flex-1">
               <h1 className="text-xl font-semibold text-foreground" data-testid="text-surah-name">
                 {surahDetails.transliteration}
               </h1>
               <p className="text-sm text-muted-foreground">
                 {surahDetails.translation} • {surahDetails.total_verses} verses
               </p>
+            </div>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goToPreviousSurah}
+                disabled={selectedSurah === 1}
+                data-testid="button-previous-surah"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goToNextSurah}
+                disabled={selectedSurah === 114}
+                data-testid="button-next-surah"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </Button>
             </div>
           </div>
         </header>
@@ -138,6 +172,29 @@ export default function QuranPage() {
                 ))}
               </div>
             )}
+
+            <div className="flex gap-3 mt-8 pb-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={goToPreviousSurah}
+                disabled={selectedSurah === 1}
+                data-testid="button-previous-surah-bottom"
+              >
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Previous Surah
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={goToNextSurah}
+                disabled={selectedSurah === 114}
+                data-testid="button-next-surah-bottom"
+              >
+                Next Surah
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
           </main>
         </ScrollArea>
 
