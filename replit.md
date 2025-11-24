@@ -11,6 +11,7 @@ Khutbah Companion is a full-stack Islamic companion web application designed to 
 - **Upgrade Button Fixes**: All upgrade buttons now properly navigate to premium page or auth page as needed
 - **Scroll-to-Top Fix**: All premium feature pages (Analytics, Journal, Action Points, Khutbah Database, Premium) now scroll to top on load
 - **Development Premium Access**: All authenticated users automatically get premium access in development mode for easy testing
+- **Prayer Time Countdown Fix**: Fixed timezone bug causing incorrect countdown to next prayer - now uses user's local timezone instead of server timezone for accurate remaining time calculation
 
 **Complimentary Premium Access System**
 - **Purpose**: Allows granting free premium access to up to 15 friends/special users without payment

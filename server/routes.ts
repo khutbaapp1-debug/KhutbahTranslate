@@ -460,7 +460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         method: method as any,
         asrMethod: asrMethod === 2 ? 'hanafi' : 'standard',
       });
-      const nextPrayerInfo = getTimeUntilNextPrayer(prayerTimes);
+      const nextPrayerInfo = getTimeUntilNextPrayer(prayerTimes, prayerTimes.timezone);
       
       res.json({
         ...prayerTimes,

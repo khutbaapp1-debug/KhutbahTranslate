@@ -56,7 +56,7 @@ function getAdhanCalculationMethod(method: CalculationMethodType): ReturnType<ty
   }
 }
 
-export function calculatePrayerTimes(options: PrayerTimesOptions): PrayerTimesResult {
+export function calculatePrayerTimes(options: PrayerTimesOptions): PrayerTimesResult & { timezone: string } {
   const {
     latitude,
     longitude,
@@ -99,11 +99,16 @@ export function calculatePrayerTimes(options: PrayerTimesOptions): PrayerTimesRe
       longitude,
     },
     date: date.toISOString().split('T')[0],
+    timezone, // Return timezone so countdown can use it
   };
 }
 
 // Calculate time remaining until next prayer
-export function getTimeUntilNextPrayer(prayerTimes: PrayerTimesResult, currentTime: Date = new Date()): {
+export function getTimeUntilNextPrayer(
+  prayerTimes: PrayerTimesResult, 
+  timezone: string,
+  currentTime: Date = new Date()
+): {
   nextPrayer: string;
   timeRemaining: string;
   hours: number;
@@ -112,7 +117,10 @@ export function getTimeUntilNextPrayer(prayerTimes: PrayerTimesResult, currentTi
 } | null {
   // Only include actual prayer times, not sunrise (which is informational only)
   const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-  const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes() + currentTime.getSeconds() / 60;
+  
+  // Convert current time to the user's local timezone for accurate comparison
+  const localCurrentTime = toZonedTime(currentTime, timezone);
+  const currentMinutes = localCurrentTime.getHours() * 60 + localCurrentTime.getMinutes() + localCurrentTime.getSeconds() / 60;
   
   for (const prayer of prayers) {
     const prayerTimeStr = prayerTimes[prayer as keyof PrayerTimesResult] as string;
