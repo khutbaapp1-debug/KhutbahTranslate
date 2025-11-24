@@ -9,31 +9,38 @@ Khutbah Companion is a full-stack Islamic companion web application designed to 
 - **Database Schema**: Created tables for `hadiths`, `favoriteHadiths`, and added notification preferences to `userPreferences`
   - Hadiths table stores Arabic text, English translation, collection, narrator, category, reference, and grade
   - User notification preferences include Daily Hadith, prayer reminders, and Jummah reminders with customizable times
+  - **Security**: Unique constraint on `favoriteHadiths (userId, hadithId)` prevents duplicate favorites
 - **Authentic Hadith Collection**: Seeded 20 authentic hadiths from major collections (Sahih Bukhari, Sahih Muslim, Jami' at-Tirmidhi, Sunan Ibn Majah)
   - Categories: faith, character, prayer, charity, knowledge, purification, justice, taqwa
   - All hadiths are graded (sahih/hasan) with complete references
 - **Daily Hadith Page**: 
-  - Deterministic daily rotation based on day of year (ensures same hadith for all users each day)
+  - **UTC-based deterministic rotation**: Uses UTC day-of-year to ensure same hadith globally regardless of server timezone
   - Beautiful Arabic text display with English translation
   - Share functionality (native share API or clipboard fallback)
-  - Heart icon to favorite hadiths (toggles favorite status)
+  - Heart icon to favorite hadiths (true toggle: removes if favorited, adds if not)
   - Category badges and narrator information
   - Reference display with hadith grade
 - **Notification Settings Page**:
   - Master notifications toggle
   - Daily Hadith: Enable/disable with customizable time (HH:MM format)
-  - Prayer Reminders: Enable/disable with customizable minutes before prayer
+  - Prayer Reminders: Enable/disable with customizable minutes before prayer (0-60)
   - Jummah Reminder: Enable/disable with customizable time on Fridays
+  - **Zod validation**: All inputs validated server-side (time format, minute range)
   - Real-time updates to user preferences
-- **Backend API Routes**:
-  - `GET /api/hadiths/daily` - Get today's hadith (public, authenticated users see favorite status)
-  - `GET /api/hadiths` - Get all hadiths with optional category filter
-  - `GET /api/hadiths/favorites` - Get user's favorited hadiths
-  - `POST /api/hadiths/:id/favorite` - Toggle favorite status
-  - `GET /api/notifications/settings` - Get user notification preferences
-  - `PATCH /api/notifications/settings` - Update notification preferences
-  - `POST /api/notifications/register-token` - Register push notification token
+- **Backend API Routes** (with security fixes):
+  - `GET /api/hadiths/daily` - Get today's hadith (public, validates req.user before exposing favorite status)
+  - `GET /api/hadiths` - Get all hadiths with optional category filter (validates req.user for favorites)
+  - `GET /api/hadiths/favorites` - Get user's favorited hadiths (requireAuth)
+  - `POST /api/hadiths/:id/favorite` - Toggle favorite status (requireAuth, true toggle with delete/insert)
+  - `GET /api/notifications/settings` - Get user notification preferences (requireAuth)
+  - `PATCH /api/notifications/settings` - Update notification preferences (requireAuth, Zod validation)
+  - `POST /api/notifications/register-token` - Register push notification token (requireAuth)
 - **Navigation**: Daily Hadith added to home screen grid, Notification Settings accessible from Profile page
+- **Security Improvements**:
+  - Fixed potential data leak: favorite status only exposed for authenticated users with valid req.user
+  - Added Zod schema validation for notification settings PATCH (prevents invalid times/negative minutes)
+  - Unique database constraint prevents race condition duplicate favorites
+  - UTC-based hadith selection ensures global consistency across all server deployments
 
 **Qur'an Reader: Complete Feature Set**
 - **Audio Recitation System**: Streaming audio playback using EveryAyah.com CDN (zero storage footprint)
