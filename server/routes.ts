@@ -889,6 +889,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         duaRemindersEnabled: z.boolean().optional(),
         duaMorningTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format. Use HH:MM").optional(),
         duaEveningTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format. Use HH:MM").optional(),
+        // Push notification token
+        pushToken: z.string().optional(),
       });
       
       const validated = updateSchema.parse(req.body);
