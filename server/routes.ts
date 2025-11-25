@@ -8,8 +8,9 @@ import {
   translateArabicToEnglish,
   generateActionPoints,
   generateSermonSummary,
+  generateKhutbahGuidelines,
 } from "./openai-service";
-import { insertSermonSchema, insertNoteSchema, duas, favoriteDuas, hadiths, favoriteHadiths, userPreferences, users } from "@shared/schema";
+import { insertSermonSchema, insertNoteSchema, insertKhutbahGuidelineSchema, insertMissedPrayerSchema, duas, favoriteDuas, hadiths, favoriteHadiths, userPreferences, users, khutbahGuidelines, missedPrayers, sermons } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -369,6 +370,248 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/preferences", requireAuth, async (req, res) => {
     try {
       await storage.updateUserPreferences(req.user!.id, req.body);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============ KHUTBAH GUIDELINES ROUTES ============
+
+  // Get all guidelines for user
+  app.get("/api/khutbah-guidelines", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const guidelines = await db.select()
+        .from(khutbahGuidelines)
+        .where(eq(khutbahGuidelines.userId, userId))
+        .orderBy(sql`${khutbahGuidelines.createdAt} DESC`);
+      res.json(guidelines);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get guidelines for a specific sermon
+  app.get("/api/khutbah-guidelines/sermon/:sermonId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { sermonId } = req.params;
+      const guidelines = await db.select()
+        .from(khutbahGuidelines)
+        .where(and(
+          eq(khutbahGuidelines.userId, userId),
+          eq(khutbahGuidelines.sermonId, sermonId)
+        ));
+      res.json(guidelines[0] || null);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Generate new guidelines
+  app.post("/api/khutbah-guidelines", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      
+      // Validate only client-provided fields
+      const schema = z.object({
+        sermonId: z.string(),
+        title: z.string().optional(),
+      });
+      const validated = schema.parse(req.body);
+      
+      // Fetch sermon details for AI generation
+      const [sermon] = await db.select().from(sermons).where(eq(sermons.id, validated.sermonId));
+      if (!sermon) {
+        return res.status(404).json({ error: "Sermon not found" });
+      }
+
+      // Generate suggestions using AI
+      const suggestions = await generateKhutbahGuidelines(
+        sermon.title,
+        sermon.mainTheme || undefined,
+        sermon.englishTranslation || undefined
+      );
+
+      // Add completed flag to each suggestion
+      const suggestionsWithFlags = suggestions.map(s => ({ ...s, completed: false }));
+
+      // Create guideline
+      const [guideline] = await db.insert(khutbahGuidelines).values({
+        userId,
+        sermonId: validated.sermonId,
+        title: validated.title || "Weekly Implementation Plan",
+        suggestions: suggestionsWithFlags as any,
+        weekStartDate: new Date(),
+      }).returning();
+
+      res.status(201).json(guideline);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update guidelines (mark suggestions as completed)
+  app.patch("/api/khutbah-guidelines/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { id } = req.params;
+      const { suggestions } = req.body;
+
+      const [updated] = await db.update(khutbahGuidelines)
+        .set({ suggestions })
+        .where(and(
+          eq(khutbahGuidelines.id, id),
+          eq(khutbahGuidelines.userId, userId)
+        ))
+        .returning();
+
+      if (!updated) {
+        return res.status(404).json({ error: "Guideline not found" });
+      }
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Delete guidelines
+  app.delete("/api/khutbah-guidelines/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { id } = req.params;
+
+      await db.delete(khutbahGuidelines)
+        .where(and(
+          eq(khutbahGuidelines.id, id),
+          eq(khutbahGuidelines.userId, userId)
+        ));
+
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============ MISSED PRAYERS (QADA) ROUTES ============
+
+  // Get all missed prayers for user
+  app.get("/api/missed-prayers", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const prayers = await db.select()
+        .from(missedPrayers)
+        .where(eq(missedPrayers.userId, userId))
+        .orderBy(sql`${missedPrayers.dateMissed} DESC`);
+      res.json(prayers);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get statistics and makeup plan
+  app.get("/api/missed-prayers/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      
+      // Count total missed and made-up prayers
+      const [stats] = await db.select({
+        total: sql<number>`COUNT(*)`,
+        madeUp: sql<number>`COUNT(*) FILTER (WHERE ${missedPrayers.madeUp} = true)`,
+        remaining: sql<number>`COUNT(*) FILTER (WHERE ${missedPrayers.madeUp} = false)`,
+      }).from(missedPrayers).where(eq(missedPrayers.userId, userId));
+
+      // Calculate makeup plan (assuming 1 makeup prayer per day)
+      const daysNeeded = Math.ceil(stats.remaining / 1);
+      const completionDate = new Date();
+      completionDate.setDate(completionDate.getDate() + daysNeeded);
+
+      res.json({
+        ...stats,
+        daysNeeded,
+        estimatedCompletionDate: completionDate,
+        makeupPerDay: 1,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Log a new missed prayer
+  app.post("/api/missed-prayers", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      
+      // Validate only client-provided fields
+      const schema = z.object({
+        prayerType: z.enum(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']),
+        dateMissed: z.string().or(z.date()),
+        notes: z.string().optional(),
+      });
+      const validated = schema.parse(req.body);
+
+      const [prayer] = await db.insert(missedPrayers).values({
+        userId,
+        prayerType: validated.prayerType,
+        dateMissed: new Date(validated.dateMissed),
+        notes: validated.notes,
+        madeUp: false,
+      }).returning();
+
+      res.status(201).json(prayer);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Mark a prayer as made up
+  app.patch("/api/missed-prayers/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { id } = req.params;
+      const { madeUp } = req.body;
+
+      const [updated] = await db.update(missedPrayers)
+        .set({ 
+          madeUp,
+          dateMadeUp: madeUp ? new Date() : null,
+        })
+        .where(and(
+          eq(missedPrayers.id, id),
+          eq(missedPrayers.userId, userId)
+        ))
+        .returning();
+
+      if (!updated) {
+        return res.status(404).json({ error: "Prayer not found" });
+      }
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Delete a missed prayer entry
+  app.delete("/api/missed-prayers/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { id } = req.params;
+
+      await db.delete(missedPrayers)
+        .where(and(
+          eq(missedPrayers.id, id),
+          eq(missedPrayers.userId, userId)
+        ));
+
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

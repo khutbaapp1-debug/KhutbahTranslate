@@ -171,6 +171,29 @@ export const actionPoints = pgTable("action_points", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Khutbah guidelines (practical implementation suggestions)
+export const khutbahGuidelines = pgTable("khutbah_guidelines", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  sermonId: uuid("sermon_id").references(() => sermons.id, { onDelete: "cascade" }).notNull(),
+  title: text("title").notNull().default("Weekly Implementation Plan"),
+  suggestions: jsonb("suggestions").notNull(), // array of {text, category, completed}
+  weekStartDate: timestamp("week_start_date").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Missed prayers (Qada) tracking for makeup prayers
+export const missedPrayers = pgTable("missed_prayers", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  prayerType: text("prayer_type").notNull(), // 'fajr', 'dhuhr', 'asr', 'maghrib', 'isha'
+  dateMissed: timestamp("date_missed").notNull(), // when the prayer was missed
+  dateMadeUp: timestamp("date_made_up"), // when it was made up (null if not yet)
+  madeUp: boolean("made_up").notNull().default(false),
+  notes: text("notes"), // optional notes
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   sermons: many(sermons),
@@ -178,6 +201,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   analytics: many(userAnalytics),
   preferences: one(userPreferences),
   actionPoints: many(actionPoints),
+  khutbahGuidelines: many(khutbahGuidelines),
+  missedPrayers: many(missedPrayers),
   favoriteDuas: many(favoriteDuas),
   favoriteHadiths: many(favoriteHadiths),
 }));
@@ -190,6 +215,7 @@ export const sermonsRelations = relations(sermons, ({ one, many }) => ({
   segments: many(transcriptSegments),
   notes: many(notes),
   actionPoints: many(actionPoints),
+  khutbahGuidelines: many(khutbahGuidelines),
 }));
 
 export const transcriptSegmentsRelations = relations(transcriptSegments, ({ one }) => ({
@@ -265,6 +291,24 @@ export const favoriteDuasRelations = relations(favoriteDuas, ({ one }) => ({
   }),
 }));
 
+export const khutbahGuidelinesRelations = relations(khutbahGuidelines, ({ one }) => ({
+  user: one(users, {
+    fields: [khutbahGuidelines.userId],
+    references: [users.id],
+  }),
+  sermon: one(sermons, {
+    fields: [khutbahGuidelines.sermonId],
+    references: [sermons.id],
+  }),
+}));
+
+export const missedPrayersRelations = relations(missedPrayers, ({ one }) => ({
+  user: one(users, {
+    fields: [missedPrayers.userId],
+    references: [users.id],
+  }),
+}));
+
 // Zod schemas for validation
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -321,6 +365,16 @@ export const insertFavoriteDuaSchema = createInsertSchema(favoriteDuas).omit({
   createdAt: true,
 });
 
+export const insertKhutbahGuidelineSchema = createInsertSchema(khutbahGuidelines).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMissedPrayerSchema = createInsertSchema(missedPrayers).omit({
+  id: true,
+  createdAt: true,
+});
+
 // TypeScript types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -354,3 +408,9 @@ export type InsertDua = z.infer<typeof insertDuaSchema>;
 
 export type FavoriteDua = typeof favoriteDuas.$inferSelect;
 export type InsertFavoriteDua = z.infer<typeof insertFavoriteDuaSchema>;
+
+export type KhutbahGuideline = typeof khutbahGuidelines.$inferSelect;
+export type InsertKhutbahGuideline = z.infer<typeof insertKhutbahGuidelineSchema>;
+
+export type MissedPrayer = typeof missedPrayers.$inferSelect;
+export type InsertMissedPrayer = z.infer<typeof insertMissedPrayerSchema>;

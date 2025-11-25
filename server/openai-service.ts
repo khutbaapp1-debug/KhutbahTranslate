@@ -273,3 +273,44 @@ Respond in JSON format: { "recommendations": ["topic1", "topic2", ...] }`;
     throw new Error("Failed to generate recommendations: " + error.message);
   }
 }
+
+// Generate practical implementation guidelines for khutbah
+export async function generateKhutbahGuidelines(sermonTitle: string, mainTheme?: string, summary?: string): Promise<Array<{text: string, category: string}>> {
+  try {
+    const themeInfo = mainTheme ? `Main Theme: ${mainTheme}` : "";
+    const summaryInfo = summary ? `Summary: ${summary}` : "";
+    
+    const prompt = `Generate 5-7 practical implementation suggestions for a Muslim who attended a khutbah titled "${sermonTitle}".
+
+${themeInfo}
+${summaryInfo}
+
+For each suggestion:
+1. Make it specific and actionable for the coming week
+2. Connect it directly to the khutbah's teachings
+3. Make it realistic and achievable
+4. Assign a category: "Family", "Work", "Spiritual Practice", "Community", or "Personal Growth"
+
+Respond in JSON format: { "suggestions": [{"text": "...", "category": "..."}, ...] }`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are an Islamic counselor helping Muslims apply religious teachings to their daily lives in practical, achievable ways."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    return result.suggestions || [];
+  } catch (error: any) {
+    throw new Error("Failed to generate khutbah guidelines: " + error.message);
+  }
+}
