@@ -460,10 +460,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req.user as any).id;
       const { id } = req.params;
-      const { suggestions } = req.body;
+      
+      // Validate PATCH payload - only allow suggestions updates
+      const schema = z.object({
+        suggestions: z.array(z.object({
+          category: z.string(),
+          suggestion: z.string(),
+          completed: z.boolean(),
+        })),
+      });
+      const validated = schema.parse(req.body);
 
       const [updated] = await db.update(khutbahGuidelines)
-        .set({ suggestions })
+        .set({ suggestions: validated.suggestions as any })
         .where(and(
           eq(khutbahGuidelines.id, id),
           eq(khutbahGuidelines.userId, userId)
@@ -476,6 +485,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
       res.status(500).json({ error: error.message });
     }
   });
@@ -577,13 +589,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req.user as any).id;
       const { id } = req.params;
-      const { madeUp } = req.body;
+      
+      // Validate PATCH payload
+      const schema = z.object({
+        madeUp: z.boolean(),
+        notes: z.string().optional(),
+      });
+      const validated = schema.parse(req.body);
+
+      const updateData: any = {
+        madeUp: validated.madeUp,
+        dateMadeUp: validated.madeUp ? new Date() : null,
+      };
+      if (validated.notes !== undefined) {
+        updateData.notes = validated.notes;
+      }
 
       const [updated] = await db.update(missedPrayers)
-        .set({ 
-          madeUp,
-          dateMadeUp: madeUp ? new Date() : null,
-        })
+        .set(updateData)
         .where(and(
           eq(missedPrayers.id, id),
           eq(missedPrayers.userId, userId)
@@ -596,6 +619,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
       res.status(500).json({ error: error.message });
     }
   });
