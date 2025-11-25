@@ -9,7 +9,6 @@ import {
   sermons,
   transcriptSegments,
   notes,
-  journalEntries,
   userAnalytics,
   userPreferences,
   type User,
@@ -20,8 +19,6 @@ import {
   type InsertTranscriptSegment,
   type Note,
   type InsertNote,
-  type JournalEntry,
-  type InsertJournalEntry,
   type UserAnalytics as UserAnalyticsType,
   type InsertUserAnalytics,
   type UserPreferences as UserPreferencesType,
@@ -55,12 +52,6 @@ export interface IStorage {
   createNote(note: InsertNote): Promise<Note>;
   updateNote(id: string, content: string): Promise<void>;
   deleteNote(id: string): Promise<void>;
-
-  // Journal management
-  getUserJournalEntries(userId: string): Promise<JournalEntry[]>;
-  createJournalEntry(entry: InsertJournalEntry): Promise<JournalEntry>;
-  updateJournalEntry(id: string, content: string, mood?: string): Promise<void>;
-  deleteJournalEntry(id: string): Promise<void>;
 
   // Analytics
   getUserAnalytics(userId: string): Promise<UserAnalyticsType | undefined>;
@@ -186,29 +177,6 @@ export class DatabaseStorage implements IStorage {
     await db.delete(notes).where(eq(notes.id, id));
   }
 
-  // Journal methods
-  async getUserJournalEntries(userId: string): Promise<JournalEntry[]> {
-    return await db.select()
-      .from(journalEntries)
-      .where(eq(journalEntries.userId, userId))
-      .orderBy(desc(journalEntries.createdAt));
-  }
-
-  async createJournalEntry(entry: InsertJournalEntry): Promise<JournalEntry> {
-    const [newEntry] = await db.insert(journalEntries).values(entry).returning();
-    return newEntry;
-  }
-
-  async updateJournalEntry(id: string, content: string, mood?: string): Promise<void> {
-    const updates: any = { content };
-    if (mood) updates.mood = mood;
-    await db.update(journalEntries).set(updates).where(eq(journalEntries.id, id));
-  }
-
-  async deleteJournalEntry(id: string): Promise<void> {
-    await db.delete(journalEntries).where(eq(journalEntries.id, id));
-  }
-
   // Analytics methods
   async getUserAnalytics(userId: string): Promise<UserAnalyticsType | undefined> {
     const [analytics] = await db.select()
@@ -222,7 +190,7 @@ export class DatabaseStorage implements IStorage {
     if (existing) {
       await db.update(userAnalytics).set(updates).where(eq(userAnalytics.userId, userId));
     } else {
-      await db.insert(userAnalytics).values({ userId, ...updates });
+      await db.insert(userAnalytics).values({ userId, date: new Date(), ...updates });
     }
   }
 

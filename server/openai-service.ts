@@ -273,38 +273,3 @@ Respond in JSON format: { "recommendations": ["topic1", "topic2", ...] }`;
     throw new Error("Failed to generate recommendations: " + error.message);
   }
 }
-
-// Generate reflection journal prompt
-export async function generateJournalPrompt(sermonTitle: string, mainTheme: string): Promise<string> {
-  try {
-    const prompt = `Create a thoughtful reflection prompt for a Muslim who attended a khutbah titled "${sermonTitle}" with the main theme of "${mainTheme}". 
-
-The prompt should:
-1. Encourage deep personal reflection
-2. Connect the teaching to daily life
-3. Be specific and actionable
-4. Inspire spiritual growth
-
-Respond in JSON format: { "prompt": "your reflection question here" }`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are a spiritual guide helping Muslims reflect on Islamic teachings."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      response_format: { type: "json_object" },
-    });
-
-    const result = JSON.parse(response.choices[0].message.content || "{}");
-    return result.prompt || "How will you apply this teaching in your life this week?";
-  } catch (error: any) {
-    throw new Error("Failed to generate journal prompt: " + error.message);
-  }
-}

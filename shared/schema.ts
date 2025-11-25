@@ -64,17 +64,6 @@ export const notes = pgTable("notes", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Journal entries (premium feature)
-export const journalEntries = pgTable("journal_entries", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  sermonId: uuid("sermon_id").references(() => sermons.id, { onDelete: "cascade" }),
-  content: text("content").notNull(),
-  prompt: text("prompt"), // the AI-generated prompt
-  mood: text("mood"), // e.g., "grateful", "reflective", "inspired"
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
 // User analytics
 export const userAnalytics = pgTable("user_analytics", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -186,7 +175,6 @@ export const actionPoints = pgTable("action_points", {
 export const usersRelations = relations(users, ({ many, one }) => ({
   sermons: many(sermons),
   notes: many(notes),
-  journalEntries: many(journalEntries),
   analytics: many(userAnalytics),
   preferences: one(userPreferences),
   actionPoints: many(actionPoints),
@@ -201,7 +189,6 @@ export const sermonsRelations = relations(sermons, ({ one, many }) => ({
   }),
   segments: many(transcriptSegments),
   notes: many(notes),
-  journalEntries: many(journalEntries),
   actionPoints: many(actionPoints),
 }));
 
@@ -219,17 +206,6 @@ export const notesRelations = relations(notes, ({ one }) => ({
   }),
   sermon: one(sermons, {
     fields: [notes.sermonId],
-    references: [sermons.id],
-  }),
-}));
-
-export const journalEntriesRelations = relations(journalEntries, ({ one }) => ({
-  user: one(users, {
-    fields: [journalEntries.userId],
-    references: [users.id],
-  }),
-  sermon: one(sermons, {
-    fields: [journalEntries.sermonId],
     references: [sermons.id],
   }),
 }));
@@ -314,11 +290,6 @@ export const insertNoteSchema = createInsertSchema(notes).omit({
   createdAt: true,
 });
 
-export const insertJournalEntrySchema = createInsertSchema(journalEntries).omit({
-  id: true,
-  createdAt: true,
-});
-
 export const insertUserAnalyticsSchema = createInsertSchema(userAnalytics).omit({
   id: true,
 });
@@ -368,9 +339,6 @@ export type InsertTranscriptSegment = z.infer<typeof insertTranscriptSegmentSche
 
 export type Note = typeof notes.$inferSelect;
 export type InsertNote = z.infer<typeof insertNoteSchema>;
-
-export type JournalEntry = typeof journalEntries.$inferSelect;
-export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
 
 export type UserAnalytics = typeof userAnalytics.$inferSelect;
 export type InsertUserAnalytics = z.infer<typeof insertUserAnalyticsSchema>;

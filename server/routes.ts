@@ -8,9 +8,8 @@ import {
   translateArabicToEnglish,
   generateActionPoints,
   generateSermonSummary,
-  generateJournalPrompt,
 } from "./openai-service";
-import { insertSermonSchema, insertNoteSchema, insertJournalEntrySchema, duas, favoriteDuas, hadiths, favoriteHadiths, userPreferences, users } from "@shared/schema";
+import { insertSermonSchema, insertNoteSchema, duas, favoriteDuas, hadiths, favoriteHadiths, userPreferences, users } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -326,63 +325,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/notes/:id", requireAuth, async (req, res) => {
     try {
       await storage.deleteNote(req.params.id);
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ============ JOURNAL ROUTES (Premium) ============
-
-  // Get journal entries
-  app.get("/api/journal", requireAuth, requirePremium, async (req, res) => {
-    try {
-      const entries = await storage.getUserJournalEntries(req.user!.id);
-      res.json(entries);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Create journal entry with AI-generated prompt
-  app.post("/api/journal", requireAuth, requirePremium, async (req, res) => {
-    try {
-      const validated = insertJournalEntrySchema.parse(req.body);
-      
-      // Generate AI prompt if sermon is provided
-      let prompt = validated.prompt;
-      if (validated.sermonId && !prompt) {
-        const sermon = await storage.getSermon(validated.sermonId);
-        if (sermon) {
-          prompt = await generateJournalPrompt(sermon.title, sermon.mainTheme || "spiritual growth");
-        }
-      }
-
-      const entry = await storage.createJournalEntry({
-        ...validated,
-        userId: req.user!.id,
-        prompt: prompt || "What lesson from today's khutbah will you apply this week?",
-      });
-      res.status(201).json(entry);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
-    }
-  });
-
-  // Update journal entry
-  app.patch("/api/journal/:id", requireAuth, requirePremium, async (req, res) => {
-    try {
-      await storage.updateJournalEntry(req.params.id, req.body.content, req.body.mood);
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Delete journal entry
-  app.delete("/api/journal/:id", requireAuth, requirePremium, async (req, res) => {
-    try {
-      await storage.deleteJournalEntry(req.params.id);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

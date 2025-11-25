@@ -22,7 +22,6 @@ import HijriCalendarPage from "@/pages/hijri-calendar-page";
 import KhutbahDatabasePage from "@/pages/khutbah-database-page";
 import ActionPointsPage from "@/pages/action-points-page";
 import AnalyticsPage from "@/pages/analytics-page";
-import JournalPage from "@/pages/journal-page";
 import ProfilePage from "@/pages/profile-page";
 import PremiumPage from "@/pages/premium-page";
 import NotificationSettingsPage from "@/pages/notification-settings-page";
@@ -54,7 +53,6 @@ function Router() {
       
       <Route path="/action-points" component={ActionPointsPage} />
       <Route path="/analytics" component={AnalyticsPage} />
-      <Route path="/journal" component={JournalPage} />
       
       <Route path="/profile" component={ProfilePage} />
       <Route path="/premium" component={PremiumPage} />
