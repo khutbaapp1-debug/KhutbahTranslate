@@ -21,6 +21,8 @@ import RamadanPage from "@/pages/ramadan-page";
 import HijriCalendarPage from "@/pages/hijri-calendar-page";
 import KhutbahDatabasePage from "@/pages/khutbah-database-page";
 import ActionPointsPage from "@/pages/action-points-page";
+import KhutbahGuidelinesPage from "@/pages/khutbah-guidelines-page";
+import PrayerTrackerPage from "@/pages/prayer-tracker-page";
 import AnalyticsPage from "@/pages/analytics-page";
 import ProfilePage from "@/pages/profile-page";
 import PremiumPage from "@/pages/premium-page";
@@ -52,6 +54,8 @@ function Router() {
       <Route path="/calendar" component={HijriCalendarPage} />
       
       <Route path="/action-points" component={ActionPointsPage} />
+      <Route path="/guidelines" component={KhutbahGuidelinesPage} />
+      <Route path="/prayer-tracker" component={PrayerTrackerPage} />
       <Route path="/analytics" component={AnalyticsPage} />
       
       <Route path="/profile" component={ProfilePage} />
