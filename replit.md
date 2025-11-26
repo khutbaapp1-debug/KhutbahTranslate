@@ -15,16 +15,20 @@ The frontend is built with React 18, TypeScript, and Vite. UI components utilize
 The backend is an Express.js application on Node.js, providing RESTful API endpoints. Authentication uses Passport.js with a local strategy and session management (express-session, connect-pg-simple). Multer handles audio file uploads, and role-based access control (`requireAuth`, `requirePremium`) manages feature access.
 
 ### Data Storage
-PostgreSQL serves as the primary database, utilizing Neon for serverless capabilities and Drizzle ORM for type-safe queries. The schema includes tables for users, sermons, transcript_segments, notes, journal_entries, user_analytics, hadiths, favoriteHadiths, duas, favoriteDuas, and userPreferences, including comprehensive notification settings.
+PostgreSQL serves as the primary database, utilizing Neon for serverless capabilities and Drizzle ORM for type-safe queries. The schema includes tables for users, sermons, transcript_segments, notes, khutbah_guidelines, missed_prayers, user_analytics, hadiths, favoriteHadiths, duas, favoriteDuas, and userPreferences, including comprehensive notification settings.
 
 ### Key Architectural Decisions
 The project adopts a monorepo structure with `/client`, `/server`, and `/shared` directories. Real-time translation involves audio chunk capture, backend processing with Whisper for transcription, and GPT-4o-mini for translation, with segments stored for real-time display. Session-based authentication is used for security. Premium feature gating is implemented via middleware and UI flags. A mobile-first design prioritizes thumb-friendly interactions. Islamic content handling includes dedicated Arabic fonts, RTL support, and custom translation logic. Multi-language support is built-in, with Capacitor enabling native mobile deployment.
+
+### New Features (November 2025)
+- **Khutbah Guidelines**: AI-powered weekly implementation plans generated from sermon content. Each sermon can generate 5-7 practical suggestions across categories (Family, Work, Spiritual Practice, Community, Personal Growth) that users can track and complete.
+- **Prayer Tracker (Qada)**: Missed prayer tracking system allowing users to log prayers they need to make up, mark them as completed, and view progress statistics with estimated completion timeline.
 
 ## External Dependencies
 
 ### AI Services
 - **OpenAI Whisper API**: For Arabic audio transcription and source language auto-detection.
-- **GPT-4o-mini**: For cost-effective and high-quality Arabic-to-English translation, maintaining Islamic context, and for AI-generated features like action point extraction, sermon summaries, and reflection prompts.
+- **GPT-4o-mini**: For cost-effective and high-quality Arabic-to-English translation, maintaining Islamic context, and for AI-generated features like action point extraction, sermon summaries, and khutbah implementation guidelines.
 
 ### Payment Processing
 - **Stripe**: For managing premium subscriptions, handling payments, and processing webhooks.
