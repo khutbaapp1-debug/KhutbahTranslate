@@ -2,9 +2,18 @@
 // Based on javascript_openai blueprint
 import OpenAI from "openai";
 import { getLanguageConfig } from "@shared/language-config";
+import { translationCacheService } from "./translation-cache";
 
 // Using gpt-4o model for reliable translations
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Translation cache statistics
+let cacheHits = 0;
+let cacheMisses = 0;
+
+export function getTranslationStats() {
+  return { cacheHits, cacheMisses, hitRate: cacheHits / (cacheHits + cacheMisses) || 0 };
+}
 
 export interface TranscriptionResult {
   text: string;
@@ -55,10 +64,50 @@ export async function transcribeArabicAudio(audioBuffer: Buffer): Promise<Transc
 
 // Translate text from any language to target language with Islamic terminology preservation
 // Supports Arabic, Urdu, Hindi, French, and other languages → English/Hindi/French
+// Uses hybrid caching: 1) phrase dictionary, 2) segment cache, 3) OpenAI fallback
 export async function translateArabicToEnglish(sourceText: string): Promise<TranslationResult> {
   try {
     const languageConfig = getLanguageConfig();
     const targetLanguage = languageConfig.targetLanguage;
+    
+    // Skip empty or very short text
+    if (!sourceText || sourceText.trim().length < 2) {
+      return {
+        translatedText: "",
+        originalText: sourceText,
+        targetLanguage: languageConfig.displayName,
+      };
+    }
+    
+    // STEP 1: Check Islamic phrase dictionary (instant, free)
+    const phraseMatch = await translationCacheService.checkPhraseDictionary(sourceText);
+    if (phraseMatch) {
+      cacheHits++;
+      console.log(`[Cache] Phrase dictionary hit for: "${sourceText.substring(0, 30)}..."`);
+      return {
+        translatedText: phraseMatch,
+        originalText: sourceText,
+        sourceLanguage: "Arabic",
+        targetLanguage: languageConfig.displayName,
+      };
+    }
+    
+    // STEP 2: Check translation cache (previously translated segments)
+    const cachedTranslation = await translationCacheService.checkTranslationCache(sourceText, targetLanguage);
+    if (cachedTranslation) {
+      cacheHits++;
+      console.log(`[Cache] Translation cache hit for: "${sourceText.substring(0, 30)}..."`);
+      return {
+        translatedText: cachedTranslation,
+        originalText: sourceText,
+        sourceLanguage: "Arabic",
+        targetLanguage: languageConfig.displayName,
+      };
+    }
+    
+    // STEP 3: No cache hit - call OpenAI API
+    cacheMisses++;
+    console.log(`[Cache] Cache miss - calling OpenAI for: "${sourceText.substring(0, 30)}..."`);
     
     const prompt = `You are translating a live khutbah (Islamic sermon) in real-time. Each audio chunk is 5 seconds, so the text will be a fragment of a longer sermon.
 
@@ -136,6 +185,17 @@ Respond in JSON: { "translation": "the translation only - no other text", "detec
     // Clean up extra spaces and punctuation artifacts
     translation = translation.replace(/\s{2,}/g, ' ').trim();
     translation = translation.replace(/^[,.\s]+|[,.\s]+$/g, '').trim();
+    
+    // STEP 4: Save successful translation to cache for future use
+    if (translation && translation.length > 0) {
+      await translationCacheService.saveToCache(
+        sourceText,
+        translation,
+        detectedLanguage,
+        targetLanguage
+      );
+      console.log(`[Cache] Saved new translation to cache`);
+    }
     
     return {
       translatedText: translation,
