@@ -1307,6 +1307,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ TRANSLATION CACHE ROUTES ============
+  
+  // Get translation cache statistics (public, for monitoring)
+  app.get("/api/translation-cache/stats", async (req, res) => {
+    try {
+      const { translationCacheService } = await import("./translation-cache");
+      const { getTranslationStats } = await import("./openai-service");
+      
+      const cacheStats = await translationCacheService.getCacheStats();
+      const sessionStats = getTranslationStats();
+      
+      res.json({
+        database: cacheStats,
+        session: sessionStats,
+        estimatedCostSavings: `$${(cacheStats.totalHits * 0.0001).toFixed(4)}` // Rough estimate
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Seed Islamic phrase dictionary (admin only)
+  app.post("/api/admin/seed-phrases", requireAdmin, async (req, res) => {
+    try {
+      const { seedIslamicPhrases } = await import("./islamic-phrases-seed");
+      const count = await seedIslamicPhrases();
+      
+      res.json({ 
+        success: true, 
+        message: `Seeded ${count} Islamic phrases to the dictionary`,
+        phrasesAdded: count
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
