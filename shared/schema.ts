@@ -194,6 +194,29 @@ export const missedPrayers = pgTable("missed_prayers", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Translation cache for reducing OpenAI API calls
+export const translationCache = pgTable("translation_cache", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  normalizedText: text("normalized_text").notNull().unique(), // Arabic text with diacritics stripped, lowercase
+  originalText: text("original_text").notNull(), // Original Arabic text
+  translatedText: text("translated_text").notNull(), // English translation
+  sourceLanguage: text("source_language").notNull().default("Arabic"),
+  targetLanguage: text("target_language").notNull().default("English"),
+  hitCount: integer("hit_count").notNull().default(1), // How many times this translation was used
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  lastUsedAt: timestamp("last_used_at").notNull().defaultNow(),
+});
+
+// Islamic phrase dictionary for instant translations (no AI needed)
+export const islamicPhrases = pgTable("islamic_phrases", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  arabicText: text("arabic_text").notNull().unique(), // Original Arabic phrase
+  normalizedText: text("normalized_text").notNull(), // Normalized for matching
+  englishText: text("english_text").notNull(), // English translation
+  category: text("category").notNull(), // 'dhikr', 'greetings', 'quran', 'hadith_formula', 'honorific'
+  frequency: text("frequency").notNull().default("common"), // 'common', 'frequent', 'rare'
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   sermons: many(sermons),
@@ -375,6 +398,17 @@ export const insertMissedPrayerSchema = createInsertSchema(missedPrayers).omit({
   createdAt: true,
 });
 
+export const insertTranslationCacheSchema = createInsertSchema(translationCache).omit({
+  id: true,
+  createdAt: true,
+  lastUsedAt: true,
+  hitCount: true,
+});
+
+export const insertIslamicPhraseSchema = createInsertSchema(islamicPhrases).omit({
+  id: true,
+});
+
 // TypeScript types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -414,3 +448,9 @@ export type InsertKhutbahGuideline = z.infer<typeof insertKhutbahGuidelineSchema
 
 export type MissedPrayer = typeof missedPrayers.$inferSelect;
 export type InsertMissedPrayer = z.infer<typeof insertMissedPrayerSchema>;
+
+export type TranslationCacheEntry = typeof translationCache.$inferSelect;
+export type InsertTranslationCache = z.infer<typeof insertTranslationCacheSchema>;
+
+export type IslamicPhrase = typeof islamicPhrases.$inferSelect;
+export type InsertIslamicPhrase = z.infer<typeof insertIslamicPhraseSchema>;
