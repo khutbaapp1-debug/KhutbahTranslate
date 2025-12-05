@@ -197,7 +197,7 @@ export const missedPrayers = pgTable("missed_prayers", {
 // Translation cache for reducing OpenAI API calls
 export const translationCache = pgTable("translation_cache", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  normalizedText: text("normalized_text").notNull().unique(), // Arabic text with diacritics stripped, lowercase
+  normalizedText: text("normalized_text").notNull(), // Arabic text with diacritics stripped, lowercase
   originalText: text("original_text").notNull(), // Original Arabic text
   translatedText: text("translated_text").notNull(), // English translation
   sourceLanguage: text("source_language").notNull().default("Arabic"),
@@ -205,7 +205,10 @@ export const translationCache = pgTable("translation_cache", {
   hitCount: integer("hit_count").notNull().default(1), // How many times this translation was used
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastUsedAt: timestamp("last_used_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  // Composite unique constraint: same text can have different translations for different target languages
+  uniqueTextLanguage: unique().on(table.normalizedText, table.targetLanguage),
+}));
 
 // Islamic phrase dictionary for instant translations (no AI needed)
 export const islamicPhrases = pgTable("islamic_phrases", {

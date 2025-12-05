@@ -1,7 +1,7 @@
 // Translation cache service for reducing OpenAI API calls
 // Implements hybrid caching: phrase dictionary + segment cache
 import { db } from "./db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { translationCache, islamicPhrases } from "@shared/schema";
 
 // Arabic diacritics (tashkeel) to remove for normalization
@@ -50,13 +50,19 @@ export class TranslationCacheService {
     const normalized = normalizeArabicText(arabicText);
     
     try {
+      // Query by both normalizedText AND targetLanguage for proper multi-language support
       const [cached] = await db
         .select()
         .from(translationCache)
-        .where(eq(translationCache.normalizedText, normalized))
+        .where(
+          and(
+            eq(translationCache.normalizedText, normalized),
+            eq(translationCache.targetLanguage, targetLanguage)
+          )
+        )
         .limit(1);
       
-      if (cached && cached.targetLanguage === targetLanguage) {
+      if (cached) {
         // Update hit count and last used timestamp
         await db
           .update(translationCache)
@@ -91,22 +97,16 @@ export class TranslationCacheService {
     }
     
     try {
-      await db
-        .insert(translationCache)
-        .values({
-          normalizedText: normalized,
-          originalText: originalText,
-          translatedText: translatedText,
-          sourceLanguage: sourceLanguage,
-          targetLanguage: targetLanguage,
-        })
-        .onConflictDoUpdate({
-          target: translationCache.normalizedText,
-          set: {
-            hitCount: sql`${translationCache.hitCount} + 1`,
-            lastUsedAt: new Date(),
-          }
-        });
+      // Use raw SQL for proper composite key upsert
+      await db.execute(sql`
+        INSERT INTO translation_cache (normalized_text, original_text, translated_text, source_language, target_language, hit_count, created_at, last_used_at)
+        VALUES (${normalized}, ${originalText}, ${translatedText}, ${sourceLanguage}, ${targetLanguage}, 1, NOW(), NOW())
+        ON CONFLICT (normalized_text, target_language) DO UPDATE SET
+          translated_text = EXCLUDED.translated_text,
+          source_language = EXCLUDED.source_language,
+          hit_count = translation_cache.hit_count + 1,
+          last_used_at = NOW()
+      `);
     } catch (error) {
       console.error('Failed to save to translation cache:', error);
     }
