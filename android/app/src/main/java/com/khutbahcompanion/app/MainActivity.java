@@ -1,4 +1,4 @@
-package com.khutbahtranslate.app;
+package com.khutbahcompanion.app;
 
 import com.getcapacitor.BridgeActivity;
 
