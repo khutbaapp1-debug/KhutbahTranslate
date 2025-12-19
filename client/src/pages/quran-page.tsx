@@ -52,6 +52,7 @@ const RECITERS: Reciter[] = [
   { id: "dosari", name: "Yasser Al Dosari", folder: "Yasser_Ad-Dussary_128kbps" },
   { id: "muaiqly", name: "Maher Al-Muaiqly", folder: "MaherAlMuaiqly128kbps" },
   { id: "husary", name: "Mahmoud Khalil Al-Husary", folder: "Husary_128kbps" },
+  { id: "faresabbad", name: "Faris Abad (Yemeni)", folder: "faresabbad" },
 ];
 
 export default function QuranPage() {
@@ -110,6 +111,12 @@ export default function QuranPage() {
     const reciter = RECITERS.find(r => r.id === selectedReciter);
     if (!reciter) return "";
     
+    // Faris Abad uses AlQuran Cloud API
+    if (selectedReciter === "faresabbad") {
+      return `https://cdn.alquran.cloud/media/audio/ayah/ar.faresabbad/${surahNumber}:${verseNumber}`;
+    }
+    
+    // Other reciters use everyayah.com
     const surahPadded = String(surahNumber).padStart(3, '0');
     const versePadded = String(verseNumber).padStart(3, '0');
     return `https://everyayah.com/data/${reciter.folder}/${surahPadded}${versePadded}.mp3`;

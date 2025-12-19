@@ -23,6 +23,8 @@ The project adopts a monorepo structure with `/client`, `/server`, and `/shared`
 ### New Features (November 2025)
 - **Khutbah Guidelines**: AI-powered weekly implementation plans generated from sermon content. Each sermon can generate 5-7 practical suggestions across categories (Family, Work, Spiritual Practice, Community, Personal Growth) that users can track and complete.
 - **Prayer Tracker (Qada)**: Missed prayer tracking system allowing users to log prayers they need to make up, mark them as completed, and view progress statistics with estimated completion timeline.
+- **Translation Cost Optimization**: Hybrid caching system with 307+ common Islamic phrases, translation cache for reused segments, and estimated 50-70% reduction in OpenAI API costs.
+- **Faris Abad Quran Recitation**: Added support for Faris Abad (Yemeni reciter) via AlQuran Cloud API, providing additional high-quality audio recitation option in the Quran reader.
 
 ## External Dependencies
 
