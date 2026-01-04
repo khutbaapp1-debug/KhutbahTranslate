@@ -12,13 +12,20 @@ Preferred communication style: Simple, everyday language.
 The frontend is built with React 18, TypeScript, and Vite. UI components utilize Shadcn/ui (New York style) with Radix UI primitives for accessibility, styled using Tailwind CSS and CVA. State management is handled by TanStack Query for server state and React Hook Form with Zod for validation. The design is mobile-first, featuring touch-optimized interactions, horizontal scroll cards, fixed bottom navigation, and an Islamic aesthetic with Arabic typography and respectful color treatment.
 
 ### Backend Architecture
-The backend is an Express.js application on Node.js, providing RESTful API endpoints. Authentication uses Passport.js with a local strategy and session management (express-session, connect-pg-simple). Multer handles audio file uploads, and role-based access control (`requireAuth`, `requirePremium`) manages feature access.
+The backend is an Express.js application on Node.js, providing RESTful API endpoints. Authentication uses Replit Auth (OpenID Connect) supporting Google, Apple, GitHub, X, and email/password sign-in via OAuth. Session management uses express-session with connect-pg-simple for PostgreSQL-backed sessions. Multer handles audio file uploads, and role-based access control (`requireAuth`, `requirePremium`, `requireAdmin`) manages feature access. The auth system maps OIDC subjects to internal UUID user records.
 
 ### Data Storage
 PostgreSQL serves as the primary database, utilizing Neon for serverless capabilities and Drizzle ORM for type-safe queries. The schema includes tables for users, sermons, transcript_segments, notes, khutbah_guidelines, missed_prayers, user_analytics, hadiths, favoriteHadiths, duas, favoriteDuas, and userPreferences, including comprehensive notification settings.
 
 ### Key Architectural Decisions
-The project adopts a monorepo structure with `/client`, `/server`, and `/shared` directories. Real-time translation involves audio chunk capture, backend processing with Whisper for transcription, and GPT-4o-mini for translation, with segments stored for real-time display. Session-based authentication is used for security. Premium feature gating is implemented via middleware and UI flags. A mobile-first design prioritizes thumb-friendly interactions. Islamic content handling includes dedicated Arabic fonts, RTL support, and custom translation logic. Multi-language support is built-in, with Capacitor enabling native mobile deployment.
+The project adopts a monorepo structure with `/client`, `/server`, and `/shared` directories. Real-time translation involves audio chunk capture, backend processing with Whisper for transcription, and GPT-4o-mini for translation, with segments stored for real-time display. OAuth-based authentication via Replit Auth enables social sign-in (Google, Apple, etc.) while maintaining UUID primary keys for users. Premium feature gating is implemented via middleware and UI flags. A mobile-first design prioritizes thumb-friendly interactions. Islamic content handling includes dedicated Arabic fonts, RTL support, and custom translation logic. Multi-language support is built-in, with Capacitor enabling native mobile deployment.
+
+### Authentication (January 2026)
+- **Replit Auth Integration**: Migrated from username/password auth to Replit Auth OIDC
+- **Social Sign-In**: Supports Google, Apple, GitHub, X, and email/password authentication
+- **User Schema**: Users table now includes `oidcSubject`, `firstName`, `lastName`, `profileImageUrl` fields
+- **Admin Management**: Complimentary access endpoints use email for user lookup instead of username
+- **Auth Files**: Located in `server/replit_integrations/auth/` directory
 
 ### New Features (November 2025)
 - **Khutbah Guidelines**: AI-powered weekly implementation plans generated from sermon content. Each sermon can generate 5-7 practical suggestions across categories (Family, Work, Spiritual Practice, Community, Personal Growth) that users can track and complete.

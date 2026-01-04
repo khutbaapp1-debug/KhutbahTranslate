@@ -52,7 +52,7 @@ function updateUserSession(
 
 async function upsertUser(claims: any) {
   await authStorage.upsertUser({
-    id: claims["sub"],
+    oidcSubject: claims["sub"],
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
@@ -72,7 +72,7 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
+    const user: any = {};
     updateUserSession(user, tokens);
     await upsertUser(tokens.claims());
     verified(null, user);

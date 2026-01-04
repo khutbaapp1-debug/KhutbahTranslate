@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme-provider";
-import { AuthProvider } from "@/hooks/use-auth";
 
 import HomePage from "@/pages/home-page";
 import PrayerTimesPage from "@/pages/prayer-times-page";
@@ -27,14 +26,14 @@ import AnalyticsPage from "@/pages/analytics-page";
 import ProfilePage from "@/pages/profile-page";
 import PremiumPage from "@/pages/premium-page";
 import NotificationSettingsPage from "@/pages/notification-settings-page";
-import AuthPage from "@/pages/auth-page";
+import LandingPage from "@/pages/landing-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/landing" component={LandingPage} />
       
       <Route path="/prayer" component={PrayerTimesPage} />
       <Route path="/tasbih" component={TasbihPage} />
@@ -70,14 +69,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ThemeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </ThemeProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

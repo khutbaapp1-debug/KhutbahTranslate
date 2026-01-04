@@ -97,7 +97,7 @@ export default function KhutbahGuidelinesPage() {
               <p className="text-muted-foreground">
                 Sign in to access your personalized weekly implementation plans from khutbahs.
               </p>
-              <Button className="w-full" onClick={() => setLocation('/auth')} data-testid="button-signin">
+              <Button className="w-full" onClick={() => { window.location.href = "/api/login"; }} data-testid="button-signin">
                 Sign In
               </Button>
             </CardContent>

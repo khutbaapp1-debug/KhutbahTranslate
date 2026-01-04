@@ -201,7 +201,7 @@ export default function PrayerTrackerPage() {
               <p className="text-muted-foreground">
                 Sign in to track your missed prayers and makeup progress.
               </p>
-              <Button className="w-full" onClick={() => setLocation('/auth')} data-testid="button-signin">
+              <Button className="w-full" onClick={() => { window.location.href = "/api/login"; }} data-testid="button-signin">
                 Sign In
               </Button>
             </CardContent>

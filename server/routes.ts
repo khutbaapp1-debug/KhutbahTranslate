@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, registerAuthRoutes, isAuthenticated, authStorage } from "./replit_integrations/auth";
 import {
   transcribeArabicAudio,
   translateArabicToEnglish,
@@ -16,11 +16,20 @@ import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { checkTranslationLimit, addTranslationMinutes, getUserUsageInfo, redeemAdCredit } from "./translation-limits";
 
-// Middleware for authenticated routes
-function requireAuth(req: any, res: any, next: any) {
-  if (!req.isAuthenticated()) {
+// Middleware for authenticated routes - gets full user from database
+async function requireAuth(req: any, res: any, next: any) {
+  if (!req.isAuthenticated() || !req.user?.claims?.sub) {
     return res.status(401).json({ error: "Authentication required" });
   }
+  
+  // Get full user from database using OIDC subject
+  const user = await authStorage.getUserByOidcSubject(req.user.claims.sub);
+  if (!user) {
+    return res.status(401).json({ error: "User not found" });
+  }
+  
+  // Attach full user to request
+  req.dbUser = user;
   next();
 }
 
@@ -48,20 +57,19 @@ function requireAdmin(req: any, res: any, next: any) {
   next();
 }
 
-// Middleware for premium users
+// Middleware for premium users (must be called after requireAuth)
 function requirePremium(req: any, res: any, next: any) {
   // In development (non-production), allow testing of premium features without payment
-  // This allows authenticated users to test all premium features locally
   if (process.env.NODE_ENV !== 'production') {
     return next();
   }
   
   // Check for complimentary access (for friends/special users)
-  if (req.user?.hasComplimentaryAccess) {
+  if (req.dbUser?.hasComplimentaryAccess) {
     return next();
   }
   
-  if (!req.user || req.user.subscriptionTier !== "premium") {
+  if (!req.dbUser || req.dbUser.subscriptionTier !== "premium") {
     return res.status(403).json({ error: "Premium subscription required" });
   }
   next();
@@ -74,15 +82,17 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication routes: /api/register, /api/login, /api/logout, /api/user
-  setupAuth(app);
+  // Setup Replit Auth routes: /api/login, /api/logout, /api/callback
+  await setupAuth(app);
+  // Register /api/auth/user endpoint
+  registerAuthRoutes(app);
 
   // ============ SERMON ROUTES ============
   
   // Get user's sermons
   app.get("/api/sermons", requireAuth, async (req, res) => {
     try {
-      const sermons = await storage.getUserSermons(req.user!.id);
+      const sermons = await storage.getUserSermons(req.dbUser.id);
       res.json(sermons);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -108,7 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Sermon not found" });
       }
       // Only allow access if user owns the sermon or it's public
-      if (sermon.userId !== req.user!.id && !sermon.isPublic) {
+      if (sermon.userId !== req.dbUser.id && !sermon.isPublic) {
         return res.status(403).json({ error: "Access denied" });
       }
       res.json(sermon);
@@ -121,7 +131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sermons/:id/transcripts", requireAuth, async (req, res) => {
     try {
       const sermon = await storage.getSermon(req.params.id);
-      if (!sermon || (sermon.userId !== req.user!.id && !sermon.isPublic)) {
+      if (!sermon || (sermon.userId !== req.dbUser.id && !sermon.isPublic)) {
         return res.status(404).json({ error: "Sermon not found" });
       }
       const transcripts = await storage.getSermonTranscripts(req.params.id);
@@ -137,7 +147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validated = insertSermonSchema.parse(req.body);
       const sermon = await storage.createSermon({
         ...validated,
-        userId: req.user!.id,
+        userId: req.dbUser.id,
       });
       res.status(201).json(sermon);
     } catch (error: any) {
@@ -149,7 +159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/sermons/:id", requireAuth, async (req, res) => {
     try {
       const sermon = await storage.getSermon(req.params.id);
-      if (!sermon || sermon.userId !== req.user!.id) {
+      if (!sermon || sermon.userId !== req.dbUser.id) {
         return res.status(404).json({ error: "Sermon not found" });
       }
       await storage.updateSermon(req.params.id, req.body);
@@ -163,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/sermons/:id", requireAuth, async (req, res) => {
     try {
       const sermon = await storage.getSermon(req.params.id);
-      if (!sermon || sermon.userId !== req.user!.id) {
+      if (!sermon || sermon.userId !== req.dbUser.id) {
         return res.status(404).json({ error: "Sermon not found" });
       }
       await storage.deleteSermon(req.params.id);
@@ -178,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get translation usage info (authenticated users only)
   app.get("/api/translation/usage", requireAuth, async (req, res) => {
     try {
-      const usage = await getUserUsageInfo(req.user!.id);
+      const usage = await getUserUsageInfo(req.dbUser.id);
       res.json(usage);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -188,7 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Redeem ad credit: +30 minutes after watching ad (authenticated users only)
   app.post("/api/translation/redeem-ad", requireAuth, async (req, res) => {
     try {
-      const usage = await redeemAdCredit(req.user!.id);
+      const usage = await redeemAdCredit(req.dbUser.id);
       res.json({
         success: true,
         message: "+30 minutes added to your account!",
@@ -290,8 +300,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const sermonId = req.query.sermonId as string;
       const notes = sermonId
-        ? await storage.getSermonNotes(req.user!.id, sermonId)
-        : await storage.getUserNotes(req.user!.id);
+        ? await storage.getSermonNotes(req.dbUser.id, sermonId)
+        : await storage.getUserNotes(req.dbUser.id);
       res.json(notes);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -304,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validated = insertNoteSchema.parse(req.body);
       const note = await storage.createNote({
         ...validated,
-        userId: req.user!.id,
+        userId: req.dbUser.id,
       });
       res.status(201).json(note);
     } catch (error: any) {
@@ -337,7 +347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user analytics
   app.get("/api/analytics", requireAuth, requirePremium, async (req, res) => {
     try {
-      const analytics = await storage.getUserAnalytics(req.user!.id);
+      const analytics = await storage.getUserAnalytics(req.dbUser.id);
       res.json(analytics || {});
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -347,7 +357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update analytics
   app.patch("/api/analytics", requireAuth, requirePremium, async (req, res) => {
     try {
-      await storage.updateUserAnalytics(req.user!.id, req.body);
+      await storage.updateUserAnalytics(req.dbUser.id, req.body);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -359,7 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get preferences
   app.get("/api/preferences", requireAuth, async (req, res) => {
     try {
-      const prefs = await storage.getUserPreferences(req.user!.id);
+      const prefs = await storage.getUserPreferences(req.dbUser.id);
       res.json(prefs || {});
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -369,7 +379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update preferences
   app.patch("/api/preferences", requireAuth, async (req, res) => {
     try {
-      await storage.updateUserPreferences(req.user!.id, req.body);
+      await storage.updateUserPreferences(req.dbUser.id, req.body);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -1165,19 +1175,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Validate input with Zod
       const inputSchema = z.object({
-        username: z.string().min(1, "Username is required").max(50, "Username too long")
+        email: z.string().email("Valid email is required")
       });
       
       const validated = inputSchema.parse(req.body);
-      const { username } = validated;
+      const { email } = validated;
       
       // Use transaction to ensure atomic operation
       const result = await db.transaction(async (tx) => {
-        // Find user by username (case-insensitive for consistency)
+        // Find user by email (case-insensitive for consistency)
         const [user] = await tx
           .select()
           .from(users)
-          .where(sql`LOWER(${users.username}) = LOWER(${username})`);
+          .where(sql`LOWER(${users.email}) = LOWER(${email})`);
         
         if (!user) {
           throw new Error("User not found");
@@ -1218,11 +1228,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ 
         success: true, 
-        message: `Granted complimentary access to ${username}`,
+        message: `Granted complimentary access to ${email}`,
         user: {
           id: result.updated.id,
-          username: result.updated.username,
-          hasComplimentaryAccess: result.updated.hasComplimentaryAccess
+          email: result.updated.email,
+          hasComplimentaryAccess: result.updated.has_complimentary_access
         },
         remainingSlots: 15 - result.newCount
       });
@@ -1239,17 +1249,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Validate input with Zod
       const inputSchema = z.object({
-        username: z.string().min(1, "Username is required").max(50, "Username too long")
+        email: z.string().email("Valid email is required")
       });
       
       const validated = inputSchema.parse(req.body);
-      const { username } = validated;
+      const { email } = validated;
       
-      // Find user by username (case-insensitive for consistency)
+      // Find user by email (case-insensitive for consistency)
       const [user] = await db
         .select()
         .from(users)
-        .where(sql`LOWER(${users.username}) = LOWER(${username})`);
+        .where(sql`LOWER(${users.email}) = LOWER(${email})`);
       
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -1268,10 +1278,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ 
         success: true, 
-        message: `Revoked complimentary access from ${username}`,
+        message: `Revoked complimentary access from ${email}`,
         user: {
           id: updated.id,
-          username: updated.username,
+          email: updated.email,
           hasComplimentaryAccess: updated.hasComplimentaryAccess
         }
       });
@@ -1289,8 +1299,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const complimentaryUsers = await db
         .select({
           id: users.id,
-          username: users.username,
           email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
           hasComplimentaryAccess: users.hasComplimentaryAccess,
           createdAt: users.createdAt
         })

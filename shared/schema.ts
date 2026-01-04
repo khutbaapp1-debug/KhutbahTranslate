@@ -1,28 +1,45 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, timestamp, integer, decimal, uuid, jsonb, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, timestamp, integer, decimal, uuid, jsonb, unique, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table with subscription support
+// Session storage table for Replit Auth
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)]
+);
+
+// Users table with subscription support and OAuth integration
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  // OAuth integration (Replit Auth)
+  oidcSubject: varchar("oidc_subject").unique(), // OIDC sub claim for social login
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  // Email (required for OAuth users)
+  email: text("email").unique(),
+  // Subscription support
   subscriptionTier: text("subscription_tier").notNull().default("free"), // 'free' or 'premium'
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   // Complimentary premium access (for friends/special users, bypasses payment)
-  // Admin grants this via secure API endpoints using ADMIN_API_KEY environment variable
   hasComplimentaryAccess: boolean("has_complimentary_access").notNull().default(false),
   // Translation usage tracking (free tier: 60 minutes/month base + ad credits)
   monthlyTranslationMinutesUsed: integer("monthly_translation_minutes_used").notNull().default(0),
   translationUsageResetDate: timestamp("translation_usage_reset_date").notNull().defaultNow(),
   // Ad credits system: watch 30-sec video to earn +30 minutes (max 2 hours/month)
   adCreditsMinutes: integer("ad_credits_minutes").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Sermons table
@@ -339,11 +356,25 @@ export const missedPrayersRelations = relations(missedPrayers, ({ one }) => ({
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
   subscriptionTier: true,
   subscriptionExpiresAt: true,
   stripeCustomerId: true,
   stripeSubscriptionId: true,
+  hasComplimentaryAccess: true,
+  monthlyTranslationMinutesUsed: true,
+  translationUsageResetDate: true,
+  adCreditsMinutes: true,
 });
+
+// UpsertUser type for OAuth authentication
+export type UpsertUser = {
+  oidcSubject: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImageUrl?: string | null;
+};
 
 export const insertSermonSchema = createInsertSchema(sermons).omit({
   id: true,

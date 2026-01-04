@@ -8,21 +8,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 
 export default function ProfilePage() {
-  const { user, logoutMutation } = useAuth();
+  const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Redirect to auth page if not logged in
+  // Redirect to landing page if not logged in
   if (!user) {
-    setLocation("/auth");
+    setLocation("/landing");
     return null;
   }
 
   const handleLogout = () => {
-    logoutMutation.mutate(undefined, {
-      onSuccess: () => {
-        setLocation("/auth");
-      },
-    });
+    window.location.href = "/api/logout";
   };
 
   const stats = [
@@ -50,12 +46,12 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               <Avatar className="w-20 h-20">
                 <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                  {user.username.charAt(0)}
+                  {user.firstName?.charAt(0) || user.email?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <h2 className="text-2xl font-semibold text-foreground" data-testid="text-username">
-                  {user.username}
+                  {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}
                 </h2>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
                 <Badge
@@ -140,7 +136,6 @@ export default function ProfilePage() {
               variant="ghost"
               className="w-full justify-start text-destructive hover:text-destructive"
               onClick={handleLogout}
-              disabled={logoutMutation.isPending}
               data-testid="button-logout"
             >
               <LogOut className="w-4 h-4 mr-2" />

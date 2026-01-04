@@ -243,7 +243,7 @@ export default function HomePage() {
               <Button
                 variant="default"
                 size="sm"
-                onClick={() => setLocation("/auth")}
+                onClick={() => { window.location.href = "/api/login"; }}
                 data-testid="button-login"
               >
                 <LogIn className="w-4 h-4 mr-1" />

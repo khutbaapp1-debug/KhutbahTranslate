@@ -51,9 +51,9 @@ export default function PremiumPage() {
   ];
 
   const handleUpgrade = () => {
-    // If not logged in, redirect to auth page first
+    // If not logged in, redirect to login first
     if (!user) {
-      setLocation("/auth");
+      window.location.href = "/api/login";
       return;
     }
     // TODO: Implement Stripe checkout flow when ready
