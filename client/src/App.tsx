@@ -27,6 +27,8 @@ import ProfilePage from "@/pages/profile-page";
 import PremiumPage from "@/pages/premium-page";
 import NotificationSettingsPage from "@/pages/notification-settings-page";
 import LandingPage from "@/pages/landing-page";
+import CheckoutSuccessPage from "@/pages/checkout-success-page";
+import CheckoutCancelPage from "@/pages/checkout-cancel-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -34,6 +36,8 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/landing" component={LandingPage} />
+      <Route path="/checkout/success" component={CheckoutSuccessPage} />
+      <Route path="/checkout/cancel" component={CheckoutCancelPage} />
       
       <Route path="/prayer" component={PrayerTimesPage} />
       <Route path="/tasbih" component={TasbihPage} />

@@ -1355,6 +1355,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ STRIPE ROUTES ============
+
+  // Create a checkout session for premium subscription
+  app.post("/api/stripe/checkout", requireAuth, async (req, res) => {
+    try {
+      const { getStripeClient } = await import("./stripeClient");
+      const stripe = getStripeClient();
+
+      const user = req.dbUser;
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+      // Find or create Stripe customer
+      let customerId = user.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email || undefined,
+          name: [user.firstName, user.lastName].filter(Boolean).join(" ") || undefined,
+          metadata: { userId: user.id },
+        });
+        await db.update(users)
+          .set({ stripeCustomerId: customer.id })
+          .where(eq(users.id, user.id));
+        customerId = customer.id;
+      }
+
+      // Find the premium price in Stripe
+      const prices = await stripe.prices.list({
+        active: true,
+        type: "recurring",
+        limit: 10,
+      });
+
+      // Look for the $4.99/month price
+      let priceId = prices.data.find(p => p.unit_amount === 499)?.id;
+      
+      if (!priceId) {
+        // Create the product and price if it doesn't exist
+        const product = await stripe.products.create({
+          name: "Khutbah Companion Premium",
+          description: "Unlimited AI features, khutbah database access, analytics dashboard, and more.",
+        });
+        const price = await stripe.prices.create({
+          product: product.id,
+          unit_amount: 499,
+          currency: "usd",
+          recurring: { interval: "month" },
+        });
+        priceId = price.id;
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        line_items: [{ price: priceId, quantity: 1 }],
+        mode: "subscription",
+        success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/checkout/cancel`,
+        metadata: { userId: user.id },
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("Stripe checkout error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Verify checkout session and upgrade user to premium
+  app.post("/api/stripe/verify-session", requireAuth, async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      if (!sessionId) {
+        return res.status(400).json({ error: "Session ID required" });
+      }
+
+      const { getStripeClient } = await import("./stripeClient");
+      const stripe = getStripeClient();
+
+      const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ["subscription"],
+      });
+
+      if (session.payment_status === "paid" || session.status === "complete") {
+        const subscriptionId = typeof session.subscription === "string"
+          ? session.subscription
+          : session.subscription?.id;
+
+        // Upgrade user to premium
+        await db.update(users)
+          .set({
+            subscriptionTier: "premium",
+            stripeSubscriptionId: subscriptionId || null,
+            subscriptionExpiresAt: null, // Ongoing subscription
+          })
+          .where(eq(users.id, req.dbUser.id));
+
+        return res.json({ success: true, status: "premium" });
+      }
+
+      res.json({ success: false, status: session.payment_status });
+    } catch (error: any) {
+      console.error("Stripe verify-session error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Stripe webhook handler (raw body required — registered in index.ts before express.json)
+  // The route /api/stripe/webhook is registered in server/index.ts
+
+  // Get subscription status for logged-in user
+  app.get("/api/stripe/subscription", requireAuth, async (req, res) => {
+    try {
+      const user = req.dbUser;
+      if (!user.stripeSubscriptionId) {
+        return res.json({ subscription: null, tier: user.subscriptionTier });
+      }
+
+      const { getStripeClient } = await import("./stripeClient");
+      const stripe = getStripeClient();
+      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+      res.json({ subscription, tier: user.subscriptionTier });
+    } catch (error: any) {
+      console.error("Stripe subscription error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Customer portal — manage billing
+  app.post("/api/stripe/portal", requireAuth, async (req, res) => {
+    try {
+      const user = req.dbUser;
+      if (!user.stripeCustomerId) {
+        return res.status(400).json({ error: "No Stripe customer found" });
+      }
+
+      const { getStripeClient } = await import("./stripeClient");
+      const stripe = getStripeClient();
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url: `${baseUrl}/premium`,
+      });
+
+      res.json({ url: portalSession.url });
+    } catch (error: any) {
+      console.error("Stripe portal error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

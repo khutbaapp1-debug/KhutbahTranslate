@@ -1,11 +1,13 @@
-import { useEffect } from "react";
-import { Crown, Check, BookMarked, BookOpen, BarChart3, Sparkles, TrendingUp, Award } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Crown, Check, BookMarked, BookOpen, BarChart3, Sparkles, TrendingUp, Award, Loader2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BottomNav } from "@/components/bottom-nav";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { isPremiumUser } from "@/lib/premium";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function PremiumPage() {
   const { user } = useAuth();
@@ -50,14 +52,52 @@ export default function PremiumPage() {
     },
   ];
 
-  const handleUpgrade = () => {
-    // If not logged in, redirect to login first
+  const [upgrading, setUpgrading] = useState(false);
+  const { toast } = useToast();
+
+  const handleUpgrade = async () => {
     if (!user) {
       window.location.href = "/api/login";
       return;
     }
-    // TODO: Implement Stripe checkout flow when ready
-    console.log("Upgrade to Premium clicked");
+
+    setUpgrading(true);
+    try {
+      const res = await apiRequest("POST", "/api/stripe/checkout", {});
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Failed to start checkout");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Checkout Error",
+        description: error.message || "Something went wrong. Please try again.",
+      });
+      setUpgrading(false);
+    }
+  };
+
+  const handleManageBilling = async () => {
+    setUpgrading(true);
+    try {
+      const res = await apiRequest("POST", "/api/stripe/portal", {});
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Failed to open billing portal");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Billing Error",
+        description: error.message || "Something went wrong. Please try again.",
+      });
+      setUpgrading(false);
+    }
   };
 
   if (isPremium) {
@@ -83,14 +123,30 @@ export default function PremiumPage() {
               <p className="text-muted-foreground">
                 You have access to all premium features including the khutbah database, AI insights, analytics, and more.
               </p>
-              <Button
-                onClick={() => setLocation("/")}
-                variant="default"
-                className="mt-4"
-                data-testid="button-back-home"
-              >
-                Back to Home
-              </Button>
+              <div className="flex flex-col gap-3 mt-4">
+                <Button
+                  onClick={() => setLocation("/")}
+                  variant="default"
+                  className="w-full"
+                  data-testid="button-back-home"
+                >
+                  Back to Home
+                </Button>
+                <Button
+                  onClick={handleManageBilling}
+                  variant="outline"
+                  className="w-full"
+                  disabled={upgrading}
+                  data-testid="button-manage-billing"
+                >
+                  {upgrading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Settings className="w-4 h-4 mr-2" />
+                  )}
+                  Manage Billing
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -153,10 +209,15 @@ export default function PremiumPage() {
               size="lg"
               onClick={handleUpgrade}
               className="w-full max-w-sm"
+              disabled={upgrading}
               data-testid="button-upgrade-premium"
             >
-              <Crown className="w-5 h-5 mr-2" />
-              Upgrade Now
+              {upgrading ? (
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              ) : (
+                <Crown className="w-5 h-5 mr-2" />
+              )}
+              {upgrading ? "Redirecting to Checkout..." : "Upgrade Now"}
             </Button>
             <p className="text-xs text-muted-foreground">Cancel anytime • Secure payment via Stripe</p>
           </CardContent>

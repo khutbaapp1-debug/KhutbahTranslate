@@ -9,6 +9,70 @@ declare module 'http' {
     rawBody: unknown
   }
 }
+
+// ===== STRIPE WEBHOOK: Must be registered BEFORE express.json() =====
+// Webhook needs the raw Buffer body, not parsed JSON
+app.post(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req: any, res: any) => {
+    const signature = req.headers["stripe-signature"];
+    if (!signature) {
+      return res.status(400).json({ error: "Missing stripe-signature header" });
+    }
+
+    try {
+      const { getStripeClient } = await import("./stripeClient");
+      const { db } = await import("./db");
+      const { users } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+
+      const stripe = getStripeClient();
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+      let event: any;
+      if (webhookSecret) {
+        const sig = Array.isArray(signature) ? signature[0] : signature;
+        event = stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
+      } else {
+        // In development without webhook secret, parse manually
+        event = JSON.parse((req.body as Buffer).toString());
+      }
+
+      // Handle subscription events
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object;
+        const userId = session.metadata?.userId;
+        if (userId && session.payment_status === "paid") {
+          await db.update(users)
+            .set({
+              subscriptionTier: "premium",
+              stripeCustomerId: session.customer,
+              stripeSubscriptionId: session.subscription,
+            })
+            .where(eq(users.id, userId));
+        }
+      }
+
+      if (event.type === "customer.subscription.deleted" || event.type === "customer.subscription.updated") {
+        const subscription = event.data.object;
+        if (subscription.status !== "active" && subscription.status !== "trialing") {
+          // Find user by stripeSubscriptionId and downgrade
+          await db.update(users)
+            .set({ subscriptionTier: "free" })
+            .where(eq(users.stripeSubscriptionId, subscription.id));
+        }
+      }
+
+      res.status(200).json({ received: true });
+    } catch (error: any) {
+      console.error("Stripe webhook error:", error.message);
+      res.status(400).json({ error: "Webhook error: " + error.message });
+    }
+  }
+);
+// ===== END STRIPE WEBHOOK =====
+
 app.use(express.json({
   verify: (req, _res, buf) => {
     req.rawBody = buf;
