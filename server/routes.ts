@@ -57,22 +57,9 @@ function requireAdmin(req: any, res: any, next: any) {
   next();
 }
 
-// Middleware for premium users (must be called after requireAuth)
-function requirePremium(req: any, res: any, next: any) {
-  // In development (non-production), allow testing of premium features without payment
-  if (process.env.NODE_ENV !== 'production') {
-    return next();
-  }
-  
-  // Check for complimentary access (for friends/special users)
-  if (req.dbUser?.hasComplimentaryAccess) {
-    return next();
-  }
-  
-  if (!req.dbUser || req.dbUser.subscriptionTier !== "premium") {
-    return res.status(403).json({ error: "Premium subscription required" });
-  }
-  next();
+// Middleware for premium users — app is free, all features open to everyone
+function requirePremium(_req: any, _res: any, next: any) {
+  return next();
 }
 
 // Configure multer for audio uploads

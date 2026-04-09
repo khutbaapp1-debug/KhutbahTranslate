@@ -42,46 +42,23 @@ export async function checkAndResetMonthlyUsage(userId: string): Promise<void> {
   }
 }
 
-// Get user's current usage info
+// Get user's current usage info — app is free, always return unlimited
 export async function getUserUsageInfo(userId: string): Promise<UsageInfo> {
-  await checkAndResetMonthlyUsage(userId);
-  
   const [user] = await db.select().from(users).where(eq(users.id, userId));
-  
+
   if (!user) {
     throw new Error("User not found");
   }
-  
-  // Premium users have unlimited usage
-  if (user.subscriptionTier === "premium") {
-    return {
-      minutesUsed: 0,
-      minutesRemaining: Infinity,
-      monthlyLimit: Infinity,
-      adCreditsAvailable: 0,
-      totalAvailable: Infinity,
-      resetDate: new Date(user.translationUsageResetDate),
-      isLimitReached: false,
-      canEarnAdCredits: false,
-    };
-  }
-  
-  const minutesUsed = user.monthlyTranslationMinutesUsed;
-  const adCreditsAvailable = user.adCreditsMinutes || 0;
-  const totalAvailable = FREE_TIER_MONTHLY_LIMIT_MINUTES + adCreditsAvailable;
-  const minutesRemaining = Math.max(0, totalAvailable - minutesUsed);
-  const isLimitReached = minutesUsed >= totalAvailable;
-  const canEarnAdCredits = adCreditsAvailable < MAX_AD_CREDITS_MINUTES;
-  
+
   return {
-    minutesUsed,
-    minutesRemaining,
-    monthlyLimit: FREE_TIER_MONTHLY_LIMIT_MINUTES,
-    adCreditsAvailable,
-    totalAvailable,
+    minutesUsed: 0,
+    minutesRemaining: Infinity,
+    monthlyLimit: Infinity,
+    adCreditsAvailable: 0,
+    totalAvailable: Infinity,
     resetDate: new Date(user.translationUsageResetDate),
-    isLimitReached,
-    canEarnAdCredits,
+    isLimitReached: false,
+    canEarnAdCredits: false,
   };
 }
 
@@ -109,32 +86,9 @@ export async function addTranslationMinutes(userId: string, minutes: number): Pr
     .where(eq(users.id, userId));
 }
 
-// Middleware to check translation limits (for authenticated users)
-export async function checkTranslationLimit(req: any, res: any, next: any) {
-  // If user is not authenticated, they can still use translation (no limits for anonymous users)
-  if (!req.user) {
-    return next();
-  }
-  
-  const canTranslate = await canUserTranslate(req.user.id);
-  
-  if (!canTranslate) {
-    const usage = await getUserUsageInfo(req.user.id);
-    return res.status(429).json({
-      error: "Monthly translation limit reached",
-      minutesUsed: usage.minutesUsed,
-      monthlyLimit: usage.monthlyLimit,
-      adCreditsAvailable: usage.adCreditsAvailable,
-      totalAvailable: usage.totalAvailable,
-      canEarnAdCredits: usage.canEarnAdCredits,
-      resetDate: usage.resetDate,
-      message: usage.canEarnAdCredits 
-        ? "You've reached your limit. Watch a 30-second ad to get +30 minutes, or upgrade to Premium for unlimited!"
-        : "You've used all available time this month. Upgrade to Premium for unlimited translations!",
-    });
-  }
-  
-  next();
+// Middleware to check translation limits — app is free, no limits enforced
+export async function checkTranslationLimit(_req: any, _res: any, next: any) {
+  return next();
 }
 
 // Redeem ad credits after user watches an ad
