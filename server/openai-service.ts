@@ -1,11 +1,28 @@
-// OpenAI service for khutbah transcription, translation, and AI features
-// Based on javascript_openai blueprint
+// AI service for khutbah transcription, translation, and AI features
+// Uses Groq (free tier) when GROQ_API_KEY is set, falls back to OpenAI
 import OpenAI from "openai";
+import Groq from "groq-sdk";
 import { getLanguageConfig } from "@shared/language-config";
 import { translationCacheService } from "./translation-cache";
 
-// Using gpt-4o model for reliable translations
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Groq models (free tier)
+const GROQ_TRANSCRIPTION_MODEL = "whisper-large-v3-turbo";
+const GROQ_CHAT_MODEL = "llama-3.3-70b-versatile";
+
+// OpenAI fallback models
+const OPENAI_TRANSCRIPTION_MODEL = "whisper-1";
+const OPENAI_CHAT_MODEL_FAST = "gpt-4o-mini";
+const OPENAI_CHAT_MODEL_QUALITY = "gpt-4o";
+
+function getGroqClient(): Groq | null {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) return null;
+  return new Groq({ apiKey: key });
+}
+
+function getOpenAIClient(): OpenAI {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 // Translation cache statistics
 let cacheHits = 0;
@@ -21,10 +38,10 @@ export interface TranscriptionResult {
 }
 
 export interface TranslationResult {
-  translatedText: string; // Language-agnostic - could be English, Hindi, French, etc.
-  originalText: string; // Original text in any detected language
-  sourceLanguage?: string; // Detected source language (if available)
-  targetLanguage: string; // Which language this was translated to
+  translatedText: string;
+  originalText: string;
+  sourceLanguage?: string;
+  targetLanguage: string;
 }
 
 export interface ActionPoint {
@@ -39,123 +56,128 @@ export interface SermonSummary {
   detailedSummary: string;
 }
 
-// Transcribe audio using Whisper with auto-detection
-// Can detect Arabic, Urdu, Hindi, French, English, and many other languages
+// Transcribe audio — uses Groq whisper-large-v3-turbo (free) or OpenAI whisper-1
 export async function transcribeArabicAudio(audioBuffer: Buffer): Promise<TranscriptionResult> {
   try {
-    // Create a Blob from buffer for OpenAI (works in Node.js with proper polyfills)
-    const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
-    const audioFile = new File([blob], "audio.mp3", { type: "audio/mpeg" });
-    
-    // Let Whisper auto-detect the language - supports 99+ languages
+    const blob = new Blob([audioBuffer], { type: "audio/wav" });
+    const audioFile = new File([blob], "audio.wav", { type: "audio/wav" });
+
+    const groq = getGroqClient();
+
+    if (groq) {
+      const transcription = await groq.audio.transcriptions.create({
+        file: audioFile,
+        model: GROQ_TRANSCRIPTION_MODEL,
+      });
+      return { text: transcription.text };
+    }
+
+    // Fallback to OpenAI
+    const openai = getOpenAIClient();
     const transcription = await openai.audio.transcriptions.create({
       file: audioFile,
-      model: "whisper-1",
-      // No language specified - Whisper will auto-detect
+      model: OPENAI_TRANSCRIPTION_MODEL,
     });
-
-    return {
-      text: transcription.text,
-    };
+    return { text: transcription.text };
   } catch (error: any) {
     throw new Error("Failed to transcribe audio: " + error.message);
   }
 }
 
-// Translate text from any language to target language with Islamic terminology preservation
-// Supports Arabic, Urdu, Hindi, French, and other languages → English/Hindi/French
-// Uses hybrid caching: 1) phrase dictionary, 2) segment cache, 3) OpenAI fallback
+// Chat completion helper — uses Groq Llama (free) or OpenAI
+async function chatComplete(
+  messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
+  opts: { json?: boolean; quality?: "fast" | "quality" } = {}
+): Promise<string> {
+  const groq = getGroqClient();
+
+  if (groq) {
+    const response = await groq.chat.completions.create({
+      model: GROQ_CHAT_MODEL,
+      messages,
+      ...(opts.json ? { response_format: { type: "json_object" as const } } : {}),
+    });
+    return response.choices[0].message.content || "";
+  }
+
+  // Fallback to OpenAI
+  const openai = getOpenAIClient();
+  const model = opts.quality === "quality" ? OPENAI_CHAT_MODEL_QUALITY : OPENAI_CHAT_MODEL_FAST;
+  const response = await openai.chat.completions.create({
+    model,
+    messages,
+    ...(opts.json ? { response_format: { type: "json_object" as const } } : {}),
+  });
+  return response.choices[0].message.content || "";
+}
+
+// Translate text from any language — uses cache first, then Groq Llama or OpenAI
 export async function translateArabicToEnglish(sourceText: string): Promise<TranslationResult> {
   try {
     const languageConfig = getLanguageConfig();
     const targetLanguage = languageConfig.targetLanguage;
-    
-    // Skip empty or very short text
+
     if (!sourceText || sourceText.trim().length < 2) {
-      return {
-        translatedText: "",
-        originalText: sourceText,
-        targetLanguage: languageConfig.displayName,
-      };
+      return { translatedText: "", originalText: sourceText, targetLanguage: languageConfig.displayName };
     }
-    
+
     // STEP 1: Check Islamic phrase dictionary (instant, free)
     const phraseMatch = await translationCacheService.checkPhraseDictionary(sourceText);
     if (phraseMatch) {
       cacheHits++;
-      console.log(`[Cache] Phrase dictionary hit for: "${sourceText.substring(0, 30)}..."`);
-      return {
-        translatedText: phraseMatch,
-        originalText: sourceText,
-        sourceLanguage: "Arabic",
-        targetLanguage: languageConfig.displayName,
-      };
+      return { translatedText: phraseMatch, originalText: sourceText, sourceLanguage: "Arabic", targetLanguage: languageConfig.displayName };
     }
-    
-    // STEP 2: Check translation cache (previously translated segments)
+
+    // STEP 2: Check translation cache
     const cachedTranslation = await translationCacheService.checkTranslationCache(sourceText, targetLanguage);
     if (cachedTranslation) {
       cacheHits++;
-      console.log(`[Cache] Translation cache hit for: "${sourceText.substring(0, 30)}..."`);
-      return {
-        translatedText: cachedTranslation,
-        originalText: sourceText,
-        sourceLanguage: "Arabic",
-        targetLanguage: languageConfig.displayName,
-      };
+      return { translatedText: cachedTranslation, originalText: sourceText, sourceLanguage: "Arabic", targetLanguage: languageConfig.displayName };
     }
-    
-    // STEP 3: No cache hit - call OpenAI API
+
+    // STEP 3: Call AI
     cacheMisses++;
-    console.log(`[Cache] Cache miss - calling OpenAI for: "${sourceText.substring(0, 30)}..."`);
-    
-    const prompt = `You are translating a live khutbah (Islamic sermon) in real-time. Each audio chunk is 5 seconds, so the text will be a fragment of a longer sermon.
+    const provider = getGroqClient() ? "Groq" : "OpenAI";
+    console.log(`[AI] Cache miss — calling ${provider} for: "${sourceText.substring(0, 30)}..."`);
+
+    const prompt = `You are translating a live khutbah (Islamic sermon) in real-time. Each audio chunk is a short fragment of a longer sermon.
 
 The source text may be in ANY language (Arabic, Urdu, Hindi, French, English, etc). Auto-detect the source language and translate to ${targetLanguage}.
 
 TRANSLATE EXACTLY WHAT IS SAID - nothing more, nothing less.
 
-TARGET LANGUAGE: ${targetLanguage}
-
 RULES:
-1. Auto-detect source language (could be Arabic, Urdu, Hindi, French, English, or any language)
-2. Preserve Islamic terminology (keep "Allah", "SubhanAllah", "Alhamdulillah", "Insha'Allah", "salah", "jannah", "iman")
+1. Auto-detect source language
+2. Preserve Islamic terminology: keep "Allah", "SubhanAllah", "Alhamdulillah", "Insha'Allah", "salah", "jannah", "iman"
 3. Add (SAW) or (PBUH) after Prophet Muhammad mentions
 4. Add (AS) after other prophet mentions
-5. If the text is empty or just background noise, return empty translation
-6. NEVER add commentary like "please provide the full sermon" or "this is only a fragment"
-7. NEVER add explanations or requests for more context
-8. Remove social media phrases (subscribe, like, share, follow, channel)
-9. Translate ONLY the actual words spoken - no extra text
-10. NEVER include translator names, attributions, or credits
-11. NEVER add phrases like "translated by", "translation by", or any names at the end
-12. If source is already in target language, return it as-is (no translation needed)
+5. If text is empty or just background noise, return empty translation
+6. NEVER add commentary, requests for context, or explanations
+7. Remove social media phrases (subscribe, like, share, follow)
+8. NEVER include translator names or attributions
+9. If source is already in target language, return it as-is
 
 Text to translate:
 ${sourceText}
 
-Respond in JSON: { "translation": "the translation only - no other text", "detectedLanguage": "detected source language name" }`;
+Respond in JSON: { "translation": "the translation only", "detectedLanguage": "detected source language name" }`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // 16x cheaper than GPT-4o, excellent for translation
-      messages: [
+    const content = await chatComplete(
+      [
         {
           role: "system",
-          content: `You are a real-time multilingual-to-${targetLanguage} translator for Islamic sermons. You auto-detect the source language and translate ONLY what is said, with no commentary, explanations, or requests for more context. You are processing live audio chunks, so fragments are expected and normal.`
+          content: `You are a real-time multilingual-to-${targetLanguage} translator for Islamic sermons. Translate ONLY what is said, no commentary.`,
         },
-        {
-          role: "user",
-          content: prompt
-        }
+        { role: "user", content: prompt },
       ],
-      response_format: { type: "json_object" },
-    });
+      { json: true, quality: "fast" }
+    );
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const result = JSON.parse(content || "{}");
     let translation = result.translation || "";
     const detectedLanguage = result.detectedLanguage || "Unknown";
-    
-    // Filter out unwanted phrases and AI commentary
+
+    // Filter out unwanted AI commentary phrases
     const unwantedPhrases = [
       /subscribe to (the|our) channel/gi,
       /like and subscribe/gi,
@@ -174,45 +196,26 @@ Respond in JSON: { "translation": "the translation only - no other text", "detec
       /translated by [a-z\s]+$/gi,
       /translation by [a-z\s]+$/gi,
       /translator:?\s*[a-z\s]+$/gi,
-      /\band the translation (of|by) [a-z\s]+$/gi,
-      /nancy kankar/gi,
     ];
-    
     for (const regex of unwantedPhrases) {
-      translation = translation.replace(regex, '').trim();
+      translation = translation.replace(regex, "").trim();
     }
-    
-    // Clean up extra spaces and punctuation artifacts
-    translation = translation.replace(/\s{2,}/g, ' ').trim();
-    translation = translation.replace(/^[,.\s]+|[,.\s]+$/g, '').trim();
-    
-    // STEP 4: Save successful translation to cache for future use
-    if (translation && translation.length > 0) {
-      await translationCacheService.saveToCache(
-        sourceText,
-        translation,
-        detectedLanguage,
-        targetLanguage
-      );
-      console.log(`[Cache] Saved new translation to cache`);
+    translation = translation.replace(/\s{2,}/g, " ").trim();
+    translation = translation.replace(/^[,.\s]+|[,.\s]+$/g, "").trim();
+
+    // STEP 4: Save to cache
+    if (translation.length > 0) {
+      await translationCacheService.saveToCache(sourceText, translation, detectedLanguage, targetLanguage);
     }
-    
-    return {
-      translatedText: translation,
-      originalText: sourceText,
-      sourceLanguage: detectedLanguage,
-      targetLanguage: languageConfig.displayName,
-    };
+
+    return { translatedText: translation, originalText: sourceText, sourceLanguage: detectedLanguage, targetLanguage: languageConfig.displayName };
   } catch (error: any) {
     throw new Error("Failed to translate: " + error.message);
   }
 }
 
 // Generate weekly action points from sermon content
-export async function generateActionPoints(
-  sermonContent: string,
-  sermonTitle: string
-): Promise<ActionPoint[]> {
+export async function generateActionPoints(sermonContent: string, sermonTitle: string): Promise<ActionPoint[]> {
   try {
     const prompt = `Based on the following Friday khutbah (sermon), generate 3-5 practical action points that listeners can implement in their daily lives this week.
 
@@ -229,22 +232,15 @@ Generate specific, actionable items that:
 
 Respond in JSON format: { "actionPoints": [{"content": "specific action", "category": "spiritual/social/personal"}] }`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are an Islamic scholar helping Muslims implement khutbah teachings in their daily lives."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
+    const content = await chatComplete(
+      [
+        { role: "system", content: "You are an Islamic scholar helping Muslims implement khutbah teachings in their daily lives." },
+        { role: "user", content: prompt },
       ],
-      response_format: { type: "json_object" },
-    });
+      { json: true, quality: "quality" }
+    );
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const result = JSON.parse(content || "{}");
     return result.actionPoints || [];
   } catch (error: any) {
     throw new Error("Failed to generate action points: " + error.message);
@@ -272,22 +268,15 @@ Respond in JSON format: {
   "detailedSummary": "comprehensive summary"
 }`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are an Islamic scholar specializing in khutbah analysis and summarization."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
+    const content = await chatComplete(
+      [
+        { role: "system", content: "You are an Islamic scholar specializing in khutbah analysis and summarization." },
+        { role: "user", content: prompt },
       ],
-      response_format: { type: "json_object" },
-    });
+      { json: true, quality: "quality" }
+    );
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const result = JSON.parse(content || "{}");
     return {
       mainThemes: result.mainThemes || [],
       keyPoints: result.keyPoints || [],
@@ -300,10 +289,7 @@ Respond in JSON format: {
 }
 
 // Generate personalized sermon recommendations
-export async function generateSermonRecommendations(
-  userInterests: string[],
-  recentSermons: string[]
-): Promise<string[]> {
+export async function generateSermonRecommendations(userInterests: string[], recentSermons: string[]): Promise<string[]> {
   try {
     const prompt = `Based on a user's interests and recently attended khutbahs, recommend 5 relevant sermon topics they might find beneficial.
 
@@ -312,22 +298,15 @@ Recent Sermons: ${recentSermons.join(", ")}
 
 Respond in JSON format: { "recommendations": ["topic1", "topic2", ...] }`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are an Islamic education advisor helping Muslims discover relevant religious content."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
+    const content = await chatComplete(
+      [
+        { role: "system", content: "You are an Islamic education advisor helping Muslims discover relevant religious content." },
+        { role: "user", content: prompt },
       ],
-      response_format: { type: "json_object" },
-    });
+      { json: true, quality: "quality" }
+    );
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const result = JSON.parse(content || "{}");
     return result.recommendations || [];
   } catch (error: any) {
     throw new Error("Failed to generate recommendations: " + error.message);
@@ -335,11 +314,11 @@ Respond in JSON format: { "recommendations": ["topic1", "topic2", ...] }`;
 }
 
 // Generate practical implementation guidelines for khutbah
-export async function generateKhutbahGuidelines(sermonTitle: string, mainTheme?: string, summary?: string): Promise<Array<{text: string, category: string}>> {
+export async function generateKhutbahGuidelines(sermonTitle: string, mainTheme?: string, summary?: string): Promise<Array<{ text: string; category: string }>> {
   try {
     const themeInfo = mainTheme ? `Main Theme: ${mainTheme}` : "";
     const summaryInfo = summary ? `Summary: ${summary}` : "";
-    
+
     const prompt = `Generate 5-7 practical implementation suggestions for a Muslim who attended a khutbah titled "${sermonTitle}".
 
 ${themeInfo}
@@ -353,22 +332,15 @@ For each suggestion:
 
 Respond in JSON format: { "suggestions": [{"text": "...", "category": "..."}, ...] }`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are an Islamic counselor helping Muslims apply religious teachings to their daily lives in practical, achievable ways."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
+    const content = await chatComplete(
+      [
+        { role: "system", content: "You are an Islamic counselor helping Muslims apply religious teachings to their daily lives in practical, achievable ways." },
+        { role: "user", content: prompt },
       ],
-      response_format: { type: "json_object" },
-    });
+      { json: true, quality: "fast" }
+    );
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const result = JSON.parse(content || "{}");
     return result.suggestions || [];
   } catch (error: any) {
     throw new Error("Failed to generate khutbah guidelines: " + error.message);
