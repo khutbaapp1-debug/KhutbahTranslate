@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { AdsLoader } from "@/components/ads-loader";
+import { useEffect } from "react";
+import { initNative } from "@/lib/native-init";
 
 import HomePage from "@/pages/home-page";
 import PrayerTimesPage from "@/pages/prayer-times-page";
@@ -70,6 +72,10 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    initNative();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
