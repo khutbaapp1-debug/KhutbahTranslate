@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked, Play, Pause, Loader2, Volume2 } from "lucide-react";
+import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked, Play, Pause, Loader2, Volume2, BookOpen, List, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
@@ -62,6 +62,8 @@ export default function QuranPage() {
   const [selectedReciter, setSelectedReciter] = useState<string>("alafasy");
   const [playingVerse, setPlayingVerse] = useState<number | null>(null);
   const [loadingVerse, setLoadingVerse] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<"page" | "detailed">("page");
+  const [activeVerse, setActiveVerse] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const autoPlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
@@ -332,6 +334,27 @@ export default function QuranPage() {
               </CardContent>
             </Card>
 
+            <div className="flex items-center justify-center gap-1 p-1 rounded-md bg-muted w-fit mx-auto">
+              <Button
+                size="sm"
+                variant={viewMode === "page" ? "default" : "ghost"}
+                onClick={() => setViewMode("page")}
+                data-testid="button-view-page"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                Page
+              </Button>
+              <Button
+                size="sm"
+                variant={viewMode === "detailed" ? "default" : "ghost"}
+                onClick={() => setViewMode("detailed")}
+                data-testid="button-view-detailed"
+              >
+                <List className="w-4 h-4 mr-2" />
+                Detailed
+              </Button>
+            </div>
+
             {loadingDetails ? (
               <div className="space-y-6">
                 {[...Array(5)].map((_, i) => (
@@ -344,6 +367,80 @@ export default function QuranPage() {
                   </Card>
                 ))}
               </div>
+            ) : viewMode === "page" ? (
+              <>
+                <Card className="bg-[hsl(40_30%_96%)] dark:bg-[hsl(40_15%_12%)] border-[hsl(40_30%_85%)] dark:border-[hsl(40_15%_22%)]">
+                  <CardContent className="p-6 sm:p-10">
+                    <p
+                      className="font-arabic text-foreground text-justify"
+                      dir="rtl"
+                      style={{
+                        fontSize: "1.875rem",
+                        lineHeight: "3.25rem",
+                        wordSpacing: "0.15em",
+                      }}
+                      data-testid="text-page-view"
+                    >
+                      {surahDetails.verses.map((verse) => (
+                        <span key={verse.id}>
+                          {verse.text}
+                          <button
+                            onClick={() => {
+                              setActiveVerse(verse.id);
+                              toggleVerseAudio(verse.id);
+                            }}
+                            className="inline-flex items-center justify-center mx-1 align-middle w-9 h-9 rounded-full border border-primary/40 text-primary text-sm hover-elevate active-elevate-2 transition-all"
+                            aria-label={`Verse ${verse.id}`}
+                            data-testid={`verse-marker-${verse.id}`}
+                          >
+                            {loadingVerse === verse.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : playingVerse === verse.id ? (
+                              <Pause className="w-3 h-3" />
+                            ) : (
+                              <span className="font-sans">{verse.id}</span>
+                            )}
+                          </button>{" "}
+                        </span>
+                      ))}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {activeVerse && (() => {
+                  const verse = surahDetails.verses.find(v => v.id === activeVerse);
+                  if (!verse) return null;
+                  return (
+                    <Card className="border-primary/40" data-testid={`active-verse-${verse.id}`}>
+                      <CardContent className="p-5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="default">Verse {verse.id}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setActiveVerse(null)}
+                            data-testid="button-close-active-verse"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground italic">
+                          {verse.transliteration}
+                        </p>
+                        <p className="text-base text-foreground">
+                          {verse.translation}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })()}
+
+                {!activeVerse && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    Tap any verse number to play recitation and see the translation.
+                  </p>
+                )}
+              </>
             ) : (
               <div className="space-y-6">
                 {surahDetails.verses.map((verse) => (
