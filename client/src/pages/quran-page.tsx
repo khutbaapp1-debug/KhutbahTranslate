@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked, Play, Pause, Loader2, Volume2, BookOpen, List, X } from "lucide-react";
+import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked, Play, Pause, Loader2, Volume2, BookOpen, List, X, Bookmark, BookmarkCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
@@ -64,6 +64,10 @@ export default function QuranPage() {
   const [loadingVerse, setLoadingVerse] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"page" | "detailed">("page");
   const [activeVerse, setActiveVerse] = useState<number | null>(null);
+  // Bookmarks: { [surahId]: verseId }
+  const [bookmarks, setBookmarks] = useState<Record<number, number>>({});
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressFiredRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const autoPlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
@@ -72,15 +76,24 @@ export default function QuranPage() {
     queryKey: ["/api/quran/surahs"],
   });
 
-  // Load last read surah from localStorage on mount
+  // Load bookmarks from localStorage on mount
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem('quranBookmarks');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object') {
+          setBookmarks(parsed);
+        }
+      }
+    } catch {}
+
     const lastReadSurah = localStorage.getItem('lastReadSurah');
     if (lastReadSurah) {
       const surahId = parseInt(lastReadSurah, 10);
       if (surahId >= 1 && surahId <= 114) {
         setSelectedSurah(surahId);
         setShowResumeMessage(true);
-        // Hide message after 5 seconds
         setTimeout(() => setShowResumeMessage(false), 5000);
       }
     }
@@ -92,6 +105,56 @@ export default function QuranPage() {
       localStorage.setItem('lastReadSurah', selectedSurah.toString());
     }
   }, [selectedSurah]);
+
+  // Persist bookmarks
+  useEffect(() => {
+    localStorage.setItem('quranBookmarks', JSON.stringify(bookmarks));
+  }, [bookmarks]);
+
+  // Scroll to bookmarked verse when surah loads
+  useEffect(() => {
+    if (!selectedSurah || !surahDetails) return;
+    const bookmarkedVerse = bookmarks[selectedSurah];
+    if (!bookmarkedVerse) return;
+    const timer = setTimeout(() => {
+      const el = document.querySelector(`[data-verse-anchor="${bookmarkedVerse}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [selectedSurah, surahDetails, bookmarks]);
+
+  const toggleBookmark = (verseId: number) => {
+    if (!selectedSurah) return;
+    setBookmarks(prev => {
+      const next = { ...prev };
+      if (next[selectedSurah] === verseId) {
+        delete next[selectedSurah];
+        toast({ title: "Bookmark removed", description: `Verse ${verseId} unbookmarked` });
+      } else {
+        next[selectedSurah] = verseId;
+        toast({ title: "Bookmarked", description: `Verse ${verseId} saved as your reading position` });
+      }
+      return next;
+    });
+  };
+
+  // Long-press handlers for bookmarking on the verse marker
+  const handleMarkerPressStart = (verseId: number) => {
+    longPressFiredRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      toggleBookmark(verseId);
+    }, 600);
+  };
+
+  const handleMarkerPressEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
 
   const surahDetailsQuery = useQuery<SurahDetails>({
     queryKey: [`/api/quran/surah/${selectedSurah}`],
@@ -415,28 +478,51 @@ export default function QuranPage() {
                       }}
                       data-testid="text-page-view"
                     >
-                      {surahDetails.verses.map((verse) => (
-                        <span key={verse.id}>
-                          {verse.text}
-                          <button
-                            onClick={() => {
-                              setActiveVerse(verse.id);
-                              toggleVerseAudio(verse.id);
-                            }}
-                            className="inline-flex items-center justify-center mx-1 align-middle w-9 h-9 rounded-full border border-primary/40 text-primary text-sm hover-elevate active-elevate-2 transition-all"
-                            aria-label={`Verse ${verse.id}`}
-                            data-testid={`verse-marker-${verse.id}`}
-                          >
-                            {loadingVerse === verse.id ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : playingVerse === verse.id ? (
-                              <Pause className="w-3 h-3" />
-                            ) : (
-                              <span className="font-sans">{verse.id}</span>
-                            )}
-                          </button>{" "}
-                        </span>
-                      ))}
+                      {surahDetails.verses.map((verse) => {
+                        const isBookmarked = bookmarks[selectedSurah!] === verse.id;
+                        return (
+                          <span key={verse.id} data-verse-anchor={verse.id}>
+                            {verse.text}
+                            <button
+                              onClick={() => {
+                                if (longPressFiredRef.current) {
+                                  longPressFiredRef.current = false;
+                                  return;
+                                }
+                                setActiveVerse(verse.id);
+                                toggleVerseAudio(verse.id);
+                              }}
+                              onTouchStart={() => handleMarkerPressStart(verse.id)}
+                              onTouchEnd={handleMarkerPressEnd}
+                              onTouchCancel={handleMarkerPressEnd}
+                              onMouseDown={() => handleMarkerPressStart(verse.id)}
+                              onMouseUp={handleMarkerPressEnd}
+                              onMouseLeave={handleMarkerPressEnd}
+                              onContextMenu={(e) => {
+                                e.preventDefault();
+                                toggleBookmark(verse.id);
+                              }}
+                              className={`inline-flex items-center justify-center mx-1 align-middle w-9 h-9 rounded-full text-sm hover-elevate active-elevate-2 transition-all ${
+                                isBookmarked
+                                  ? "bg-primary text-primary-foreground border border-primary"
+                                  : "border border-primary/40 text-primary"
+                              }`}
+                              aria-label={`Verse ${verse.id}${isBookmarked ? " (bookmarked)" : ""}`}
+                              data-testid={`verse-marker-${verse.id}`}
+                            >
+                              {loadingVerse === verse.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : playingVerse === verse.id ? (
+                                <Pause className="w-3 h-3" />
+                              ) : isBookmarked ? (
+                                <BookmarkCheck className="w-4 h-4" />
+                              ) : (
+                                <span className="font-sans">{verse.id}</span>
+                              )}
+                            </button>{" "}
+                          </span>
+                        );
+                      })}
                     </p>
                   </CardContent>
                 </Card>
@@ -444,19 +530,35 @@ export default function QuranPage() {
                 {activeVerse && (() => {
                   const verse = surahDetails.verses.find(v => v.id === activeVerse);
                   if (!verse) return null;
+                  const isBookmarked = bookmarks[selectedSurah!] === verse.id;
                   return (
                     <Card className="border-primary/40" data-testid={`active-verse-${verse.id}`}>
                       <CardContent className="p-5 space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <Badge variant="default">Verse {verse.id}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setActiveVerse(null)}
-                            data-testid="button-close-active-verse"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant={isBookmarked ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => toggleBookmark(verse.id)}
+                              data-testid={`button-bookmark-verse-${verse.id}`}
+                            >
+                              {isBookmarked ? (
+                                <BookmarkCheck className="w-4 h-4 mr-2" />
+                              ) : (
+                                <Bookmark className="w-4 h-4 mr-2" />
+                              )}
+                              {isBookmarked ? "Bookmarked" : "Bookmark"}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setActiveVerse(null)}
+                              data-testid="button-close-active-verse"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                         <p className="text-sm text-muted-foreground italic">
                           {verse.transliteration}
@@ -471,58 +573,81 @@ export default function QuranPage() {
 
                 {!activeVerse && (
                   <p className="text-center text-sm text-muted-foreground">
-                    Tap any verse number to play recitation and see the translation.
+                    Tap any verse number to play and translate. Long-press (or right-click) to bookmark your reading position.
                   </p>
                 )}
               </>
             ) : (
               <div className="space-y-6">
-                {surahDetails.verses.map((verse) => (
-                  <Card key={verse.id} data-testid={`verse-${verse.id}`}>
-                    <CardContent className="p-6 space-y-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <p
-                            className="text-3xl leading-loose text-foreground font-arabic mb-4"
-                            dir="rtl"
-                            data-testid={`verse-arabic-${verse.id}`}
-                          >
-                            {verse.text}
-                          </p>
-                          <p className="text-sm text-muted-foreground italic mb-2" data-testid={`verse-transliteration-${verse.id}`}>
-                            {verse.transliteration}
-                          </p>
-                          <p className="text-base text-foreground mb-3" data-testid={`verse-translation-${verse.id}`}>
-                            {verse.translation}
-                          </p>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleVerseAudio(verse.id)}
-                            disabled={loadingVerse === verse.id}
-                            data-testid={`button-play-verse-${verse.id}`}
-                          >
-                            {loadingVerse === verse.id ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : playingVerse === verse.id ? (
-                              <Pause className="w-4 h-4 mr-2" />
-                            ) : (
-                              <Play className="w-4 h-4 mr-2" />
-                            )}
-                            {loadingVerse === verse.id
-                              ? "Loading..."
-                              : playingVerse === verse.id
-                              ? "Pause"
-                              : "Play Recitation"}
-                          </Button>
+                {surahDetails.verses.map((verse) => {
+                  const isBookmarked = bookmarks[selectedSurah!] === verse.id;
+                  return (
+                    <Card
+                      key={verse.id}
+                      data-testid={`verse-${verse.id}`}
+                      data-verse-anchor={verse.id}
+                      className={isBookmarked ? "border-primary" : ""}
+                    >
+                      <CardContent className="p-6 space-y-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <p
+                              className="text-3xl leading-loose text-foreground font-arabic mb-4"
+                              dir="rtl"
+                              data-testid={`verse-arabic-${verse.id}`}
+                            >
+                              {verse.text}
+                            </p>
+                            <p className="text-sm text-muted-foreground italic mb-2" data-testid={`verse-transliteration-${verse.id}`}>
+                              {verse.transliteration}
+                            </p>
+                            <p className="text-base text-foreground mb-3" data-testid={`verse-translation-${verse.id}`}>
+                              {verse.translation}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => toggleVerseAudio(verse.id)}
+                                disabled={loadingVerse === verse.id}
+                                data-testid={`button-play-verse-${verse.id}`}
+                              >
+                                {loadingVerse === verse.id ? (
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : playingVerse === verse.id ? (
+                                  <Pause className="w-4 h-4 mr-2" />
+                                ) : (
+                                  <Play className="w-4 h-4 mr-2" />
+                                )}
+                                {loadingVerse === verse.id
+                                  ? "Loading..."
+                                  : playingVerse === verse.id
+                                  ? "Pause"
+                                  : "Play Recitation"}
+                              </Button>
+                              <Button
+                                variant={isBookmarked ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => toggleBookmark(verse.id)}
+                                data-testid={`button-bookmark-detailed-${verse.id}`}
+                              >
+                                {isBookmarked ? (
+                                  <BookmarkCheck className="w-4 h-4 mr-2" />
+                                ) : (
+                                  <Bookmark className="w-4 h-4 mr-2" />
+                                )}
+                                {isBookmarked ? "Bookmarked" : "Bookmark"}
+                              </Button>
+                            </div>
+                          </div>
+                          <Badge variant={isBookmarked ? "default" : "outline"} className="shrink-0">
+                            {verse.id}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className="shrink-0">
-                          {verse.id}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
 
