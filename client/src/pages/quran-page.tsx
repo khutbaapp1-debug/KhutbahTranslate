@@ -6,7 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked, Play, Pause, Loader2, Volume2, BookOpen, List, X, Bookmark, BookmarkCheck } from "lucide-react";
+import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked, Play, Pause, Loader2, Volume2, BookOpen, List, X, Bookmark, BookmarkCheck, HelpCircle, Hand, MousePointerClick } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
@@ -66,6 +74,7 @@ export default function QuranPage() {
   const [activeVerse, setActiveVerse] = useState<number | null>(null);
   // Bookmarks: { [surahId]: verseId }
   const [bookmarks, setBookmarks] = useState<Record<number, number>>({});
+  const [showHowTo, setShowHowTo] = useState(false);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressFiredRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -87,6 +96,10 @@ export default function QuranPage() {
         }
       }
     } catch {}
+
+    if (!localStorage.getItem('quranHowToSeen')) {
+      setShowHowTo(true);
+    }
 
     const lastReadSurah = localStorage.getItem('lastReadSurah');
     if (lastReadSurah) {
@@ -685,9 +698,20 @@ export default function QuranPage() {
     <div className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto space-y-4">
-          <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
-            The Holy Qur'an
-          </h1>
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
+              The Holy Qur'an
+            </h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowHowTo(true)}
+              aria-label="How to use"
+              data-testid="button-show-how-to"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </Button>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -760,6 +784,95 @@ export default function QuranPage() {
           </Card>
         )}
       </main>
+
+      <Dialog open={showHowTo} onOpenChange={setShowHowTo}>
+        <DialogContent className="max-w-md" data-testid="dialog-how-to">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              Quick Tour: Qur'an Reader
+            </DialogTitle>
+            <DialogDescription>
+              A few quick tips to help you get the most out of your reading experience.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="flex gap-3">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <MousePointerClick className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Tap a verse number</p>
+                <p className="text-sm text-muted-foreground">
+                  Plays the recitation and shows the translation for that verse.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <Hand className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Long-press to bookmark</p>
+                <p className="text-sm text-muted-foreground">
+                  Hold a verse number (or right-click on desktop) to save your reading position. You'll return to that exact verse next time.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <Volume2 className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Choose your reciter</p>
+                <p className="text-sm text-muted-foreground">
+                  Use the dropdown at the top of any surah to switch between reciters like Mishary Al-Afasy, Al-Sudais, and more.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <ChevronLeft className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Swipe between surahs</p>
+                <p className="text-sm text-muted-foreground">
+                  Swipe left for the next surah, swipe right for the previous one — like turning pages.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <List className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Switch views</p>
+                <p className="text-sm text-muted-foreground">
+                  Use the Page / Detailed toggle to switch between flowing Mushaf-style reading and verse-by-verse with translation.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              className="w-full"
+              onClick={() => {
+                localStorage.setItem('quranHowToSeen', '1');
+                setShowHowTo(false);
+              }}
+              data-testid="button-how-to-got-it"
+            >
+              Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <BottomNav />
     </div>
