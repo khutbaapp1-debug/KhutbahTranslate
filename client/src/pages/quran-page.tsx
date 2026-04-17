@@ -232,6 +232,7 @@ export default function QuranPage() {
     if (selectedSurah && selectedSurah > 1) {
       setSelectedSurah(selectedSurah - 1);
       setShowResumeMessage(false);
+      setActiveVerse(null);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -240,7 +241,36 @@ export default function QuranPage() {
     if (selectedSurah && selectedSurah < 114) {
       setSelectedSurah(selectedSurah + 1);
       setShowResumeMessage(false);
+      setActiveVerse(null);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Swipe gesture handlers — swipe left = next surah, swipe right = previous
+  // Note: in RTL Arabic reading, "next page" naturally feels like swipe-right,
+  // but we keep standard mobile UX (swipe-left advances) for predictability.
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null || touchStartYRef.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartYRef.current;
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+
+    // Require horizontal swipe of at least 60px and mostly horizontal motion
+    if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY) * 1.5) return;
+
+    if (deltaX < 0) {
+      goToNextSurah();
+    } else {
+      goToPreviousSurah();
     }
   };
 
@@ -313,7 +343,11 @@ export default function QuranPage() {
         </header>
 
         <ScrollArea className="h-[calc(100vh-80px)]">
-          <main className="p-6 space-y-6 max-w-screen-lg mx-auto">
+          <main
+            className="p-6 space-y-6 max-w-screen-lg mx-auto"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             {showResumeMessage && (
               <Alert className="bg-primary/10 border-primary/20">
                 <BookMarked className="h-4 w-4" />
