@@ -20,7 +20,7 @@ const USE_TEST_ADS = true;
 const TEST_BANNER_ANDROID = "ca-app-pub-3940256099942544/6300978111";
 const TEST_BANNER_IOS = "ca-app-pub-3940256099942544/2934735716";
 
-const REAL_BANNER_ANDROID = ""; // paste your real Android banner ad unit ID
+const REAL_BANNER_ANDROID = "ca-app-pub-6514143339893635/4741009217";
 const REAL_BANNER_IOS = ""; // paste your real iOS banner ad unit ID
 
 export function getBannerAdUnitId(): string {
