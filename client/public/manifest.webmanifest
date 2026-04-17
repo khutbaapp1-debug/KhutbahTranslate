@@ -1,0 +1,23 @@
+{
+  "name": "Khutbah Companion",
+  "short_name": "Khutbah",
+  "description": "Real-time Friday sermon translation, prayer times, Quran, duas, Qibla and more. Free for everyone.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0F766E",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

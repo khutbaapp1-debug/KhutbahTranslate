@@ -104,8 +104,13 @@ export default function LandingPage() {
       </div>
 
       <footer className="border-t py-8">
-        <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>Khutbah Companion - Supporting your spiritual journey</p>
+        <div className="container mx-auto px-4 text-center text-muted-foreground space-y-3">
+          <p>Khutbah Companion — Supporting your spiritual journey</p>
+          <div className="flex items-center justify-center gap-4 text-sm">
+            <a href="/privacy" className="hover:text-foreground" data-testid="link-privacy">Privacy Policy</a>
+            <span aria-hidden="true">·</span>
+            <a href="/terms" className="hover:text-foreground" data-testid="link-terms">Terms of Service</a>
+          </div>
         </div>
       </footer>
     </div>

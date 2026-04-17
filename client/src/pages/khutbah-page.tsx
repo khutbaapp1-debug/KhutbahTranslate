@@ -227,18 +227,6 @@ export default function KhutbahPage() {
                     — Running low! Watch an ad for +30 minutes
                   </span>
                 )}
-                {user.subscriptionTier === "free" && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-auto p-0 ml-2 underline"
-                    onClick={() => navigate("/premium")}
-                    data-testid="link-upgrade"
-                  >
-                    <Crown className="w-3 h-3 mr-1" />
-                    Upgrade for unlimited
-                  </Button>
-                )}
               </AlertDescription>
             </Alert>
           )}
@@ -264,14 +252,6 @@ export default function KhutbahPage() {
                       Watch Ad
                     </Button>
                   )}
-                  <Button 
-                    size="sm" 
-                    onClick={() => navigate("/premium")}
-                    data-testid="button-upgrade-now"
-                  >
-                    <Crown className="w-4 h-4 mr-2" />
-                    Upgrade to Premium
-                  </Button>
                 </div>
               </AlertDescription>
             </Alert>

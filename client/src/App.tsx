@@ -24,11 +24,10 @@ import KhutbahGuidelinesPage from "@/pages/khutbah-guidelines-page";
 import PrayerTrackerPage from "@/pages/prayer-tracker-page";
 import AnalyticsPage from "@/pages/analytics-page";
 import ProfilePage from "@/pages/profile-page";
-import PremiumPage from "@/pages/premium-page";
 import NotificationSettingsPage from "@/pages/notification-settings-page";
 import LandingPage from "@/pages/landing-page";
-import CheckoutSuccessPage from "@/pages/checkout-success-page";
-import CheckoutCancelPage from "@/pages/checkout-cancel-page";
+import PrivacyPage from "@/pages/privacy-page";
+import TermsPage from "@/pages/terms-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -36,8 +35,8 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/landing" component={LandingPage} />
-      <Route path="/checkout/success" component={CheckoutSuccessPage} />
-      <Route path="/checkout/cancel" component={CheckoutCancelPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/terms" component={TermsPage} />
       
       <Route path="/prayer" component={PrayerTimesPage} />
       <Route path="/tasbih" component={TasbihPage} />
@@ -62,7 +61,6 @@ function Router() {
       <Route path="/analytics" component={AnalyticsPage} />
       
       <Route path="/profile" component={ProfilePage} />
-      <Route path="/premium" component={PremiumPage} />
       <Route path="/notifications" component={NotificationSettingsPage} />
       
       <Route component={NotFound} />

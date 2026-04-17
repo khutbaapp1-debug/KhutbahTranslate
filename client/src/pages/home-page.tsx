@@ -1,12 +1,11 @@
 import { useLocation } from "wouter";
-import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Moon, BookOpen, Calendar, Crown, BarChart3, BookMarked, ScrollText, LogIn } from "lucide-react";
+import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Calendar, ScrollText, LogIn } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { HomepageBannerAd } from "@/components/google-ad";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-provider";
 import { Sun, Moon as MoonIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { isPremiumUser } from "@/lib/premium";
 
 import mosqueImage from "@assets/generated_images/Mosque_at_dawn_prayer_time_1c06498c.png";
 import kaabaImage from "@assets/generated_images/Kaaba_aerial_view_Makkah_b34ddcc4.png";
@@ -25,8 +24,6 @@ export default function HomePage() {
   const [, setLocation] = useLocation();
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
-  
-  const isPremium = isPremiumUser(user);
 
   const features = [
     {
@@ -155,18 +152,11 @@ export default function HomePage() {
       <div className="grid grid-cols-3 gap-5">
         {otherFeatures.map((feature: any) => {
           const Icon = feature.icon;
-          const isLocked = feature.premium && !isPremium;
-          
+
           return (
             <button
               key={feature.title}
-              onClick={() => {
-                if (isLocked) {
-                  setLocation("/premium");
-                } else {
-                  setLocation(feature.path);
-                }
-              }}
+              onClick={() => setLocation(feature.path)}
               className="flex flex-col items-center gap-2 hover-elevate active-elevate-2 transition-all"
               data-testid={`tile-${feature.title.toLowerCase().replace(/\s+/g, '-')}`}
               aria-label={`Open ${feature.title}`}
@@ -177,11 +167,6 @@ export default function HomePage() {
                 aria-hidden="true"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/40 to-primary/60" aria-hidden="true" />
-                {isLocked && (
-                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center z-20">
-                    <Crown className="w-4 h-4 text-white" />
-                  </div>
-                )}
                 <Icon className="w-12 h-12 text-white relative z-10" />
               </div>
               <span className="text-xs font-medium text-center text-foreground leading-tight line-clamp-2 w-full">
