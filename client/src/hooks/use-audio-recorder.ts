@@ -37,6 +37,7 @@ export interface AudioRecorderOptions {
 }
 
 const SAMPLE_RATE = 16000; // 16kHz is optimal for speech recognition
+const FIRST_CHUNK_DURATION = 5; // seconds - shorter first chunk so user sees translation faster
 const CHUNK_DURATION = 10; // seconds - longer chunks provide better context and reduce costs by 50%
 const CHUNK_COST_MINUTES = CHUNK_DURATION / 60; // ~0.167 minutes per chunk
 const SAFETY_BUFFER_CHUNKS = 3; // Stop recording with buffer for 3 chunks (0.5 min) to prevent mid-khutbah interruption
@@ -87,12 +88,12 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
     }, 1000);
   }, []);
 
-  const startCountdownTimer = useCallback(() => {
-    setNextTranslationIn(CHUNK_DURATION); // Reset to 10 seconds
+  const startCountdownTimer = useCallback((initialSeconds: number = CHUNK_DURATION) => {
+    setNextTranslationIn(initialSeconds);
     countdownTimerRef.current = window.setInterval(() => {
       setNextTranslationIn((prev) => {
         if (prev <= 1) {
-          return CHUNK_DURATION; // Reset when it hits 0
+          return CHUNK_DURATION; // Subsequent chunks always 10s
         }
         return prev - 1;
       });
@@ -303,13 +304,16 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
       source.connect(processor);
       processor.connect(audioContext.destination);
 
-      // Process chunks every 10 seconds
-      chunkTimerRef.current = window.setInterval(processChunk, CHUNK_DURATION * 1000);
+      // First chunk fires after 5s for fast initial feedback, then settles into 10s cadence
+      window.setTimeout(() => {
+        processChunk();
+        chunkTimerRef.current = window.setInterval(processChunk, CHUNK_DURATION * 1000);
+      }, FIRST_CHUNK_DURATION * 1000);
 
       setIsRecording(true);
       setRecordingTime(0);
       startTimer();
-      startCountdownTimer(); // Start countdown for next translation
+      startCountdownTimer(FIRST_CHUNK_DURATION); // First countdown is 5s
     } catch (err: any) {
       console.error("Error starting recording:", err);
       stopMediaTracks();
