@@ -111,20 +111,6 @@ export default function QuranPage() {
     localStorage.setItem('quranBookmarks', JSON.stringify(bookmarks));
   }, [bookmarks]);
 
-  // Scroll to bookmarked verse when surah loads
-  useEffect(() => {
-    if (!selectedSurah || !surahDetails) return;
-    const bookmarkedVerse = bookmarks[selectedSurah];
-    if (!bookmarkedVerse) return;
-    const timer = setTimeout(() => {
-      const el = document.querySelector(`[data-verse-anchor="${bookmarkedVerse}"]`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [selectedSurah, surahDetails, bookmarks]);
-
   const toggleBookmark = (verseId: number) => {
     if (!selectedSurah) return;
     setBookmarks(prev => {
@@ -170,6 +156,20 @@ export default function QuranPage() {
 
   const surahDetails = surahDetailsQuery.data;
   const loadingDetails = surahDetailsQuery.isLoading;
+
+  // Scroll to bookmarked verse when surah loads
+  useEffect(() => {
+    if (!selectedSurah || !surahDetails) return;
+    const bookmarkedVerse = bookmarks[selectedSurah];
+    if (!bookmarkedVerse) return;
+    const timer = setTimeout(() => {
+      const el = document.querySelector(`[data-verse-anchor="${bookmarkedVerse}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [selectedSurah, surahDetails, bookmarks]);
 
   // Generate audio URL for a specific verse
   const getAudioUrl = (surahNumber: number, verseNumber: number): string => {
