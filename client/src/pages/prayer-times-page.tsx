@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BottomNav } from "@/components/bottom-nav";
-import { InlineAd } from "@/components/google-ad";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -392,9 +391,6 @@ export default function PrayerTimesPage() {
             <p className="text-center text-sm text-muted-foreground">
               {CALCULATION_METHODS[calculationMethod]} • Asr: {asrMethod === 'hanafi' ? 'Hanafi' : 'Standard'}
             </p>
-            
-            {/* Google Ad Placement */}
-            <InlineAd />
           </>
         ) : null}
       </main>

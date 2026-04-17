@@ -1,7 +1,6 @@
 import { useLocation } from "wouter";
 import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Calendar, ScrollText, LogIn } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
-import { HomepageBannerAd } from "@/components/google-ad";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-provider";
 import { Sun, Moon as MoonIcon } from "lucide-react";
@@ -228,11 +227,6 @@ export default function HomePage() {
         </div>
 
         {renderAppGridLayout()}
-        
-        {/* Google Ad Placement */}
-        <div className="mt-8 px-6">
-          <HomepageBannerAd />
-        </div>
       </main>
 
       <BottomNav />
