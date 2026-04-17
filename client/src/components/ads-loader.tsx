@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAppUsageTimer } from "@/hooks/use-app-usage-timer";
 
-const ADSENSE_CLIENT = "ca-pub-5160766906090437";
+const ADSENSE_CLIENT = "ca-pub-6514143339893635";
 const USAGE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
 const NO_AD_PATHS = ["/khutbah"]; // never show ads on the translation page
 const SCRIPT_ID = "adsbygoogle-script";
