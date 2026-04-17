@@ -1,6 +1,13 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAppUsageTimer } from "@/hooks/use-app-usage-timer";
+import {
+  isNativeApp,
+  initMobileAds,
+  showBannerAd,
+  hideBannerAd,
+  removeBannerAd,
+} from "@/lib/mobile-ads";
 
 const ADSENSE_CLIENT = "ca-pub-6514143339893635";
 const USAGE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
@@ -49,15 +56,39 @@ export function AdsLoader() {
     (p) => location === p || location.startsWith(p + "/")
   );
 
+  const thresholdMet = usageMs >= USAGE_THRESHOLD_MS;
+
+  // Web: inject AdSense Auto Ads script after the threshold.
   useEffect(() => {
-    if (usageMs >= USAGE_THRESHOLD_MS) {
+    if (!isNativeApp() && thresholdMet) {
       injectScript();
     }
-  }, [usageMs]);
+  }, [thresholdMet]);
 
+  // Web: hide ads on the translation page.
   useEffect(() => {
-    setHideAds(onNoAdPage);
+    if (!isNativeApp()) setHideAds(onNoAdPage);
   }, [onNoAdPage]);
+
+  // Native (iOS / Android): initialize AdMob once.
+  useEffect(() => {
+    if (isNativeApp()) {
+      initMobileAds();
+    }
+    return () => {
+      if (isNativeApp()) removeBannerAd();
+    };
+  }, []);
+
+  // Native: show / hide banner based on threshold + route.
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    if (thresholdMet && !onNoAdPage) {
+      showBannerAd();
+    } else {
+      hideBannerAd();
+    }
+  }, [thresholdMet, onNoAdPage]);
 
   return null;
 }

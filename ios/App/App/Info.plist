@@ -55,5 +55,16 @@
         <array>
                 <string>audio</string>
         </array>
+        <!-- AdMob App ID. Replace with your real AdMob iOS App ID once issued. -->
+        <!-- Currently using Google's official sample/test App ID (safe, won't crash). -->
+        <key>GADApplicationIdentifier</key>
+        <string>ca-app-pub-3940256099942544~1458002511</string>
+        <key>SKAdNetworkItems</key>
+        <array>
+                <dict>
+                        <key>SKAdNetworkIdentifier</key>
+                        <string>cstr6suwn9.skadnetwork</string>
+                </dict>
+        </array>
 </dict>
 </plist>
