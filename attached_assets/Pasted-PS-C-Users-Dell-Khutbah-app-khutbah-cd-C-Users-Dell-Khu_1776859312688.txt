@@ -1,0 +1,53 @@
+PS C:\Users\Dell\Khutbah app\khutbah> cd "C:\Users\Dell\Khutbah app\Khutbah"
+PS C:\Users\Dell\Khutbah app\Khutbah> dir
+
+
+    Directory: C:\Users\Dell\Khutbah app\Khutbah
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----          3/5/2026   8:07 PM                .agents
+d-----        11/21/2025   4:36 PM                .cache
+d-----        11/18/2025  12:40 PM                .config
+d-----          4/9/2026  12:48 PM                .local
+d-----         4/17/2026   4:56 PM                .upm
+d-----         4/17/2026   4:57 PM                android
+d-----         4/22/2026   3:16 PM                attached_assets
+d-----         4/17/2026   4:01 PM                client
+d-----        11/21/2025   6:34 AM                dist
+d-----        11/21/2025   6:36 AM                icons
+d-----         4/17/2026   4:57 PM                ios
+d-----        11/21/2025   6:35 AM                resources
+d-----          4/9/2026  12:55 PM                scripts
+d-----          4/9/2026   1:18 PM                server
+d-----          1/4/2026   7:19 PM                shared
+-a----        11/17/2025   7:01 PM             67 .gitignore
+-a----         4/22/2026   3:18 PM            904 .replit
+-a----        11/23/2025  10:29 PM           8231 APP_STORE_KEYWORDS.md
+-a----        11/23/2025  10:28 PM          24164 APP_STORE_MATERIALS.md
+-a----        11/23/2025  10:35 PM          11910 APP_STORE_PACKAGE_README.md
+-a----        11/23/2025  10:31 PM          12552 APP_STORE_SCREENSHOTS.md
+-a----        11/23/2025  10:34 PM          19457 APP_STORE_SUBMISSION_GUIDE.md
+-a----        11/21/2025   6:35 AM            479 assets-config.json
+-a----        11/24/2025  11:57 PM           9681 BUILD_VARIANTS.md
+-a----        11/23/2025  10:19 PM            532 capacitor.config.english.ts
+-a----        11/23/2025  10:19 PM            558 capacitor.config.french.ts
+-a----        11/23/2025  10:19 PM            543 capacitor.config.hindi.ts
+-a----         4/17/2026   4:24 PM            630 capacitor.config.ts
+-a----        11/17/2025   7:01 PM            459 components.json
+-a----        11/23/2025  10:20 PM           7384 DEPLOYMENT.md
+-a----        11/23/2025  10:18 PM           7229 design_guidelines.md
+-a----        11/17/2025   7:01 PM            325 drizzle.config.ts
+-a----         4/17/2026   4:56 PM         528045 package-lock.json
+-a----         4/17/2026   4:56 PM           4628 package.json
+-a----        11/17/2025   7:01 PM             80 postcss.config.js
+-a----        11/23/2025  10:31 PM           9234 PRIVACY_POLICY.md
+-a----          1/4/2026   7:27 PM           5260 replit.md
+-a----        11/23/2025  10:42 PM          24176 SOCIAL_MEDIA_MARKETING_PLAN.md
+-a----        11/17/2025   9:12 PM           4090 tailwind.config.ts
+-a----        11/17/2025   7:01 PM            657 tsconfig.json
+-a----        11/17/2025   7:01 PM           1080 vite.config.ts
+
+
+PS C:\Users\Dell\Khutbah app\Khutbah>
