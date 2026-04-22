@@ -1,0 +1,44 @@
+PS C:\Users\Dell\Khutbah app\Khutbah> npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.20 building for production...
+transforming (1) index.htmlBrowserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+transforming (5) ..\node_modules\wouter\esm\index.js
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 2707 modules transformed.
+../dist/public/index.html                                                     2.83 kB │ gzip:   1.07 kB
+../dist/public/assets/hands_in_dua_position-DSUolwRl.png                    138.11 kB
+../dist/public/assets/Ramadan_crescent_moon_lanterns_7acbaea8-DFxutFmr.png  146.60 kB
+../dist/public/assets/Mosque_at_dawn_prayer_time_1c06498c-DA3m4u1G.png      147.79 kB
+../dist/public/assets/mosque_microphone_audio_setup-DNk2iN4L.png            152.41 kB
+../dist/public/assets/Open_Quran_with_calligraphy_c7ef6e94-BdzK8JAH.png     224.04 kB
+../dist/public/assets/islamic_calligraphy_allah_names-mkwn0-lz.png          239.33 kB
+../dist/public/assets/mosque_aerial_city_view-CqupJp-d.png                  239.56 kB
+../dist/public/assets/Prayer_beads_tasbih_closeup_5696650d-Noe7hkeZ.png     296.22 kB
+../dist/public/assets/analytics_spiritual_dashboard-DWfMIu3l.png            320.00 kB
+../dist/public/assets/Kaaba_aerial_view_Makkah_b34ddcc4-Br0AP6Zl.png        454.07 kB
+../dist/public/assets/index-DXw0kfvp.css                                     99.85 kB │ gzip:  20.19 kB
+../dist/public/assets/web-D_zKwwNq.js                                         0.12 kB │ gzip:   0.13 kB
+../dist/public/assets/index-DQYkQYog.js                                       0.27 kB │ gzip:   0.22 kB
+../dist/public/assets/index-BK9qei5m.js                                       0.30 kB │ gzip:   0.23 kB
+../dist/public/assets/index-D5_A3epa.js                                       0.33 kB │ gzip:   0.23 kB
+../dist/public/assets/index-CqKJ_kWw.js                                       0.35 kB │ gzip:   0.24 kB
+../dist/public/assets/web-D3z4hxOK.js                                         0.76 kB │ gzip:   0.36 kB
+../dist/public/assets/web-YPr02dqw.js                                         1.61 kB │ gzip:   0.54 kB
+../dist/public/assets/index-ubh8epse.js                                       2.36 kB │ gzip:   0.87 kB
+../dist/public/assets/index-D75pk15o.js                                     834.73 kB │ gzip: 246.08 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 6.96s
+
+  dist\index.js  152.8kb
+
+⚡ Done in 306ms
+PS C:\Users\Dell\Khutbah app\Khutbah>
