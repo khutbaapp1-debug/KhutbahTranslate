@@ -1,0 +1,44 @@
+Why is this user data collected? Select all that apply. Learn more and view examples
+
+App functionality
+Used for features in your app, for example to enable functionality or authenticate users. Learn more
+
+Analytics
+Used to collect data about how users use your app, or how your app performs. For example, to see how many users are using a particular feature, to monitor app health, to diagnose and fix bugs or crashes or to make future performance improvements. Learn more
+
+Developer communications
+Used to send news or notifications about you or your app. For example, sending a push notification to inform users about an important security update or informing users about new features in your app. Learn more
+
+Advertising or marketing
+Used to display or target ads or marketing communications, or measure ad performance. For example, displaying ads in your app, sending push notifications to promote other products or services, or sharing data with advertising partners. Learn more
+
+Fraud prevention, security and compliance
+Used for fraud prevention, security or compliance with laws. For example, monitoring failed login attempts to identify possible fraudulent activity. Learn more
+
+Personalisation
+Used to customise your app, such as showing recommended content or suggestions. For example, suggesting playlists based on users' listening habits, or delivering local news based on a user's location. Learn more
+
+Account management
+Used for the setup or management of user accounts. For example, to enable users to create accounts, to add information to accounts that you provide for use across your services, to log in to your app or to verify their credentials. Learn more
+Why is this user data shared? Select all that apply. Learn more and view examples
+
+App functionality
+Used for features in your app, for example to enable functionality or authenticate users. Learn more
+
+Analytics
+Used to collect data about how users use your app, or how your app performs. For example, to see how many users are using a particular feature, to monitor app health, to diagnose and fix bugs or crashes or to make future performance improvements. Learn more
+
+Developer communications
+Used to send news or notifications about you or your app. For example, sending a push notification to inform users about an important security update or informing users about new features in your app. Learn more
+
+Advertising or marketing
+Used to display or target ads or marketing communications, or measure ad performance. For example, displaying ads in your app, sending push notifications to promote other products or services, or sharing data with advertising partners. Learn more
+
+Fraud prevention, security and compliance
+Used for fraud prevention, security or compliance with laws. For example, monitoring failed login attempts to identify possible fraudulent activity. Learn more
+
+Personalisation
+Used to customise your app, such as showing recommended content or suggestions. For example, suggesting playlists based on users' listening habits, or delivering local news based on a user's location. Learn more
+
+Account management
+Used for the setup or management of user accounts. For example, to enable users to create accounts, to add information to accounts that you provide for use across your services, to log in to your app or to verify their credentials. Learn more
