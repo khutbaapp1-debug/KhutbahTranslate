@@ -3,13 +3,49 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, Settings, Book, Activity, Bell, Shield, FileText } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { LogOut, Settings, Book, Activity, Bell, Shield, FileText, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", "/api/account");
+    },
+    onSuccess: () => {
+      queryClient.clear();
+      toast({
+        title: "Account deleted",
+        description: "Your account and all associated data have been permanently deleted.",
+      });
+      window.location.href = "/landing";
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Deletion failed",
+        description: error.message || "Could not delete account. Please try again or contact support.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Redirect to landing page if not logged in
   if (!user) {
@@ -117,16 +153,48 @@ export default function ProfilePage() {
         </Card>
 
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 space-y-2">
             <Button
               variant="ghost"
-              className="w-full justify-start text-destructive hover:text-destructive"
+              className="w-full justify-start"
               onClick={handleLogout}
               data-testid="button-logout"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
             </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-destructive hover:text-destructive"
+                  data-testid="button-delete-account"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete your account and all associated data, including your saved sermons, notes, prayer tracking history, favorited hadiths and duas, and preferences. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel data-testid="button-delete-cancel">Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => deleteAccountMutation.mutate()}
+                    disabled={deleteAccountMutation.isPending}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    data-testid="button-delete-confirm"
+                  >
+                    {deleteAccountMutation.isPending ? "Deleting..." : "Yes, delete my account"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
       </main>

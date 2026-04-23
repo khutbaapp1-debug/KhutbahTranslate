@@ -33,6 +33,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserSubscription(userId: string, tier: string, expiresAt: Date | null): Promise<void>;
+  deleteUser(userId: string): Promise<void>;
 
   // Sermon management
   getSermon(id: string): Promise<Sermon | undefined>;
@@ -95,6 +96,13 @@ export class DatabaseStorage implements IStorage {
     await db.update(users)
       .set({ subscriptionTier: tier, subscriptionExpiresAt: expiresAt })
       .where(eq(users.id, userId));
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    // All user-related tables use onDelete: "cascade", so this single delete
+    // removes sermons, transcripts, notes, analytics, preferences, favorites,
+    // khutbah guidelines, missed prayers, and action points automatically.
+    await db.delete(users).where(eq(users.id, userId));
   }
 
   // Sermon methods

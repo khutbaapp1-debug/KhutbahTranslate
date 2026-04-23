@@ -170,6 +170,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ ACCOUNT MANAGEMENT ============
+
+  // Delete the authenticated user's account and all associated data
+  app.delete("/api/account", requireAuth, async (req, res) => {
+    try {
+      const userId = req.dbUser.id;
+      await storage.deleteUser(userId);
+      req.logout((err) => {
+        if (err) {
+          return res.status(500).json({ error: "Account deleted but logout failed" });
+        }
+        req.session.destroy(() => {
+          res.clearCookie("connect.sid");
+          res.json({ success: true });
+        });
+      });
+    } catch (error: any) {
+      console.error("Account deletion error:", error);
+      res.status(500).json({ error: error.message || "Failed to delete account" });
+    }
+  });
+
   // ============ AUDIO TRANSCRIPTION & TRANSLATION ============
   
   // Get translation usage info (authenticated users only)
