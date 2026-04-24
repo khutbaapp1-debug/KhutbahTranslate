@@ -25,6 +25,7 @@ import KhutbahDatabasePage from "@/pages/khutbah-database-page";
 import ActionPointsPage from "@/pages/action-points-page";
 import KhutbahGuidelinesPage from "@/pages/khutbah-guidelines-page";
 import PrayerTrackerPage from "@/pages/prayer-tracker-page";
+import SalahGuidePage from "@/pages/salah-guide-page";
 import AnalyticsPage from "@/pages/analytics-page";
 import ProfilePage from "@/pages/profile-page";
 import NotificationSettingsPage from "@/pages/notification-settings-page";
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/action-points" component={ActionPointsPage} />
       <Route path="/guidelines" component={KhutbahGuidelinesPage} />
       <Route path="/prayer-tracker" component={PrayerTrackerPage} />
+      <Route path="/salah-guide" component={SalahGuidePage} />
       <Route path="/analytics" component={AnalyticsPage} />
       
       <Route path="/profile" component={ProfilePage} />
