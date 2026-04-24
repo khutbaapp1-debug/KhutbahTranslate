@@ -50,4 +50,4 @@ The project adopts a monorepo structure with `/client`, `/server`, and `/shared`
 - **Embla Carousel**: For swipeable UI components.
 
 ### Native Mobile Platform
-- **Capacitor**: For deploying the web application as native iOS and Android apps.
+- **Capacitor**: For deploying the web application as native iOS and Android apps. The Capacitor config sets `server.url` to `https://khutbah-translate.replit.app`, so the APK loads the live deployed website rather than bundled assets. This means web redeploys automatically update the mobile app — a new AAB only needs to be built when native plugins (AdMob, splash screen, permissions) change.

@@ -5,6 +5,14 @@ const config: CapacitorConfig = {
   appName: 'Khutbah Companion',
   webDir: 'dist/public',
   backgroundColor: '#0F766E',
+  // Load the app from the deployed website so backend APIs (auth, prayer times,
+  // mosques, Quran, duas, hadiths, etc.) work and so future web redeploys
+  // automatically update the mobile app without rebuilding the AAB.
+  server: {
+    url: 'https://khutbah-translate.replit.app',
+    androidScheme: 'https',
+    cleartext: false,
+  },
   ios: {
     contentInset: 'always',
     backgroundColor: '#0F766E',
