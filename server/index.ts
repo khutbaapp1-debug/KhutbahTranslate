@@ -129,20 +129,33 @@ async function ensureSchemaAndSeed() {
     await db.execute(sql`ALTER TABLE users ALTER COLUMN username DROP NOT NULL;`).catch(() => {});
 
     const { duas, hadiths } = await import("@shared/schema");
-    const duaCount = await db.select().from(duas).limit(1);
-    if (duaCount.length === 0) {
+    const { seedDuas, EXPECTED_DUA_COUNT } = await import("./seed-duas");
+    const { seedHadiths, EXPECTED_HADITH_COUNT } = await import("./seed-hadiths");
+
+    const duaRows = await db.select().from(duas);
+    if (duaRows.length === 0) {
       log("No duas found - seeding database...");
-      const { seedDuas } = await import("./seed-duas");
       await seedDuas();
       log("Duas seeded successfully");
+    } else if (duaRows.length < EXPECTED_DUA_COUNT) {
+      log(`Outdated duas table (${duaRows.length} of ${EXPECTED_DUA_COUNT}) - refreshing...`);
+      await db.execute(sql`TRUNCATE TABLE favorite_duas CASCADE;`).catch(() => {});
+      await db.execute(sql`TRUNCATE TABLE duas CASCADE;`);
+      await seedDuas();
+      log("Duas refreshed successfully");
     }
 
-    const hadithCount = await db.select().from(hadiths).limit(1);
-    if (hadithCount.length === 0) {
+    const hadithRows = await db.select().from(hadiths);
+    if (hadithRows.length === 0) {
       log("No hadiths found - seeding database...");
-      const { seedHadiths } = await import("./seed-hadiths");
       await seedHadiths();
       log("Hadiths seeded successfully");
+    } else if (hadithRows.length < EXPECTED_HADITH_COUNT) {
+      log(`Outdated hadiths table (${hadithRows.length} of ${EXPECTED_HADITH_COUNT}) - refreshing...`);
+      await db.execute(sql`TRUNCATE TABLE favorite_hadiths CASCADE;`).catch(() => {});
+      await db.execute(sql`TRUNCATE TABLE hadiths CASCADE;`);
+      await seedHadiths();
+      log("Hadiths refreshed successfully");
     }
   } catch (err: any) {
     console.error("Startup schema/seed task failed (non-fatal):", err?.message || err);

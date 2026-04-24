@@ -1,246 +1,115 @@
-// Seed authentic hadiths from major collections
 import { db } from "./db";
 import { hadiths } from "@shared/schema";
 
-const AUTHENTIC_HADITHS = [
-  {
-    arabicText: "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى",
-    englishTranslation: "Actions are judged by intentions, and everyone will be rewarded according to their intention.",
-    collection: "bukhari",
-    bookNumber: 1,
-    hadithNumber: 1,
-    narrator: "Umar ibn Al-Khattab",
-    category: "faith",
-    reference: "Sahih Bukhari 1:1:1",
-    grade: "sahih"
-  },
-  {
-    arabicText: "الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ",
-    englishTranslation: "A Muslim is the one from whose tongue and hand the Muslims are safe.",
-    collection: "bukhari",
-    bookNumber: 2,
-    hadithNumber: 10,
-    narrator: "Abdullah ibn Amr",
-    category: "character",
-    reference: "Sahih Bukhari 2:1:10",
-    grade: "sahih"
-  },
-  {
-    arabicText: "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ",
-    englishTranslation: "Whoever believes in Allah and the Last Day should speak good or remain silent.",
-    collection: "bukhari",
-    bookNumber: 8,
-    hadithNumber: 47,
-    narrator: "Abu Huraira",
-    category: "character",
-    reference: "Sahih Bukhari 8:1:47",
-    grade: "sahih"
-  },
-  {
-    arabicText: "الدِّينُ النَّصِيحَةُ",
-    englishTranslation: "Religion is sincerity and sincere advice.",
-    collection: "muslim",
-    bookNumber: 1,
-    hadithNumber: 55,
-    narrator: "Tamim Ad-Dari",
-    category: "faith",
-    reference: "Sahih Muslim 1:1:55",
-    grade: "sahih"
-  },
-  {
-    arabicText: "لاَ يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ",
-    englishTranslation: "None of you truly believes until he loves for his brother what he loves for himself.",
-    collection: "bukhari",
-    bookNumber: 1,
-    hadithNumber: 13,
-    narrator: "Anas ibn Malik",
-    category: "faith",
-    reference: "Sahih Bukhari 1:2:13",
-    grade: "sahih"
-  },
-  {
-    arabicText: "الطُّهُورُ شَطْرُ الإِيمَانِ",
-    englishTranslation: "Purity is half of faith.",
-    collection: "muslim",
-    bookNumber: 1,
-    hadithNumber: 223,
-    narrator: "Abu Malik Al-Ashari",
-    category: "purification",
-    reference: "Sahih Muslim 1:2:223",
-    grade: "sahih"
-  },
-  {
-    arabicText: "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
-    englishTranslation: "The best among you are those who learn the Quran and teach it.",
-    collection: "bukhari",
-    bookNumber: 6,
-    hadithNumber: 545,
-    narrator: "Uthman ibn Affan",
-    category: "knowledge",
-    reference: "Sahih Bukhari 6:61:545",
-    grade: "sahih"
-  },
-  {
-    arabicText: "تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ",
-    englishTranslation: "Your smiling in the face of your brother is charity.",
-    collection: "tirmidhi",
-    bookNumber: 27,
-    hadithNumber: 1956,
-    narrator: "Abu Dharr",
-    category: "charity",
-    reference: "Jami' at-Tirmidhi 27:1956",
-    grade: "hasan"
-  },
-  {
-    arabicText: "الْمُؤْمِنُ الْقَوِيُّ خَيْرٌ وَأَحَبُّ إِلَى اللَّهِ مِنَ الْمُؤْمِنِ الضَّعِيفِ",
-    englishTranslation: "The strong believer is better and more beloved to Allah than the weak believer.",
-    collection: "muslim",
-    bookNumber: 34,
-    hadithNumber: 2664,
-    narrator: "Abu Huraira",
-    category: "faith",
-    reference: "Sahih Muslim 34:2664",
-    grade: "sahih"
-  },
-  {
-    arabicText: "مَنْ صَلَّى الْبَرْدَيْنِ دَخَلَ الْجَنَّةَ",
-    englishTranslation: "Whoever prays the two cool prayers (Fajr and Asr) will enter Paradise.",
-    collection: "bukhari",
-    bookNumber: 9,
-    hadithNumber: 553,
-    narrator: "Abu Musa",
-    category: "prayer",
-    reference: "Sahih Bukhari 9:10:553",
-    grade: "sahih"
-  },
-  {
-    arabicText: "الصَّلَوَاتُ الْخَمْسُ وَالْجُمُعَةُ إِلَى الْجُمُعَةِ كَفَّارَةٌ لِمَا بَيْنَهُنَّ",
-    englishTranslation: "The five daily prayers and from one Friday to the next are expiation for whatever sins come between them.",
-    collection: "muslim",
-    bookNumber: 2,
-    hadithNumber: 233,
-    narrator: "Abu Huraira",
-    category: "prayer",
-    reference: "Sahih Muslim 2:233",
-    grade: "sahih"
-  },
-  {
-    arabicText: "مَنْ غَشَّنَا فَلَيْسَ مِنَّا",
-    englishTranslation: "Whoever cheats us is not one of us.",
-    collection: "muslim",
-    bookNumber: 1,
-    hadithNumber: 102,
-    narrator: "Abu Huraira",
-    category: "character",
-    reference: "Sahih Muslim 1:102",
-    grade: "sahih"
-  },
-  {
-    arabicText: "لَا ضَرَرَ وَلَا ضِرَارَ",
-    englishTranslation: "There should be neither harming nor reciprocating harm.",
-    collection: "ibn majah",
-    bookNumber: 13,
-    hadithNumber: 2340,
-    narrator: "Abu Said Al-Khudri",
-    category: "justice",
-    reference: "Sunan Ibn Majah 13:2340",
-    grade: "hasan"
-  },
-  {
-    arabicText: "إِنَّ اللَّهَ طَيِّبٌ لَا يَقْبَلُ إِلَّا طَيِّبًا",
-    englishTranslation: "Allah is pure and accepts only that which is pure.",
-    collection: "muslim",
-    bookNumber: 12,
-    hadithNumber: 1015,
-    narrator: "Abu Huraira",
-    category: "charity",
-    reference: "Sahih Muslim 12:1015",
-    grade: "sahih"
-  },
-  {
-    arabicText: "أَحَبُّ الْأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ",
-    englishTranslation: "The most beloved deeds to Allah are those that are most consistent, even if they are small.",
-    collection: "bukhari",
-    bookNumber: 76,
-    hadithNumber: 469,
-    narrator: "Aisha",
-    category: "faith",
-    reference: "Sahih Bukhari 76:76:469",
-    grade: "sahih"
-  },
-  {
-    arabicText: "الْكَلِمَةُ الطَّيِّبَةُ صَدَقَةٌ",
-    englishTranslation: "A kind word is charity.",
-    collection: "bukhari",
-    bookNumber: 56,
-    hadithNumber: 128,
-    narrator: "Abu Huraira",
-    category: "charity",
-    reference: "Sahih Bukhari 56:128",
-    grade: "sahih"
-  },
-  {
-    arabicText: "اتَّقِ اللَّهَ حَيْثُمَا كُنْتَ",
-    englishTranslation: "Fear Allah wherever you are.",
-    collection: "tirmidhi",
-    bookNumber: 27,
-    hadithNumber: 1987,
-    narrator: "Abu Dharr",
-    category: "taqwa",
-    reference: "Jami' at-Tirmidhi 27:1987",
-    grade: "hasan"
-  },
-  {
-    arabicText: "مَنْ بَنَى مَسْجِدًا يَبْتَغِي بِهِ وَجْهَ اللَّهِ بَنَى اللَّهُ لَهُ مِثْلَهُ فِي الْجَنَّةِ",
-    englishTranslation: "Whoever builds a mosque seeking Allah's pleasure, Allah will build for him a similar place in Paradise.",
-    collection: "bukhari",
-    bookNumber: 8,
-    hadithNumber: 450,
-    narrator: "Uthman ibn Affan",
-    category: "charity",
-    reference: "Sahih Bukhari 8:65:450",
-    grade: "sahih"
-  },
-  {
-    arabicText: "مَنْ يُرِدِ اللَّهُ بِهِ خَيْرًا يُفَقِّهْهُ فِي الدِّينِ",
-    englishTranslation: "If Allah wants good for a person, He gives him understanding of the religion.",
-    collection: "bukhari",
-    bookNumber: 3,
-    hadithNumber: 71,
-    narrator: "Muawiya",
-    category: "knowledge",
-    reference: "Sahih Bukhari 3:71",
-    grade: "sahih"
-  },
-  {
-    arabicText: "الْحَيَاءُ مِنَ الْإِيمَانِ",
-    englishTranslation: "Modesty is part of faith.",
-    collection: "bukhari",
-    bookNumber: 2,
-    hadithNumber: 9,
-    narrator: "Abu Huraira",
-    category: "character",
-    reference: "Sahih Bukhari 2:1:9",
-    grade: "sahih"
-  },
-];
-
-export async function seedHadiths() {
-  console.log("Seeding hadiths...");
-  
-  // Check if hadiths already exist
-  const existing = await db.select().from(hadiths).limit(1);
-  if (existing.length > 0) {
-    console.log("Hadiths already seeded, skipping...");
-    return;
-  }
-
-  // Insert all hadiths
-  await db.insert(hadiths).values(AUTHENTIC_HADITHS);
-  console.log(`✓ Seeded ${AUTHENTIC_HADITHS.length} authentic hadiths`);
+interface CuratedHadith {
+  collection: "bukhari" | "muslim" | "tirmidhi" | "abudawud" | "nasai" | "ibnmajah";
+  number: number;
+  category: string;
+  narrator: string;
+  grade: "sahih" | "hasan";
 }
 
-// Allow running this file directly as a CLI script (e.g. tsx server/seed-hadiths.ts)
+const COLLECTION_NAMES: Record<string, string> = {
+  bukhari: "Sahih al-Bukhari",
+  muslim: "Sahih Muslim",
+  tirmidhi: "Jami at-Tirmidhi",
+  abudawud: "Sunan Abu Dawud",
+  nasai: "Sunan an-Nasai",
+  ibnmajah: "Sunan Ibn Majah",
+};
+
+const CURATED_HADITHS: CuratedHadith[] = [
+  { collection: "bukhari", number: 1, category: "intentions", narrator: "Umar ibn Al-Khattab", grade: "sahih" },
+  { collection: "bukhari", number: 8, category: "faith", narrator: "Ibn Umar", grade: "sahih" },
+  { collection: "bukhari", number: 12, category: "character", narrator: "Abdullah ibn Amr", grade: "sahih" },
+  { collection: "bukhari", number: 13, category: "brotherhood", narrator: "Anas ibn Malik", grade: "sahih" },
+  { collection: "bukhari", number: 25, category: "deeds", narrator: "Abu Huraira", grade: "sahih" },
+  { collection: "bukhari", number: 41, category: "repentance", narrator: "Abu Sa'id Al-Khudri", grade: "sahih" },
+  { collection: "bukhari", number: 1395, category: "charity", narrator: "Ibn Abbas", grade: "sahih" },
+  { collection: "bukhari", number: 5970, category: "family", narrator: "Abdullah ibn Mas'ud", grade: "sahih" },
+  { collection: "bukhari", number: 6011, category: "brotherhood", narrator: "An-Nu'man ibn Bashir", grade: "sahih" },
+  { collection: "bukhari", number: 6018, category: "character", narrator: "Abu Huraira", grade: "sahih" },
+  { collection: "bukhari", number: 6094, category: "character", narrator: "Abdullah ibn Mas'ud", grade: "sahih" },
+  { collection: "bukhari", number: 6464, category: "deeds", narrator: "Aisha", grade: "sahih" },
+  { collection: "bukhari", number: 6502, category: "spiritual", narrator: "Abu Huraira", grade: "sahih" },
+  { collection: "bukhari", number: 7405, category: "remembrance", narrator: "Abu Huraira", grade: "sahih" },
+
+  { collection: "muslim", number: 1, category: "faith", narrator: "Umar ibn Al-Khattab", grade: "sahih" },
+  { collection: "muslim", number: 8, category: "faith", narrator: "Umar ibn Al-Khattab", grade: "sahih" },
+  { collection: "muslim", number: 49, category: "character", narrator: "Abu Sa'id Al-Khudri", grade: "sahih" },
+  { collection: "muslim", number: 223, category: "purification", narrator: "Abu Malik Al-Ash'ari", grade: "sahih" },
+  { collection: "muslim", number: 2564, category: "spiritual", narrator: "Abu Huraira", grade: "sahih" },
+  { collection: "muslim", number: 2999, category: "patience", narrator: "Suhaib", grade: "sahih" },
+
+  { collection: "tirmidhi", number: 1924, category: "mercy", narrator: "Abdullah ibn Amr", grade: "sahih" },
+  { collection: "tirmidhi", number: 1987, category: "character", narrator: "Abu Dharr", grade: "hasan" },
+  { collection: "tirmidhi", number: 2317, category: "character", narrator: "Abu Huraira", grade: "hasan" },
+  { collection: "tirmidhi", number: 2516, category: "spiritual", narrator: "Ibn Abbas", grade: "hasan" },
+  { collection: "tirmidhi", number: 2687, category: "knowledge", narrator: "Abu Umamah", grade: "hasan" },
+
+  { collection: "abudawud", number: 4084, category: "manners", narrator: "Abu Huraira", grade: "sahih" },
+  { collection: "abudawud", number: 4811, category: "gratitude", narrator: "Abu Huraira", grade: "sahih" },
+
+  { collection: "nasai", number: 1574, category: "prayer", narrator: "Aisha", grade: "sahih" },
+  { collection: "nasai", number: 5009, category: "wealth", narrator: "Abu Huraira", grade: "sahih" },
+
+  { collection: "ibnmajah", number: 224, category: "knowledge", narrator: "Anas ibn Malik", grade: "sahih" },
+];
+
+async function fetchHadith(collection: string, number: number) {
+  const base = "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions";
+  const [engRes, araRes] = await Promise.all([
+    fetch(`${base}/eng-${collection}/${number}.json`),
+    fetch(`${base}/ara-${collection}/${number}.json`),
+  ]);
+  if (!engRes.ok || !araRes.ok) {
+    throw new Error(`HTTP ${engRes.status}/${araRes.status} for ${collection}/${number}`);
+  }
+  const eng = await engRes.json();
+  const ara = await araRes.json();
+  return {
+    arabic: (ara?.hadiths?.[0]?.text ?? "").trim(),
+    english: (eng?.hadiths?.[0]?.text ?? "").trim(),
+  };
+}
+
+export async function seedHadiths() {
+  console.log("Fetching authentic hadiths from sunnah.com sources...");
+
+  const inserts: Array<typeof hadiths.$inferInsert> = [];
+  let failed = 0;
+
+  for (const h of CURATED_HADITHS) {
+    try {
+      const { arabic, english } = await fetchHadith(h.collection, h.number);
+      if (!arabic || !english) {
+        failed++;
+        continue;
+      }
+      inserts.push({
+        arabicText: arabic,
+        englishTranslation: english,
+        collection: h.collection,
+        hadithNumber: h.number,
+        narrator: h.narrator,
+        category: h.category,
+        reference: `${COLLECTION_NAMES[h.collection]} ${h.number}`,
+        grade: h.grade,
+      });
+    } catch (err: any) {
+      console.error(`Failed to fetch ${h.collection} ${h.number}: ${err.message}`);
+      failed++;
+    }
+  }
+
+  if (inserts.length > 0) {
+    await db.insert(hadiths).values(inserts);
+  }
+  console.log(`Seeded ${inserts.length} hadiths (${failed} failed) from authentic collections.`);
+}
+
+export const EXPECTED_HADITH_COUNT = CURATED_HADITHS.length;
+
 const isDirectRun = process.argv[1] && process.argv[1].includes("seed-hadiths");
 if (isDirectRun) {
   seedHadiths()
