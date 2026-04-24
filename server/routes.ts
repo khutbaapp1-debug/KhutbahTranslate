@@ -728,16 +728,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `;
       
       const overpassUrl = "https://overpass-api.de/api/interpreter";
-      const response = await fetch(overpassUrl, {
-        method: "POST",
-        body: `data=${encodeURIComponent(overpassQuery)}`,
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      });
-      
+      const fetchOverpass = async (url: string) => {
+        return fetch(url, {
+          method: "POST",
+          body: `data=${encodeURIComponent(overpassQuery)}`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "KhutbahCompanion/1.0 (https://khutbah-translate.replit.app)",
+            "Accept": "application/json",
+          },
+        });
+      };
+
+      let response = await fetchOverpass(overpassUrl);
       if (!response.ok) {
-        throw new Error("Failed to fetch mosques from OpenStreetMap");
+        // Fallback to Kumi mirror if main endpoint is rate-limited / down
+        response = await fetchOverpass("https://overpass.kumi.systems/api/interpreter");
+      }
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        console.error("Overpass API error:", response.status, body.slice(0, 200));
+        throw new Error(`Failed to fetch mosques from OpenStreetMap (status ${response.status})`);
       }
       
       const data: any = await response.json();

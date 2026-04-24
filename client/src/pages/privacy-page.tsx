@@ -8,7 +8,7 @@ export default function PrivacyPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg pt-safe border-b border-border">
         <div className="flex items-center gap-2 p-4 max-w-screen-md mx-auto">
           <Button
             variant="ghost"

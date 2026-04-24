@@ -110,7 +110,47 @@ app.use((req, res, next) => {
   next();
 });
 
+async function ensureSchemaAndSeed() {
+  try {
+    const { db } = await import("./db");
+    const { sql } = await import("drizzle-orm");
+
+    // Idempotent schema patches for production databases that pre-date the OAuth migration.
+    await db.execute(sql`
+      ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS oidc_subject VARCHAR UNIQUE,
+        ADD COLUMN IF NOT EXISTS first_name VARCHAR,
+        ADD COLUMN IF NOT EXISTS last_name VARCHAR,
+        ADD COLUMN IF NOT EXISTS profile_image_url VARCHAR,
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+    `);
+    // Make legacy username/password optional so OAuth users can be created.
+    await db.execute(sql`ALTER TABLE users ALTER COLUMN password DROP NOT NULL;`).catch(() => {});
+    await db.execute(sql`ALTER TABLE users ALTER COLUMN username DROP NOT NULL;`).catch(() => {});
+
+    const { duas, hadiths } = await import("@shared/schema");
+    const duaCount = await db.select().from(duas).limit(1);
+    if (duaCount.length === 0) {
+      log("No duas found - seeding database...");
+      const { seedDuas } = await import("./seed-duas");
+      await seedDuas();
+      log("Duas seeded successfully");
+    }
+
+    const hadithCount = await db.select().from(hadiths).limit(1);
+    if (hadithCount.length === 0) {
+      log("No hadiths found - seeding database...");
+      const { seedHadiths } = await import("./seed-hadiths");
+      await seedHadiths();
+      log("Hadiths seeded successfully");
+    }
+  } catch (err: any) {
+    console.error("Startup schema/seed task failed (non-fatal):", err?.message || err);
+  }
+}
+
 (async () => {
+  await ensureSchemaAndSeed();
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

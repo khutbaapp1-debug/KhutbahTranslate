@@ -32,8 +32,8 @@ export default function TasbihPage() {
   const progress = (count / selectedDhikr.target) * 100;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
+    <div className="min-h-screen bg-background pb-nav">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg pt-safe border-b border-border">
         <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
           <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
             Digital Tasbih

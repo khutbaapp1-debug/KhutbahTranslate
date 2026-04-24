@@ -240,13 +240,16 @@ export async function seedHadiths() {
   console.log(`✓ Seeded ${AUTHENTIC_HADITHS.length} authentic hadiths`);
 }
 
-// Run immediately
-seedHadiths()
-  .then(() => {
-    console.log("Hadith seeding complete!");
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error("Error seeding hadiths:", error);
-    process.exit(1);
-  });
+// Allow running this file directly as a CLI script (e.g. tsx server/seed-hadiths.ts)
+const isDirectRun = process.argv[1] && process.argv[1].includes("seed-hadiths");
+if (isDirectRun) {
+  seedHadiths()
+    .then(() => {
+      console.log("Hadith seeding complete!");
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error("Error seeding hadiths:", error);
+      process.exit(1);
+    });
+}
