@@ -23,14 +23,9 @@ export default function LandingPage() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-              <Button size="lg" asChild data-testid="button-login">
-                <a href="/api/login">
-                  Sign In with Google or Apple
-                </a>
-              </Button>
-              <Button size="lg" variant="outline" asChild data-testid="button-explore">
+              <Button size="lg" asChild data-testid="button-explore">
                 <a href="/">
-                  Explore Features
+                  Open the App
                 </a>
               </Button>
             </div>

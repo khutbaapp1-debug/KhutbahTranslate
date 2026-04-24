@@ -1,4 +1,4 @@
-import { Home, Book, Clock, Circle, User } from "lucide-react";
+import { Home, Book, Clock, Circle, Heart } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 const navItems = [
@@ -6,7 +6,7 @@ const navItems = [
   { path: "/quran", icon: Book, label: "Qur'an" },
   { path: "/prayer", icon: Clock, label: "Prayer" },
   { path: "/tasbih", icon: Circle, label: "Tasbih" },
-  { path: "/profile", icon: User, label: "Profile" },
+  { path: "/duas", icon: Heart, label: "Duas" },
 ];
 
 export function BottomNav() {

@@ -1,10 +1,9 @@
 import { useLocation } from "wouter";
-import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, Calendar, ScrollText, LogIn } from "lucide-react";
+import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, ScrollText } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-provider";
 import { Sun, Moon as MoonIcon } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
 
 import mosqueImage from "@assets/generated_images/Mosque_at_dawn_prayer_time_1c06498c.png";
 import kaabaImage from "@assets/generated_images/Kaaba_aerial_view_Makkah_b34ddcc4.png";
@@ -22,7 +21,6 @@ import analyticsImage from "@assets/generated_images/analytics_spiritual_dashboa
 export default function HomePage() {
   const [, setLocation] = useLocation();
   const { theme, toggleTheme } = useTheme();
-  const { user } = useAuth();
 
   const features = [
     {
@@ -105,14 +103,6 @@ export default function HomePage() {
       path: "/mosques",
       category: "community",
     },
-    {
-      title: "Prayer Tracker",
-      description: "Track and make up missed prayers (Qada)",
-      icon: Calendar,
-      backgroundImage: analyticsImage,
-      path: "/prayer-tracker",
-      category: "prayer",
-    },
   ];
 
   const khutbahFeature = features[0]; // Live Translation is first
@@ -189,17 +179,6 @@ export default function HomePage() {
             <p className="text-xs text-muted-foreground">Your Islamic Companion</p>
           </div>
           <div className="flex items-center gap-2">
-            {!user && (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => { window.location.href = "/api/login"; }}
-                data-testid="button-login"
-              >
-                <LogIn className="w-4 h-4 mr-1" />
-                Sign In
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="icon"
