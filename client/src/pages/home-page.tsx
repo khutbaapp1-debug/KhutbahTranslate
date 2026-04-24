@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, ScrollText } from "lucide-react";
+import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, ScrollText, Calendar } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-provider";
@@ -102,6 +102,14 @@ export default function HomePage() {
       backgroundImage: mosqueFinderImage,
       path: "/mosques",
       category: "community",
+    },
+    {
+      title: "Hijri Calendar",
+      description: "Islamic calendar with Hijri dates and Ramadan countdown",
+      icon: Calendar,
+      backgroundImage: ramadanImage,
+      path: "/calendar",
+      category: "knowledge",
     },
   ];
 
