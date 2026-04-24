@@ -800,30 +800,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ QURAN ROUTES ============
   
   // Get all surahs (index)
+  // In-memory caches (Quran data is static — safe to cache forever)
+  const surahsListCache: { data: any | null } = { data: null };
+  const surahDetailsCache = new Map<number, any>();
+
   app.get("/api/quran/surahs", async (req, res) => {
     try {
-      const response = await fetch(
-        "https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/chapters/en/index.json"
-      );
-      const surahs = await response.json();
+      if (surahsListCache.data) {
+        return res.json(surahsListCache.data);
+      }
+      const response = await fetch("https://api.alquran.cloud/v1/meta");
+      const meta = await response.json();
+      const refs = meta?.data?.surahs?.references ?? [];
+      const surahs = refs.map((s: any) => ({
+        id: s.number,
+        name: s.name,
+        transliteration: s.englishName,
+        translation: s.englishNameTranslation,
+        type: (s.revelationType || "").toLowerCase(),
+        total_verses: s.numberOfAyahs,
+      }));
+      surahsListCache.data = surahs;
       res.json(surahs);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
-  
-  // Get specific surah with verses
+
+  // Get specific surah with verses (Arabic + clean transliteration + Sahih International translation)
   app.get("/api/quran/surah/:id", async (req, res) => {
     try {
       const surahId = parseInt(req.params.id);
       if (isNaN(surahId) || surahId < 1 || surahId > 114) {
         return res.status(400).json({ error: "Surah ID must be between 1 and 114" });
       }
-      
+
+      if (surahDetailsCache.has(surahId)) {
+        return res.json(surahDetailsCache.get(surahId));
+      }
+
       const response = await fetch(
-        `https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/chapters/en/${surahId}.json`
+        `https://api.alquran.cloud/v1/surah/${surahId}/editions/quran-uthmani,en.transliteration,en.sahih`
       );
-      const surah = await response.json();
+      const payload = await response.json();
+      const editions: any[] = payload?.data ?? [];
+
+      const arabic = editions.find((e) => e.edition?.identifier === "quran-uthmani");
+      const translit = editions.find((e) => e.edition?.identifier === "en.transliteration");
+      const english = editions.find((e) => e.edition?.identifier === "en.sahih");
+
+      if (!arabic) {
+        return res.status(502).json({ error: "Failed to fetch Quran data" });
+      }
+
+      const verses = arabic.ayahs.map((ayah: any, idx: number) => ({
+        id: ayah.numberInSurah,
+        text: ayah.text,
+        transliteration: translit?.ayahs?.[idx]?.text ?? "",
+        translation: english?.ayahs?.[idx]?.text ?? "",
+      }));
+
+      const surah = {
+        id: arabic.number,
+        name: arabic.name,
+        transliteration: arabic.englishName,
+        translation: arabic.englishNameTranslation,
+        type: (arabic.revelationType || "").toLowerCase(),
+        total_verses: arabic.numberOfAyahs,
+        verses,
+      };
+
+      surahDetailsCache.set(surahId, surah);
       res.json(surah);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
