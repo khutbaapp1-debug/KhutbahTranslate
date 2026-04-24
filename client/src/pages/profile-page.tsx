@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { LogOut, Settings, Book, Activity, Bell, Shield, FileText, Trash2 } from "lucide-react";
+import { LogOut, Settings, Book, Activity, Bell, Shield, FileText, Trash2, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
@@ -47,10 +47,55 @@ export default function ProfilePage() {
     },
   });
 
-  // Redirect to landing page if not logged in
+  // Show a sign-in prompt for guests (still rendering the bottom nav so
+  // users can navigate back home).
   if (!user) {
-    setLocation("/landing");
-    return null;
+    return (
+      <div className="min-h-screen bg-background pb-nav">
+        <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg pt-safe border-b border-border">
+          <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
+            <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
+              Profile
+            </h1>
+          </div>
+        </header>
+
+        <main className="p-6 max-w-screen-md mx-auto">
+          <Card>
+            <CardContent className="p-8 text-center space-y-4">
+              <Avatar className="w-20 h-20 mx-auto">
+                <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                  <UserIcon className="w-10 h-10" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Sign in to your account</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Save your sermons, sync your prayer tracker, and personalize your experience.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 pt-2">
+                <Button
+                  onClick={() => { window.location.href = "/api/login"; }}
+                  data-testid="button-signin"
+                >
+                  Sign In
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setLocation("/")}
+                  data-testid="button-back-home"
+                >
+                  Back to Home
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+
+        <BottomNav />
+      </div>
+    );
   }
 
   const handleLogout = () => {
