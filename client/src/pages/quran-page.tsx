@@ -602,10 +602,10 @@ export default function QuranPage() {
                       className={isBookmarked ? "border-primary" : ""}
                     >
                       <CardContent className="p-6 space-y-4">
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-row-reverse items-start justify-between gap-4">
                           <div className="flex-1">
                             <p
-                              className="text-3xl leading-loose text-foreground font-arabic mb-4"
+                              className="text-3xl leading-loose text-foreground font-arabic mb-4 text-right"
                               dir="rtl"
                               data-testid={`verse-arabic-${verse.id}`}
                             >
@@ -747,12 +747,12 @@ export default function QuranPage() {
                 data-testid={`surah-card-${surah.id}`}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
+                  <div className="flex flex-row-reverse items-center justify-between gap-4">
+                    <div className="flex flex-row-reverse items-center gap-4">
                       <div className="w-12 h-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold">
                         {surah.id}
                       </div>
-                      <div>
+                      <div className="text-right">
                         <h3 className="font-semibold text-lg text-foreground" data-testid={`surah-name-${surah.id}`}>
                           {surah.transliteration}
                         </h3>
@@ -761,7 +761,7 @@ export default function QuranPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left">
                       <p className="text-2xl font-arabic" dir="rtl">
                         {surah.name}
                       </p>
