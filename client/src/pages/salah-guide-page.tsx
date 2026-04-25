@@ -3,6 +3,12 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import takbirImg from "@assets/salah/takbir.png";
+import qiyamImg from "@assets/salah/qiyam.png";
+import rukuImg from "@assets/salah/ruku.png";
+import sujoodImg from "@assets/salah/sujood.png";
+import jalsahImg from "@assets/salah/jalsah.png";
+import tasleemImg from "@assets/salah/tasleem.png";
 
 type Prayer = {
   id: string;
@@ -70,6 +76,8 @@ type Step = {
   transliteration: string;
   translation: string;
   notes?: string;
+  image?: string;
+  imageAlt?: string;
 };
 
 const steps: Step[] = [
@@ -85,6 +93,8 @@ const steps: Step[] = [
     transliteration: "Allaahu Akbar",
     translation: "Allah is the Greatest",
     notes: "Raise both hands to the level of your ears (men) or shoulders (women), then place the right hand over the left on your chest.",
+    image: takbirImg,
+    imageAlt: "Takbir al-Ihram: standing with both hands raised to ear level",
   },
   {
     position: "3. Opening Supplication (Du'a al-Istiftah)",
