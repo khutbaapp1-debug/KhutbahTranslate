@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { SalahPosture, type Pose } from "@/components/salah-posture";
+import salahPosturesChart from "@assets/image_1777114574002.png";
 
 type Prayer = {
   id: string;
@@ -220,25 +221,33 @@ export default function SalahGuidePage() {
 
           <TabsContent value="postures" className="space-y-4 mt-4">
             <p className="text-sm text-muted-foreground px-1">
-              The physical postures of one rakah, in order. Repeat these for each rakah of any prayer.
+              Visual reference for the physical postures of Salah. Repeat these for each rakah of any prayer.
             </p>
-            <div className="grid grid-cols-2 gap-3">
-              {postureItems.map((item, idx) => (
-                <Card key={`${item.pose}-${idx}`} data-testid={`posture-card-${idx + 1}`}>
-                  <CardContent className="p-4 space-y-2 flex flex-col items-center text-center">
-                    <div className="w-24 h-24 rounded-md bg-muted/60 flex items-center justify-center text-foreground/80 p-2">
-                      <SalahPosture pose={item.pose} className="w-full h-full" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        {idx + 1}. {item.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">{item.hint}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+
+            <Card>
+              <CardContent className="p-3">
+                <img
+                  src={salahPosturesChart}
+                  alt="Illustrated reference of Salah postures"
+                  className="w-full h-auto rounded-md"
+                  data-testid="img-postures-chart"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-5 space-y-3">
+                <h3 className="font-semibold text-foreground">Posture order in one rakah</h3>
+                <ol className="text-sm text-foreground space-y-2 list-decimal pl-5">
+                  {postureItems.map((item, idx) => (
+                    <li key={`${item.pose}-${idx}`} data-testid={`posture-item-${idx + 1}`}>
+                      <span className="font-medium">{item.name}</span>
+                      <span className="text-muted-foreground"> — {item.hint}</span>
+                    </li>
+                  ))}
+                </ol>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="say" className="space-y-3 mt-4">
