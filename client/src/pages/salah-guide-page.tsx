@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -179,9 +178,25 @@ const steps: Step[] = [
   },
 ];
 
-export default function SalahGuidePage() {
-  const [activePrayer, setActivePrayer] = useState("fajr");
+type PostureItem = {
+  pose: Pose;
+  name: string;
+  hint: string;
+};
 
+const postureItems: PostureItem[] = [
+  { pose: "takbir", name: "Takbir al-Ihram", hint: "Raise hands and say Allaahu Akbar to begin." },
+  { pose: "qiyam", name: "Qiyam (Standing)", hint: "Stand with right hand over left, recite Al-Fatiha and a surah." },
+  { pose: "ruku", name: "Ruku' (Bowing)", hint: "Bow with hands on knees, back straight." },
+  { pose: "qiyam", name: "I'tidal (Stand again)", hint: "Rise back up fully from bowing." },
+  { pose: "sujood", name: "Sujood (Prostration)", hint: "Forehead, nose, palms, knees and toes touch the ground." },
+  { pose: "jalsah", name: "Jalsah (Sit briefly)", hint: "Sit up between the two prostrations." },
+  { pose: "sujood", name: "Second Sujood", hint: "Prostrate again. This completes one rakah." },
+  { pose: "jalsah", name: "Tashahhud (Sitting)", hint: "Sit and recite the testimony after every 2 rakahs." },
+  { pose: "tasleem", name: "Tasleem (Closing)", hint: "Turn head right then left to end the prayer." },
+];
+
+export default function SalahGuidePage() {
   return (
     <div className="min-h-screen bg-background pb-nav">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg pt-safe border-b border-border">
@@ -195,26 +210,83 @@ export default function SalahGuidePage() {
         </div>
       </header>
 
-      <main className="p-4 max-w-screen-md mx-auto space-y-6">
-        <Tabs value={activePrayer} onValueChange={setActivePrayer}>
-          <TabsList className="w-full grid grid-cols-5">
-            {prayers.map((p) => (
-              <TabsTrigger key={p.id} value={p.id} data-testid={`tab-${p.id}`}>
-                {p.name}
-              </TabsTrigger>
-            ))}
+      <main className="p-4 max-w-screen-md mx-auto space-y-4">
+        <Tabs defaultValue="postures">
+          <TabsList className="w-full grid grid-cols-3">
+            <TabsTrigger value="postures" data-testid="tab-postures">Postures</TabsTrigger>
+            <TabsTrigger value="say" data-testid="tab-say">What to say</TabsTrigger>
+            <TabsTrigger value="prayers" data-testid="tab-prayers">Prayers</TabsTrigger>
           </TabsList>
 
-          {prayers.map((prayer) => (
-            <TabsContent key={prayer.id} value={prayer.id} className="space-y-4 mt-4">
-              <Card>
-                <CardContent className="p-6 space-y-4">
+          <TabsContent value="postures" className="space-y-4 mt-4">
+            <p className="text-sm text-muted-foreground px-1">
+              The physical postures of one rakah, in order. Repeat these for each rakah of any prayer.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {postureItems.map((item, idx) => (
+                <Card key={`${item.pose}-${idx}`} data-testid={`posture-card-${idx + 1}`}>
+                  <CardContent className="p-4 space-y-2 flex flex-col items-center text-center">
+                    <div className="w-24 h-24 rounded-md bg-muted/60 flex items-center justify-center text-foreground/80 p-2">
+                      <SalahPosture pose={item.pose} className="w-full h-full" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {idx + 1}. {item.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{item.hint}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="say" className="space-y-3 mt-4">
+            <p className="text-sm text-muted-foreground px-1">
+              Words to recite at each step of one rakah. Repeat steps 4–11 in every rakah, then perform Tashahhud after every 2 rakahs and again at the end.
+            </p>
+            {steps.map((step, idx) => (
+              <Card key={idx} data-testid={`step-${idx + 1}`}>
+                <CardContent className="p-5 space-y-3">
+                  <h4 className="font-semibold text-foreground">{step.position}</h4>
+
+                  {step.arabic && (
+                    <p className="text-2xl font-arabic text-foreground leading-loose text-right" dir="rtl">
+                      {step.arabic}
+                    </p>
+                  )}
+
+                  {step.transliteration && (
+                    <p className="text-sm italic text-muted-foreground">{step.transliteration}</p>
+                  )}
+
+                  {step.translation && (
+                    <p className="text-sm text-foreground">{step.translation}</p>
+                  )}
+
+                  {step.notes && (
+                    <div className="text-xs text-muted-foreground bg-muted rounded-md p-3 mt-2">
+                      {step.notes}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+
+          <TabsContent value="prayers" className="space-y-3 mt-4">
+            <p className="text-sm text-muted-foreground px-1">
+              Each daily prayer has a different number of rakahs. Use the postures and words above for every rakah.
+            </p>
+            {prayers.map((prayer) => (
+              <Card key={prayer.id} data-testid={`prayer-${prayer.id}`}>
+                <CardContent className="p-5 space-y-3">
                   <div className="flex items-baseline justify-between flex-wrap gap-2">
                     <div>
-                      <h2 className="text-xl font-semibold text-foreground" data-testid={`text-prayer-${prayer.id}`}>
+                      <h2 className="text-lg font-semibold text-foreground" data-testid={`text-prayer-${prayer.id}`}>
                         {prayer.name}
                       </h2>
-                      <p className="text-3xl font-arabic text-primary mt-1" dir="rtl">
+                      <p className="text-2xl font-arabic text-primary mt-1" dir="rtl">
                         {prayer.arabicName}
                       </p>
                     </div>
@@ -242,72 +314,23 @@ export default function SalahGuidePage() {
                   <p className="text-sm text-muted-foreground">{prayer.description}</p>
                 </CardContent>
               </Card>
-            </TabsContent>
-          ))}
-        </Tabs>
+            ))}
 
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-foreground px-1">
-            How to perform one rakah
-          </h3>
-          <p className="text-sm text-muted-foreground px-1">
-            Follow these steps for each rakah. Repeat steps 4–11 in every rakah, then perform Tashahhud after every 2 rakahs and again at the end.
-          </p>
-
-          {steps.map((step, idx) => (
-            <Card key={idx} data-testid={`step-${idx + 1}`}>
-              <CardContent className="p-5 space-y-3">
-                <div className="flex items-start gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-foreground">{step.position}</h4>
-                  </div>
-                  {step.pose && (
-                    <div
-                      className="shrink-0 w-20 h-20 rounded-md bg-muted/60 flex items-center justify-center text-foreground/80 p-2"
-                      data-testid={`posture-${step.pose}-${idx + 1}`}
-                    >
-                      <SalahPosture pose={step.pose} className="w-full h-full" />
-                    </div>
-                  )}
-                </div>
-
-                {step.arabic && (
-                  <p className="text-2xl font-arabic text-foreground leading-loose text-right" dir="rtl">
-                    {step.arabic}
-                  </p>
-                )}
-
-                {step.transliteration && (
-                  <p className="text-sm italic text-muted-foreground">{step.transliteration}</p>
-                )}
-
-                {step.translation && (
-                  <p className="text-sm text-foreground">{step.translation}</p>
-                )}
-
-                {step.notes && (
-                  <div className="text-xs text-muted-foreground bg-muted rounded-md p-3 mt-2">
-                    {step.notes}
-                  </div>
-                )}
+            <Card>
+              <CardContent className="p-5 space-y-2">
+                <h3 className="font-semibold text-foreground">Important reminders</h3>
+                <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
+                  <li>Perform wudu (ablution) before every prayer.</li>
+                  <li>Face the Qibla (direction of the Kaaba in Makkah).</li>
+                  <li>Wear clean clothes that cover the body appropriately.</li>
+                  <li>Pray on a clean surface or prayer mat.</li>
+                  <li>For 3-rakah prayers (Maghrib): perform Tashahhud after the 2nd rakah, stand up for the 3rd, then end with full Tashahhud and Tasleem.</li>
+                  <li>For 4-rakah prayers (Dhuhr, Asr, Isha): perform Tashahhud after the 2nd rakah, then continue to the 3rd and 4th rakahs (recite only Al-Fatiha in those), then end with full Tashahhud and Tasleem.</li>
+                </ul>
               </CardContent>
             </Card>
-          ))}
-        </div>
-
-        <Card>
-          <CardContent className="p-5 space-y-2">
-            <h3 className="font-semibold text-foreground">Important reminders</h3>
-            <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
-              <li>Perform wudu (ablution) before every prayer.</li>
-              <li>Face the Qibla (direction of the Kaaba in Makkah).</li>
-              <li>Wear clean clothes that cover the body appropriately.</li>
-              <li>Pray on a clean surface or prayer mat.</li>
-              <li>For 3-rakah prayers (Maghrib): perform Tashahhud after the 2nd rakah, stand up for the 3rd, then end with full Tashahhud and Tasleem.</li>
-              <li>For 4-rakah prayers (Dhuhr, Asr, Isha): perform Tashahhud after the 2nd rakah, then continue to the 3rd and 4th rakahs (recite only Al-Fatiha in those), then end with full Tashahhud and Tasleem.</li>
-            </ul>
-          </CardContent>
-        </Card>
+          </TabsContent>
+        </Tabs>
       </main>
 
       <BottomNav />
