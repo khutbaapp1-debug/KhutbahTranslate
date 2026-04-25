@@ -3,6 +3,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { SalahPosture, type Pose } from "@/components/salah-posture";
 
 type Prayer = {
   id: string;
@@ -70,6 +71,7 @@ type Step = {
   transliteration: string;
   translation: string;
   notes?: string;
+  pose?: Pose;
 };
 
 const steps: Step[] = [
@@ -85,8 +87,7 @@ const steps: Step[] = [
     transliteration: "Allaahu Akbar",
     translation: "Allah is the Greatest",
     notes: "Raise both hands to the level of your ears (men) or shoulders (women), then place the right hand over the left on your chest.",
-    image: takbirImg,
-    imageAlt: "Takbir al-Ihram: standing with both hands raised to ear level",
+    pose: "takbir",
   },
   {
     position: "3. Opening Supplication (Du'a al-Istiftah)",
@@ -106,6 +107,7 @@ const steps: Step[] = [
     transliteration: "Alhamdu lillaahi Rabbil-'aalameen. Ar-Rahmaanir-Raheem. Maaliki Yawmid-Deen. Iyyaaka na'budu wa iyyaaka nasta'een. Ihdinas-Siraatal-Mustaqeem. Siraatal-ladheena an'amta 'alayhim, ghayril-maghdoobi 'alayhim wa lad-daalleen",
     translation: "All praise is for Allah, Lord of all worlds. The Most Gracious, the Most Merciful. Master of the Day of Judgment. You alone we worship and You alone we ask for help. Guide us to the straight path. The path of those You have blessed, not of those who incurred Your wrath, nor of those who went astray.",
     notes: "Say 'Aameen' silently (Hanafi) or aloud (other schools) at the end.",
+    pose: "qiyam",
   },
   {
     position: "6. Recite a Surah or Verses",
@@ -119,6 +121,7 @@ const steps: Step[] = [
     transliteration: "Subhaana Rabbiyal-'Adheem",
     translation: "Glory is to my Lord, the Most Great",
     notes: "Say 'Allaahu Akbar', then bow forward, placing your hands on your knees with your back straight. Recite the above 3 times.",
+    pose: "ruku",
   },
   {
     position: "8. Standing from Ruku' (I'tidal)",
@@ -126,6 +129,7 @@ const steps: Step[] = [
     transliteration: "Sami'a Allaahu liman hamidah. Rabbanaa wa lakal-hamd",
     translation: "Allah hears the one who praises Him. Our Lord, all praise is for You.",
     notes: "Rise back to standing position fully.",
+    pose: "qiyam",
   },
   {
     position: "9. First Sujood (Prostration)",
@@ -133,6 +137,7 @@ const steps: Step[] = [
     transliteration: "Subhaana Rabbiyal-A'laa",
     translation: "Glory is to my Lord, the Most High",
     notes: "Say 'Allaahu Akbar', then prostrate, placing forehead, nose, both palms, both knees, and toes on the ground. Recite the above 3 times.",
+    pose: "sujood",
   },
   {
     position: "10. Sitting Between Sujoods (Jalsah)",
@@ -140,6 +145,7 @@ const steps: Step[] = [
     transliteration: "Rabbighfir lee",
     translation: "My Lord, forgive me",
     notes: "Say 'Allaahu Akbar', then sit up briefly. Recite the above 1-3 times.",
+    pose: "jalsah",
   },
   {
     position: "11. Second Sujood",
@@ -147,6 +153,7 @@ const steps: Step[] = [
     transliteration: "Subhaana Rabbiyal-A'laa",
     translation: "Glory is to my Lord, the Most High",
     notes: "Say 'Allaahu Akbar' and prostrate again, repeating as before. This completes one rakah.",
+    pose: "sujood",
   },
   {
     position: "12. Tashahhud (After Every 2 Rakahs)",
@@ -154,6 +161,7 @@ const steps: Step[] = [
     transliteration: "At-tahiyyaatu lillaahi was-salawaatu wat-tayyibaat. As-salaamu 'alayka ayyuhan-Nabiyyu wa rahmatullaahi wa barakaatuh. As-salaamu 'alaynaa wa 'alaa 'ibaadillaahis-saaliheen. Ash-hadu an laa ilaaha illallaah, wa ash-hadu anna Muhammadan 'abduhu wa rasooluh",
     translation: "All compliments, prayers, and pure words are for Allah. Peace be upon you, O Prophet, and the mercy of Allah and His blessings. Peace be upon us and upon the righteous servants of Allah. I bear witness that there is no god but Allah, and I bear witness that Muhammad is His servant and messenger.",
     notes: "Sit with right foot upright and left foot under you. Raise the right index finger when saying 'illallaah'.",
+    pose: "jalsah",
   },
   {
     position: "13. Salawat (Final Tashahhud Only)",
@@ -167,6 +175,7 @@ const steps: Step[] = [
     transliteration: "As-salaamu 'alaykum wa rahmatullaah",
     translation: "Peace and the mercy of Allah be upon you",
     notes: "Turn your head to the right and say it, then turn to the left and repeat. This ends the prayer.",
+    pose: "tasleem",
   },
 ];
 
@@ -248,7 +257,19 @@ export default function SalahGuidePage() {
           {steps.map((step, idx) => (
             <Card key={idx} data-testid={`step-${idx + 1}`}>
               <CardContent className="p-5 space-y-3">
-                <h4 className="font-semibold text-foreground">{step.position}</h4>
+                <div className="flex items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-foreground">{step.position}</h4>
+                  </div>
+                  {step.pose && (
+                    <div
+                      className="shrink-0 w-20 h-20 rounded-md bg-muted/60 flex items-center justify-center text-foreground/80 p-2"
+                      data-testid={`posture-${step.pose}-${idx + 1}`}
+                    >
+                      <SalahPosture pose={step.pose} className="w-full h-full" />
+                    </div>
+                  )}
+                </div>
 
                 {step.arabic && (
                   <p className="text-2xl font-arabic text-foreground leading-loose text-right" dir="rtl">
