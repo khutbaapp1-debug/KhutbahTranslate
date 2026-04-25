@@ -483,22 +483,61 @@ export default function QuranPage() {
                   <CardContent className="p-6 sm:p-10">
                     {(() => {
                       const bismillahText = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
-                      const normalize = (s: string) =>
+                      const stripDiacritics = (s: string) =>
                         s
                           .replace(/\uFEFF/g, "")
                           .normalize("NFD")
-                          .replace(/[\u0300-\u036f\u064B-\u065F\u0670\u0653\u0654\u0655]/g, "")
-                          .replace(/\s+/g, "");
+                          .replace(/[\u0300-\u036f\u064B-\u065F\u0670\u0653\u0654\u0655]/g, "");
+                      const normalize = (s: string) =>
+                        stripDiacritics(s).replace(/\s+/g, "");
                       const firstVerse = surahDetails.verses[0];
                       const firstIsBismillah =
                         !!firstVerse &&
                         normalize(firstVerse.text).startsWith(normalize(bismillahText));
-                      const bodyVerses = firstIsBismillah
+
+                      // Strip the Bismillah prefix from verse 1 if present, leaving the
+                      // actual verse content (e.g., الٓمٓ for Al-Baqarah).
+                      let firstVerseRemainder = "";
+                      if (firstIsBismillah && firstVerse) {
+                        const stripped = stripDiacritics(firstVerse.text);
+                        const bismillahStripped = stripDiacritics(bismillahText);
+                        const idx = stripped.indexOf(bismillahStripped);
+                        if (idx === 0) {
+                          // Walk through original text counting non-diacritic chars to
+                          // find where Bismillah ends in the original (with diacritics).
+                          const diacriticRe = /[\uFEFF\u0300-\u036f\u064B-\u065F\u0670\u0653\u0654\u0655]/;
+                          let count = 0;
+                          let cut = 0;
+                          for (let i = 0; i < firstVerse.text.length; i++) {
+                            const ch = firstVerse.text[i];
+                            if (!diacriticRe.test(ch)) {
+                              count++;
+                            }
+                            if (count >= bismillahStripped.length) {
+                              cut = i + 1;
+                              break;
+                            }
+                          }
+                          // Consume any trailing combining marks/diacritics that belong
+                          // to the last letter of Bismillah (e.g., the kasra on the final م).
+                          while (
+                            cut < firstVerse.text.length &&
+                            diacriticRe.test(firstVerse.text[cut])
+                          ) {
+                            cut++;
+                          }
+                          firstVerseRemainder = firstVerse.text.slice(cut).trim();
+                        }
+                      }
+
+                      // Al-Fatiha: Bismillah IS verse 1 — show it as the numbered header.
+                      // Other surahs: Bismillah is unnumbered header, then verse 1 content shows below.
+                      const bismillahIsVerseOne =
+                        firstIsBismillah && normalize(firstVerseRemainder) === "";
+                      const bodyVerses = firstIsBismillah && bismillahIsVerseOne
                         ? surahDetails.verses.slice(1)
                         : surahDetails.verses;
-                      const bismillahDisplay = firstIsBismillah
-                        ? firstVerse.text.replace(/\uFEFF/g, "")
-                        : bismillahText;
+                      const bismillahDisplay = bismillahText;
 
                       const renderMarker = (verse: typeof surahDetails.verses[number]) => {
                         const isBookmarked = bookmarks[selectedSurah!] === verse.id;
@@ -553,11 +592,11 @@ export default function QuranPage() {
                                 fontSize: "1.875rem",
                                 lineHeight: "3.25rem",
                               }}
-                              data-verse-anchor={firstVerse.id}
+                              data-verse-anchor={bismillahIsVerseOne ? firstVerse.id : undefined}
                               data-testid={`verse-bismillah-${firstVerse.id}`}
                             >
                               <span>{bismillahDisplay}</span>
-                              {renderMarker(firstVerse)}
+                              {bismillahIsVerseOne && renderMarker(firstVerse)}
                             </div>
                           )}
                           <p
@@ -570,12 +609,18 @@ export default function QuranPage() {
                             }}
                             data-testid="text-page-view"
                           >
-                            {bodyVerses.map((verse) => (
-                              <span key={verse.id} data-verse-anchor={verse.id}>
-                                {verse.text}
-                                {renderMarker(verse)}{" "}
-                              </span>
-                            ))}
+                            {bodyVerses.map((verse) => {
+                              const isFirstWithRemainder =
+                                firstIsBismillah &&
+                                !bismillahIsVerseOne &&
+                                verse.id === firstVerse.id;
+                              return (
+                                <span key={verse.id} data-verse-anchor={verse.id}>
+                                  {isFirstWithRemainder ? firstVerseRemainder : verse.text}
+                                  {renderMarker(verse)}{" "}
+                                </span>
+                              );
+                            })}
                           </p>
                         </>
                       );
