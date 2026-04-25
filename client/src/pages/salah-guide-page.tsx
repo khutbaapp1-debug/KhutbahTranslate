@@ -3,12 +3,6 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import takbirImg from "@assets/salah/takbir.png";
-import qiyamImg from "@assets/salah/qiyam.png";
-import rukuImg from "@assets/salah/ruku.png";
-import sujoodImg from "@assets/salah/sujood.png";
-import jalsahImg from "@assets/salah/jalsah.png";
-import tasleemImg from "@assets/salah/tasleem.png";
 
 type Prayer = {
   id: string;
@@ -76,8 +70,6 @@ type Step = {
   transliteration: string;
   translation: string;
   notes?: string;
-  image?: string;
-  imageAlt?: string;
 };
 
 const steps: Step[] = [
