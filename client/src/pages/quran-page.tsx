@@ -481,62 +481,105 @@ export default function QuranPage() {
               <>
                 <Card className="bg-[hsl(40_30%_96%)] dark:bg-[hsl(40_15%_12%)] border-[hsl(40_30%_85%)] dark:border-[hsl(40_15%_22%)]">
                   <CardContent className="p-6 sm:p-10">
-                    <p
-                      className="font-arabic text-foreground text-justify"
-                      dir="rtl"
-                      style={{
-                        fontSize: "1.875rem",
-                        lineHeight: "3.25rem",
-                        wordSpacing: "0.15em",
-                      }}
-                      data-testid="text-page-view"
-                    >
-                      {surahDetails.verses.map((verse) => {
+                    {(() => {
+                      const bismillahText = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
+                      const normalize = (s: string) =>
+                        s
+                          .replace(/\uFEFF/g, "")
+                          .normalize("NFD")
+                          .replace(/[\u0300-\u036f\u064B-\u065F\u0670\u0653\u0654\u0655]/g, "")
+                          .replace(/\s+/g, "");
+                      const firstVerse = surahDetails.verses[0];
+                      const firstIsBismillah =
+                        !!firstVerse &&
+                        normalize(firstVerse.text).startsWith(normalize(bismillahText));
+                      const bodyVerses = firstIsBismillah
+                        ? surahDetails.verses.slice(1)
+                        : surahDetails.verses;
+                      const bismillahDisplay = firstIsBismillah
+                        ? firstVerse.text.replace(/\uFEFF/g, "")
+                        : bismillahText;
+
+                      const renderMarker = (verse: typeof surahDetails.verses[number]) => {
                         const isBookmarked = bookmarks[selectedSurah!] === verse.id;
                         return (
-                          <span key={verse.id} data-verse-anchor={verse.id}>
-                            {verse.text}
-                            <button
-                              onClick={() => {
-                                if (longPressFiredRef.current) {
-                                  longPressFiredRef.current = false;
-                                  return;
-                                }
-                                setActiveVerse(verse.id);
-                                toggleVerseAudio(verse.id);
-                              }}
-                              onTouchStart={() => handleMarkerPressStart(verse.id)}
-                              onTouchEnd={handleMarkerPressEnd}
-                              onTouchCancel={handleMarkerPressEnd}
-                              onMouseDown={() => handleMarkerPressStart(verse.id)}
-                              onMouseUp={handleMarkerPressEnd}
-                              onMouseLeave={handleMarkerPressEnd}
-                              onContextMenu={(e) => {
-                                e.preventDefault();
-                                toggleBookmark(verse.id);
-                              }}
-                              className={`inline-flex items-center justify-center mx-1 align-middle w-9 h-9 rounded-full text-sm hover-elevate active-elevate-2 transition-all ${
-                                isBookmarked
-                                  ? "bg-primary text-primary-foreground border border-primary"
-                                  : "border border-primary/40 text-primary"
-                              }`}
-                              aria-label={`Verse ${verse.id}${isBookmarked ? " (bookmarked)" : ""}`}
-                              data-testid={`verse-marker-${verse.id}`}
-                            >
-                              {loadingVerse === verse.id ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : playingVerse === verse.id ? (
-                                <Pause className="w-3 h-3" />
-                              ) : isBookmarked ? (
-                                <BookmarkCheck className="w-4 h-4" />
-                              ) : (
-                                <span className="font-sans">{verse.id}</span>
-                              )}
-                            </button>{" "}
-                          </span>
+                          <button
+                            onClick={() => {
+                              if (longPressFiredRef.current) {
+                                longPressFiredRef.current = false;
+                                return;
+                              }
+                              setActiveVerse(verse.id);
+                              toggleVerseAudio(verse.id);
+                            }}
+                            onTouchStart={() => handleMarkerPressStart(verse.id)}
+                            onTouchEnd={handleMarkerPressEnd}
+                            onTouchCancel={handleMarkerPressEnd}
+                            onMouseDown={() => handleMarkerPressStart(verse.id)}
+                            onMouseUp={handleMarkerPressEnd}
+                            onMouseLeave={handleMarkerPressEnd}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              toggleBookmark(verse.id);
+                            }}
+                            className={`inline-flex items-center justify-center mx-1 align-middle w-9 h-9 rounded-full text-sm hover-elevate active-elevate-2 transition-all ${
+                              isBookmarked
+                                ? "bg-primary text-primary-foreground border border-primary"
+                                : "border border-primary/40 text-primary"
+                            }`}
+                            aria-label={`Verse ${verse.id}${isBookmarked ? " (bookmarked)" : ""}`}
+                            data-testid={`verse-marker-${verse.id}`}
+                          >
+                            {loadingVerse === verse.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : playingVerse === verse.id ? (
+                              <Pause className="w-3 h-3" />
+                            ) : isBookmarked ? (
+                              <BookmarkCheck className="w-4 h-4" />
+                            ) : (
+                              <span className="font-sans">{verse.id}</span>
+                            )}
+                          </button>
                         );
-                      })}
-                    </p>
+                      };
+
+                      return (
+                        <>
+                          {firstIsBismillah && (
+                            <div
+                              className="font-arabic text-foreground text-center mb-6 pb-6 border-b border-[hsl(40_30%_85%)] dark:border-[hsl(40_15%_22%)]"
+                              dir="rtl"
+                              style={{
+                                fontSize: "1.875rem",
+                                lineHeight: "3.25rem",
+                              }}
+                              data-verse-anchor={firstVerse.id}
+                              data-testid={`verse-bismillah-${firstVerse.id}`}
+                            >
+                              <span>{bismillahDisplay}</span>
+                              {renderMarker(firstVerse)}
+                            </div>
+                          )}
+                          <p
+                            className="font-arabic text-foreground text-justify"
+                            dir="rtl"
+                            style={{
+                              fontSize: "1.875rem",
+                              lineHeight: "3.25rem",
+                              wordSpacing: "0.15em",
+                            }}
+                            data-testid="text-page-view"
+                          >
+                            {bodyVerses.map((verse) => (
+                              <span key={verse.id} data-verse-anchor={verse.id}>
+                                {verse.text}
+                                {renderMarker(verse)}{" "}
+                              </span>
+                            ))}
+                          </p>
+                        </>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
 
