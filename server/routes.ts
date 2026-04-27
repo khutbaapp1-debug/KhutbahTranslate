@@ -15,6 +15,7 @@ import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { checkTranslationLimit, addTranslationMinutes, getUserUsageInfo, redeemAdCredit } from "./translation-limits";
+import rateLimit from "express-rate-limit";
 
 // Middleware for authenticated routes - gets full user from database
 async function requireAuth(req: any, res: any, next: any) {
@@ -66,6 +67,29 @@ function requirePremium(_req: any, _res: any, next: any) {
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+});
+
+// Separate upload instance for /api/transcribe with a tighter size limit
+const transcribeUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+});
+
+// Rate limiters applied only to /api/transcribe
+const transcribeRateLimitPerMinute = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." },
+});
+
+const transcribeRateLimitPerDay = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000,
+  max: 2000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Daily request limit exceeded, please try again tomorrow." },
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -222,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Free tier: 1 hour per month base (60 minutes) + up to 2 hours from ads (120 minutes)
   // Premium: unlimited
   // Anonymous users: unlimited (no tracking)
-  app.post("/api/transcribe", upload.single("audio"), checkTranslationLimit, async (req, res) => {
+  app.post("/api/transcribe", transcribeRateLimitPerMinute, transcribeRateLimitPerDay, transcribeUpload.single("audio"), checkTranslationLimit, async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No audio file provided" });
