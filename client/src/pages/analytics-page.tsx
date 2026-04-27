@@ -1,16 +1,9 @@
 import { useEffect } from "react";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { TrendingUp, Book, Activity, Clock, Crown } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { isPremiumUser } from "@/lib/premium";
+import { TrendingUp, Book, Activity, Clock } from "lucide-react";
 
 export default function AnalyticsPage() {
-  const { user } = useAuth();
-  const isPremium = isPremiumUser(user);
-
   // Scroll to top on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -22,41 +15,6 @@ export default function AnalyticsPage() {
     { label: "Prayers On Time", value: "89%", icon: Clock, trend: "+5% this week" },
     { label: "Qur'an Pages Read", value: 42, icon: Book, trend: "+12 this week" },
   ];
-
-  if (!isPremium) {
-    return (
-      <div className="min-h-screen bg-background pb-nav">
-        <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg pt-safe border-b border-border">
-          <div className="p-4 max-w-screen-xl mx-auto">
-            <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2" data-testid="text-page-title">
-              <Crown className="w-6 h-6 text-primary" />
-              Analytics
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">Premium Feature</p>
-          </div>
-        </header>
-
-        <main className="p-6 flex items-center justify-center min-h-[calc(100vh-200px)]">
-          <Card className="max-w-md w-full border-primary/50">
-            <CardContent className="p-8 text-center space-y-4">
-              <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-                <Crown className="w-10 h-10 text-primary" />
-              </div>
-              <h2 className="text-2xl font-semibold">Upgrade to Premium</h2>
-              <p className="text-muted-foreground">
-                Track your spiritual progress with detailed analytics on prayers, dhikr, Qur'an reading, and sermon attendance
-              </p>
-              <Button className="w-full" data-testid="button-upgrade">
-                Upgrade to Premium
-              </Button>
-            </CardContent>
-          </Card>
-        </main>
-
-        <BottomNav />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background pb-nav">
@@ -70,10 +28,6 @@ export default function AnalyticsPage() {
               </h1>
               <p className="text-sm text-muted-foreground mt-1">Track your spiritual progress</p>
             </div>
-            <Badge variant="default" className="flex items-center gap-1">
-              <Crown className="w-3 h-3" />
-              Premium
-            </Badge>
           </div>
         </div>
       </header>

@@ -3,23 +3,10 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mic, MicOff, Save, Clock, Pause, Play, X, AlertCircle, Crown, Play as PlayCircle } from "lucide-react";
+import { Mic, MicOff, Save, Clock, Pause, Play, X, AlertCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { useLocation } from "wouter";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface TranscriptSegment {
   id: number;
@@ -28,61 +15,11 @@ interface TranscriptSegment {
   timestamp: number;
 }
 
-interface UsageInfo {
-  minutesUsed: number;
-  minutesRemaining: number;
-  monthlyLimit: number;
-  adCreditsAvailable: number;
-  totalAvailable: number;
-  resetDate: string | Date;
-  isLimitReached: boolean;
-  canEarnAdCredits: boolean;
-}
-
 export default function KhutbahPage() {
   const [processingError, setProcessingError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
-  const [showLimitModal, setShowLimitModal] = useState(false);
-  const [watchingAd, setWatchingAd] = useState(false);
-  const [, navigate] = useLocation();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
-  // Fetch translation usage info for authenticated users
-  const { data: usageInfo, refetch: refetchUsage } = useQuery<UsageInfo>({
-    queryKey: ['/api/translation/usage'],
-    enabled: !!user,
-    refetchInterval: 30000, // Refresh every 30 seconds
-  });
 
-  // Mutation to redeem ad credit
-  const redeemAdMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/translation/redeem-ad');
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
-      setWatchingAd(false);
-      setShowLimitModal(false);
-      clearErrors(); // Clear error states without losing translations
-      toast({
-        title: "Success!",
-        description: "+30 minutes added to your account",
-      });
-    },
-    onError: (error: any) => {
-      setWatchingAd(false);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to redeem ad credit. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Audio recorder hook with local optimistic usage guard (handles refetch delays)
   const {
     isRecording,
     isPaused,
@@ -90,7 +27,6 @@ export default function KhutbahPage() {
     audioBlob,
     audioUrl,
     error,
-    transcriptionError,
     translations,
     nextTranslationIn,
     startRecording,
@@ -98,17 +34,7 @@ export default function KhutbahPage() {
     pauseRecording,
     resumeRecording,
     clearRecording,
-    clearErrors,
-  } = useAudioRecorder({
-    minutesRemaining: usageInfo?.minutesRemaining, // Hook handles pending consumption internally
-    onLimitReached: () => {
-      setShowLimitModal(true);
-    },
-    onChunkSent: () => {
-      // Refresh usage after each chunk (hook reconciles pending consumption on update)
-      queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
-    }
-  });
+  } = useAudioRecorder({});
 
   useEffect(() => {
     // Auto-scroll to bottom when new translations arrive
@@ -117,60 +43,10 @@ export default function KhutbahPage() {
     }
   }, [translations]);
 
-  // Watch for 429 errors from backend
-  useEffect(() => {
-    if (transcriptionError === "limit_reached" && !showLimitModal) {
-      // 429 error hit - pause recording and show modal
-      if (isRecording) {
-        pauseRecording();
-      }
-      setShowLimitModal(true);
-      queryClient.invalidateQueries({ queryKey: ['/api/translation/usage'] });
-    }
-  }, [transcriptionError, showLimitModal, isRecording, pauseRecording]);
-
   const handleStartRecording = async () => {
-    // Pre-flight check: Fetch fresh usage data before starting
-    if (user) {
-      const { data: freshUsage } = await refetchUsage();
-      
-      // Check if limit reached
-      if (freshUsage?.isLimitReached) {
-        setShowLimitModal(true);
-        return;
-      }
-      
-      // Warn if low on minutes (< 5 minutes)
-      if (freshUsage && freshUsage.minutesRemaining < 5) {
-        setShowLimitModal(true);
-        return;
-      }
-    }
-    
     clearRecording();
     setProcessingError(null);
     await startRecording();
-  };
-
-  const handleWatchAd = () => {
-    setProcessingError(null); // Clear any previous errors
-    setWatchingAd(true);
-    // Simulate watching a 30-second ad
-    // In production, this would integrate with Google AdSense/AdMob
-    setTimeout(() => {
-      redeemAdMutation.mutate();
-    }, 3000); // Shortened to 3 seconds for testing (would be 30 seconds in production)
-  };
-
-  const handleModalClose = (open: boolean) => {
-    // Only close when open is false (per Shadcn dialog pattern)
-    if (!open) {
-      setShowLimitModal(false);
-      setWatchingAd(false);
-      setProcessingError(null);
-      // Clear error states only - preserve translations and audio
-      clearErrors();
-    }
   };
 
   const handleStopRecording = () => {
@@ -213,49 +89,6 @@ export default function KhutbahPage() {
               </div>
             )}
           </div>
-          
-          {user && usageInfo && !usageInfo.isLimitReached && usageInfo.monthlyLimit !== Infinity && (
-            <Alert 
-              className={usageInfo.minutesRemaining < 10 ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900" : "bg-muted/50"} 
-              data-testid="alert-usage-info"
-            >
-              <Clock className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                <span className="font-medium">{Math.floor(usageInfo.minutesRemaining)} minutes</span> of free translation remaining this month
-                {usageInfo.minutesRemaining < 10 && usageInfo.canEarnAdCredits && (
-                  <span className="text-yellow-700 dark:text-yellow-400 ml-2">
-                    — Running low! Watch an ad for +30 minutes
-                  </span>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          {user && usageInfo?.isLimitReached && (
-            <Alert variant="destructive" data-testid="alert-limit-reached">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <p className="font-medium">Translation limit reached</p>
-                <p className="text-sm mt-1">
-                  You've used all {usageInfo.totalAvailable} minutes this month. 
-                  Resets on {new Date(usageInfo.resetDate).toLocaleDateString()}.
-                </p>
-                <div className="flex gap-2 mt-2">
-                  {usageInfo.canEarnAdCredits && (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => setShowLimitModal(true)}
-                      data-testid="button-watch-ad-header"
-                    >
-                      <PlayCircle className="w-3 h-3 mr-1" />
-                      Watch Ad
-                    </Button>
-                  )}
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
           
           {processingError && (
             <Alert variant="destructive" data-testid="alert-error">
@@ -402,116 +235,6 @@ export default function KhutbahPage() {
       </main>
 
       <BottomNav />
-      
-      {/* Limit Reached Modal - Watch Ad or Upgrade */}
-      <Dialog open={showLimitModal} onOpenChange={handleModalClose}>
-        <DialogContent className="sm:max-w-md" data-testid="dialog-limit-reached">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-primary" />
-              Translation Limit Reached
-            </DialogTitle>
-            <DialogDescription>
-              You've used all {usageInfo?.totalAvailable || 60} minutes of free translation this month.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            {usageInfo?.canEarnAdCredits && !watchingAd && (
-              <Card className="border-primary/20 hover-elevate" data-testid="card-watch-ad">
-                <CardContent className="p-6 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <PlayCircle className="w-6 h-6 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-1">Watch a 30-second ad</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Get +30 minutes instantly
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        ({usageInfo.adCreditsAvailable}/120 minutes earned from ads)
-                      </p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={handleWatchAd} 
-                    className="w-full"
-                    data-testid="button-watch-ad"
-                  >
-                    <PlayCircle className="w-4 h-4 mr-2" />
-                    Watch Ad for +30 Minutes
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-            
-            {watchingAd && (
-              <Card className="border-primary/20">
-                <CardContent className="p-6 text-center space-y-3">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
-                    <PlayCircle className="w-8 h-8 text-primary" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Playing ad... Please wait
-                  </p>
-                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                    <div className="h-full bg-primary animate-pulse" style={{ width: '60%' }} />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {!usageInfo?.canEarnAdCredits && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-sm">
-                  You've earned the maximum ad credits (2 hours) this month.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <Card className="border-primary hover-elevate" data-testid="card-upgrade-premium">
-              <CardContent className="p-6 space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                    <Crown className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold mb-1">Upgrade to Premium</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Unlimited translation + exclusive features
-                    </p>
-                    <p className="text-lg font-bold text-primary mt-2">$4.99/month</p>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => {
-                    setShowLimitModal(false);
-                    navigate("/premium");
-                  }} 
-                  className="w-full"
-                  variant="default"
-                  data-testid="button-upgrade-premium"
-                >
-                  <Crown className="w-4 h-4 mr-2" />
-                  Upgrade Now
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <DialogFooter className="sm:justify-start">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowLimitModal(false)}
-              data-testid="button-cancel"
-            >
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

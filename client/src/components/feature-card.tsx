@@ -8,7 +8,6 @@ interface FeatureCardProps {
   icon: LucideIcon;
   backgroundImage?: string;
   onExplore: () => void;
-  isPremium?: boolean;
 }
 
 export function FeatureCard({
@@ -17,7 +16,6 @@ export function FeatureCard({
   icon: Icon,
   backgroundImage,
   onExplore,
-  isPremium = false,
 }: FeatureCardProps) {
   return (
     <Card
@@ -42,11 +40,6 @@ export function FeatureCard({
           <div className="space-y-2">
             <h3 className={`text-2xl font-semibold ${backgroundImage ? 'text-white' : 'text-foreground'}`}>
               {title}
-              {isPremium && (
-                <span className="ml-2 text-xs bg-primary text-primary-foreground px-2 py-1 rounded-full">
-                  Premium
-                </span>
-              )}
             </h3>
             <p className={`text-sm ${backgroundImage ? 'text-white/90' : 'text-muted-foreground'}`}>
               {description}
