@@ -234,7 +234,24 @@ export default function PrayerTimesPage() {
   ] : [];
 
   const nextPrayer = prayerTimes.find((p) => p.isNext);
-  const currentPrayer = prayerTimes.find((p) => !p.isPassed && !p.isNext);
+  // "Now" = the most recently started prayer (the active prayer window).
+  // After Isha until midnight, Isha stays as "Now" (handled via isAfterIsha below).
+  const startedPrayers = prayerData
+    ? prayerTimes.filter((p) => {
+        const timeStr =
+          p.name === "Fajr" ? prayerData.fajr :
+          p.name === "Dhuhr" || p.name === "Jummah" ? prayerData.dhuhr :
+          p.name === "Asr" ? prayerData.asr :
+          p.name === "Maghrib" ? prayerData.maghrib :
+          prayerData.isha;
+        return isTimePassed(timeStr, currentTime);
+      })
+    : [];
+  const currentPrayer = isAfterIsha
+    ? prayerTimes.find((p) => p.name === "Isha")
+    : startedPrayers.length > 0
+      ? startedPrayers[startedPrayers.length - 1]
+      : undefined;
 
   return (
     <div className="min-h-screen bg-background pb-nav">
@@ -333,7 +350,7 @@ export default function PrayerTimesPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {prayerTimes.map((prayer) => {
-                  const isCurrent = !prayer.isPassed && !prayer.isNext;
+                  const isCurrent = currentPrayer?.name === prayer.name && !prayer.isNext;
                   return (
                     <div
                       key={prayer.name}
