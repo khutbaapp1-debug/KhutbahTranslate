@@ -71,7 +71,7 @@ export async function initMobileAds(): Promise<void> {
  * Show a bottom banner. Returns true if shown.
  * Respects the calling code's gating (usage threshold, route, etc.).
  */
-export async function showBannerAd(): Promise<boolean> {
+export async function showBannerAd(marginBottom = 0): Promise<boolean> {
   if (!isNativeApp()) return false;
   await initMobileAds();
 
@@ -83,7 +83,7 @@ export async function showBannerAd(): Promise<boolean> {
       adId: getBannerAdUnitId(),
       adSize: BannerAdSize.ADAPTIVE_BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
-      margin: 0,
+      margin: marginBottom,
       isTesting: USE_TEST_ADS,
     });
     return true;
