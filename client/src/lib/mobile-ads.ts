@@ -47,8 +47,18 @@ export async function initMobileAds(): Promise<void> {
 
   try {
     const { AdMob } = await import("@capacitor-community/admob");
+
+    // iOS App Tracking Transparency must be requested before initialize().
+    // Non-personalized ads still serve if the user denies tracking.
+    if (Capacitor.getPlatform() === "ios") {
+      try {
+        await AdMob.requestTrackingAuthorization();
+      } catch {
+        // ATT unavailable or denied — continue with non-personalized ads
+      }
+    }
+
     await AdMob.initialize({
-      requestTrackingAuthorization: true,
       initializeForTesting: USE_TEST_ADS,
     });
     initialized = true;
