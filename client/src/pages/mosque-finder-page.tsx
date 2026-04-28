@@ -98,11 +98,11 @@ export default function MosqueFinderPage() {
 
   // Fetch nearby mosques when user location is available
   const queryUrl = userLocation
-    ? `/api/mosques/nearby?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&radius=5000`
+    ? `/api/mosques/nearby?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}`
     : null;
-    
+
   const { data: mosques = [], isLoading, error } = useQuery<Mosque[]>({
-    queryKey: ["/api/mosques/nearby", userLocation?.latitude, userLocation?.longitude, 5000],
+    queryKey: ["/api/mosques/nearby", userLocation?.latitude, userLocation?.longitude],
     queryFn: async () => {
       if (!queryUrl) return [];
       const response = await fetch(queryUrl);
@@ -248,7 +248,7 @@ export default function MosqueFinderPage() {
                   <p className="text-sm text-muted-foreground">
                     {searchQuery
                       ? "No mosques found matching your search"
-                      : "No mosques found within 5km of your location"}
+                      : "No mosques found within 10km of your location"}
                   </p>
                 </CardContent>
               </Card>
