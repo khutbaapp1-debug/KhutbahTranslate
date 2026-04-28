@@ -794,6 +794,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const data: any = await response.json();
 
+      if (!data.elements) {
+        console.error("Overpass response missing elements field:", JSON.stringify(data).slice(0, 300));
+      }
+      console.log(`Overpass returned status ${response.status}, ${data.elements?.length ?? 0} elements`);
+
       // Calculate distance using Haversine formula
       const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
         const R = 6371;
@@ -843,6 +848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store in cache for 5 minutes
       mosqueCache.set(cacheKey, { data: mosques, expiresAt: Date.now() + 5 * 60 * 1000 });
 
+      console.log(`Returning ${mosques.length} mosques after dedup`);
       res.json(mosques);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
