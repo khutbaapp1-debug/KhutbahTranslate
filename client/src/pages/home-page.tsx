@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, ScrollText, BookOpen } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
+import { BannerAd } from "@/components/banner-ad";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-provider";
 import { Sun, Moon as MoonIcon } from "lucide-react";
@@ -216,6 +217,7 @@ export default function HomePage() {
         {renderAppGridLayout()}
       </main>
 
+      <BannerAd />
       <BottomNav />
     </div>
   );
