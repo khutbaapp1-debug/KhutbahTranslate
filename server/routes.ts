@@ -729,7 +729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ MOSQUES ROUTES ============
 
-  // 5-minute in-memory cache: key = "lat,lon,radius" rounded to 2dp (~1km grid)
+  // 1-hour in-memory cache: key = "lat,lon,radius" rounded to 2dp (~1km grid)
   const mosqueCache = new Map<string, { data: any[]; expiresAt: number }>();
 
   // Get nearby mosques using OpenStreetMap Overpass API
@@ -752,7 +752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Broad Overpass query — union of multiple tagging conventions
       const overpassQuery = `
-        [out:json][timeout:25];
+        [out:json][timeout:15];
         (
           node["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${latitude},${longitude});
           way["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${latitude},${longitude});
@@ -767,7 +767,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         out center;
       `;
 
-      const overpassUrl = "https://overpass-api.de/api/interpreter";
       const fetchOverpass = async (url: string) => {
         return fetch(url, {
           method: "POST",
@@ -780,19 +779,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       };
 
-      let response = await fetchOverpass(overpassUrl);
-      if (!response.ok) {
-        // Fallback to Kumi mirror if main endpoint is rate-limited / down
-        response = await fetchOverpass("https://overpass.kumi.systems/api/interpreter");
-      }
+      // Try Kumi first; fall back to overpass-api.de if Kumi fails or returns 0 elements
+      let response = await fetchOverpass("https://overpass.kumi.systems/api/interpreter");
+      let data: any = response.ok ? await response.json() : null;
 
-      if (!response.ok) {
-        const body = await response.text().catch(() => "");
-        console.error("Overpass API error:", response.status, body.slice(0, 200));
-        throw new Error(`Failed to fetch mosques from OpenStreetMap (status ${response.status})`);
+      if (!response.ok || !data?.elements?.length) {
+        console.log(`Kumi returned ${response.ok ? (data?.elements?.length ?? 0) : `HTTP ${response.status}`}, falling back to overpass-api.de`);
+        response = await fetchOverpass("https://overpass-api.de/api/interpreter");
+        if (!response.ok) {
+          const body = await response.text().catch(() => "");
+          console.error("Overpass API error:", response.status, body.slice(0, 200));
+          throw new Error(`Failed to fetch mosques from OpenStreetMap (status ${response.status})`);
+        }
+        data = await response.json();
       }
-
-      const data: any = await response.json();
 
       if (!data.elements) {
         console.error("Overpass response missing elements field:", JSON.stringify(data).slice(0, 300));
@@ -845,8 +845,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .sort((a: any, b: any) => parseFloat(a.distance) - parseFloat(b.distance));
 
-      // Store in cache for 5 minutes
-      mosqueCache.set(cacheKey, { data: mosques, expiresAt: Date.now() + 5 * 60 * 1000 });
+      // Store in cache for 1 hour
+      mosqueCache.set(cacheKey, { data: mosques, expiresAt: Date.now() + 60 * 60 * 1000 });
 
       console.log(`Returning ${mosques.length} mosques after dedup`);
       res.json(mosques);
