@@ -732,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 1-hour in-memory cache: key = "lat,lon,radius" rounded to 2dp (~1km grid)
   const mosqueCache = new Map<string, { data: any[]; expiresAt: number }>();
 
-  // Get nearby mosques using OpenStreetMap Overpass API
+  // Get nearby mosques using Google Places API (New)
   app.get("/api/mosques/nearby", async (req, res) => {
     try {
       const latitude = parseFloat(req.query.latitude as string);
@@ -743,6 +743,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Valid latitude and longitude required" });
       }
 
+      const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+      if (!apiKey) {
+        throw new Error("GOOGLE_PLACES_API_KEY not configured");
+      }
+
       // Cache lookup — round coords to 2dp (~1km grid)
       const cacheKey = `${latitude.toFixed(2)},${longitude.toFixed(2)},${radius}`;
       const cached = mosqueCache.get(cacheKey);
@@ -750,54 +755,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(cached.data);
       }
 
-      // Broad Overpass query — union of multiple tagging conventions
-      const overpassQuery = `
-        [out:json][timeout:15];
-        (
-          node["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${latitude},${longitude});
-          way["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${latitude},${longitude});
-          relation["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${latitude},${longitude});
-          node["building"="mosque"](around:${radius},${latitude},${longitude});
-          way["building"="mosque"](around:${radius},${latitude},${longitude});
-          relation["building"="mosque"](around:${radius},${latitude},${longitude});
-          node["amenity"="place_of_worship"]["name"~"mosque|masjid|jamia|jami|islamic cent",i](around:${radius},${latitude},${longitude});
-          way["amenity"="place_of_worship"]["name"~"mosque|masjid|jamia|jami|islamic cent",i](around:${radius},${latitude},${longitude});
-          relation["amenity"="place_of_worship"]["name"~"mosque|masjid|jamia|jami|islamic cent",i](around:${radius},${latitude},${longitude});
-        );
-        out center;
-      `;
-
-      const fetchOverpass = async (url: string) => {
-        return fetch(url, {
-          method: "POST",
-          body: `data=${encodeURIComponent(overpassQuery)}`,
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "KhutbahCompanion/1.0 (https://khutbah-translate.replit.app)",
-            "Accept": "application/json",
+      const response = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.formattedAddress,places.websiteUri,places.internationalPhoneNumber",
+        },
+        body: JSON.stringify({
+          includedTypes: ["mosque"],
+          maxResultCount: 20,
+          locationRestriction: {
+            circle: {
+              center: { latitude, longitude },
+              radius,
+            },
           },
-        });
-      };
+        }),
+      });
 
-      // Try Kumi first; fall back to overpass-api.de if Kumi fails or returns 0 elements
-      let response = await fetchOverpass("https://overpass.kumi.systems/api/interpreter");
-      let data: any = response.ok ? await response.json() : null;
-
-      if (!response.ok || !data?.elements?.length) {
-        console.log(`Kumi returned ${response.ok ? (data?.elements?.length ?? 0) : `HTTP ${response.status}`}, falling back to overpass-api.de`);
-        response = await fetchOverpass("https://overpass-api.de/api/interpreter");
-        if (!response.ok) {
-          const body = await response.text().catch(() => "");
-          console.error("Overpass API error:", response.status, body.slice(0, 200));
-          throw new Error(`Failed to fetch mosques from OpenStreetMap (status ${response.status})`);
-        }
-        data = await response.json();
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        console.error("Google Places API error:", response.status, body.slice(0, 200));
+        throw new Error(`Failed to fetch mosques from Google Places (status ${response.status})`);
       }
 
-      if (!data.elements) {
-        console.error("Overpass response missing elements field:", JSON.stringify(data).slice(0, 300));
-      }
-      console.log(`Overpass returned status ${response.status}, ${data.elements?.length ?? 0} elements`);
+      const data = await response.json();
+      const places: any[] = data.places ?? [];
+
+      console.log(`Google Places returned ${places.length} results`);
 
       // Calculate distance using Haversine formula
       const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -812,35 +798,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return R * c;
       };
 
-      // De-duplicate by OSM element id, then format
-      const seen = new Set<string>();
-      const mosques = data.elements
-        .filter((element: any) => {
-          const key = element.id.toString();
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        })
-        .map((element: any) => {
-          const lat = element.center?.lat || element.lat;
-          const lon = element.center?.lon || element.lon;
+      const mosques = places
+        .map((place: any) => {
+          const lat = place.location.latitude;
+          const lon = place.location.longitude;
           const distance = calculateDistance(latitude, longitude, lat, lon);
 
           return {
-            id: element.id.toString(),
-            name: element.tags?.name || "Unnamed Mosque",
+            id: place.id,
+            name: place.displayName?.text || "Unnamed Mosque",
             latitude: lat,
             longitude: lon,
             distance: distance.toFixed(2),
-            address: [
-              element.tags?.["addr:street"],
-              element.tags?.["addr:housenumber"],
-              element.tags?.["addr:city"],
-              element.tags?.["addr:postcode"],
-            ].filter(Boolean).join(", ") || "Address not available",
-            denomination: element.tags?.denomination,
-            website: element.tags?.website,
-            phone: element.tags?.phone,
+            address: place.formattedAddress || "Address not available",
+            denomination: undefined,
+            website: place.websiteUri,
+            phone: place.internationalPhoneNumber,
           };
         })
         .sort((a: any, b: any) => parseFloat(a.distance) - parseFloat(b.distance));
@@ -848,7 +821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store in cache for 1 hour
       mosqueCache.set(cacheKey, { data: mosques, expiresAt: Date.now() + 60 * 60 * 1000 });
 
-      console.log(`Returning ${mosques.length} mosques after dedup`);
+      console.log(`Returning ${mosques.length} mosques after processing`);
       res.json(mosques);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
