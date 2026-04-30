@@ -1,8 +1,17 @@
+import { useState, useEffect } from "react";
+import { Info } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { BannerAd } from "@/components/banner-ad";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { SalahPosture, type Pose } from "@/components/salah-posture";
 
 type Prayer = {
@@ -33,7 +42,7 @@ const prayers: Prayer[] = [
     sunnahBefore: 4,
     fard: 4,
     sunnahAfter: 2,
-    description: "The midday prayer, after the sun passes its zenith. Recited silently.",
+    description: "The midday prayer, performed after the sun passes its zenith. Recited silently.",
   },
   {
     id: "asr",
@@ -42,7 +51,7 @@ const prayers: Prayer[] = [
     sunnahBefore: 0,
     fard: 4,
     sunnahAfter: 0,
-    description: "The afternoon prayer, before sunset. Recited silently.",
+    description: "The afternoon prayer, performed in the late afternoon before sunset. Recited silently.",
   },
   {
     id: "maghrib",
@@ -51,7 +60,7 @@ const prayers: Prayer[] = [
     sunnahBefore: 0,
     fard: 3,
     sunnahAfter: 2,
-    description: "The sunset prayer, just after the sun has set. First two rakahs aloud, last silent.",
+    description: "The sunset prayer, performed just after sunset. First two rakat aloud, third silent.",
   },
   {
     id: "isha",
@@ -61,7 +70,7 @@ const prayers: Prayer[] = [
     fard: 4,
     sunnahAfter: 2,
     witr: 3,
-    description: "The night prayer, after twilight has disappeared. First two rakahs aloud, rest silent. Witr is highly recommended.",
+    description: "The night prayer, performed after twilight. First two rakat aloud, the rest silent.",
   },
 ];
 
@@ -86,7 +95,7 @@ const steps: Step[] = [
     arabic: "اللَّهُ أَكْبَرُ",
     transliteration: "Allaahu Akbar",
     translation: "Allah is the Greatest",
-    notes: "Raise both hands to the level of your ears (men) or shoulders (women), then place the right hand over the left on your chest.",
+    notes: "Raise both hands and say 'Allahu Akbar.' This officially begins the prayer. After saying the Takbir, place your right hand over your left, between the chest and navel.",
     pose: "takbir",
   },
   {
@@ -106,7 +115,7 @@ const steps: Step[] = [
     arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ۝ الرَّحْمَٰنِ الرَّحِيمِ ۝ مَالِكِ يَوْمِ الدِّينِ ۝ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ۝ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ۝ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
     transliteration: "Alhamdu lillaahi Rabbil-'aalameen. Ar-Rahmaanir-Raheem. Maaliki Yawmid-Deen. Iyyaaka na'budu wa iyyaaka nasta'een. Ihdinas-Siraatal-Mustaqeem. Siraatal-ladheena an'amta 'alayhim, ghayril-maghdoobi 'alayhim wa lad-daalleen",
     translation: "All praise is for Allah, Lord of all worlds. The Most Gracious, the Most Merciful. Master of the Day of Judgment. You alone we worship and You alone we ask for help. Guide us to the straight path. The path of those You have blessed, not of those who incurred Your wrath, nor of those who went astray.",
-    notes: "Say 'Aameen' silently (Hanafi) or aloud (other schools) at the end.",
+    notes: "Say 'Ameen' at the end (some traditions say it silently, others aloud).",
     pose: "qiyam",
   },
   {
@@ -160,7 +169,7 @@ const steps: Step[] = [
     arabic: "التَّحِيَّاتُ لِلَّهِ وَالصَّلَوَاتُ وَالطَّيِّبَاتُ، السَّلَامُ عَلَيْكَ أَيُّهَا النَّبِيُّ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ، السَّلَامُ عَلَيْنَا وَعَلَىٰ عِبَادِ اللَّهِ الصَّالِحِينَ، أَشْهَدُ أَنْ لَا إِلَٰهَ إِلَّا اللَّهُ، وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُولُهُ",
     transliteration: "At-tahiyyaatu lillaahi was-salawaatu wat-tayyibaat. As-salaamu 'alayka ayyuhan-Nabiyyu wa rahmatullaahi wa barakaatuh. As-salaamu 'alaynaa wa 'alaa 'ibaadillaahis-saaliheen. Ash-hadu an laa ilaaha illallaah, wa ash-hadu anna Muhammadan 'abduhu wa rasooluh",
     translation: "All compliments, prayers, and pure words are for Allah. Peace be upon you, O Prophet, and the mercy of Allah and His blessings. Peace be upon us and upon the righteous servants of Allah. I bear witness that there is no god but Allah, and I bear witness that Muhammad is His servant and messenger.",
-    notes: "Sit with right foot upright and left foot under you. Raise the right index finger when saying 'illallaah'.",
+    notes: "Sit with the right foot upright (toes curled) and the left foot folded under you. When you reach 'La ilaha illa Allah,' close the other fingers of your right hand into a fist and raise the index finger; then lower it.",
     pose: "jalsah",
   },
   {
@@ -186,25 +195,47 @@ type PostureItem = {
 };
 
 const postureItems: PostureItem[] = [
-  { pose: "takbir", name: "Takbir al-Ihram", hint: "Raise hands and say Allaahu Akbar to begin." },
-  { pose: "qiyam", name: "Qiyam (Standing)", hint: "Stand with right hand over left, recite Al-Fatiha and a surah." },
-  { pose: "ruku", name: "Ruku' (Bowing)", hint: "Bow with hands on knees, back straight." },
-  { pose: "qiyam", name: "I'tidal (Stand again)", hint: "Rise back up fully from bowing." },
-  { pose: "sujood", name: "Sujood (Prostration)", hint: "Forehead, nose, palms, knees and toes touch the ground." },
-  { pose: "jalsah", name: "Jalsah (Sit briefly)", hint: "Sit up between the two prostrations." },
-  { pose: "sujood", name: "Second Sujood", hint: "Prostrate again. This completes one rakah." },
-  { pose: "jalsah", name: "Tashahhud (Sitting)", hint: "Sit and recite the testimony after every 2 rakahs." },
-  { pose: "tasleem", name: "Tasleem (Closing)", hint: "Turn head right then left to end the prayer." },
+  { pose: "takbir", name: "Takbir al-Ihram", hint: "Begin with the intention (niyyah) in your heart for the prayer you are about to perform. Raise your hands and say 'Allahu Akbar' (Allah is the Greatest). This officially begins the prayer." },
+  { pose: "qiyam", name: "Qiyam (Standing)", hint: "Place your right hand over your left, between the chest and navel. Keep your gaze focused on the spot where your forehead will rest in prostration. Recite the opening dua, then Surah al-Fatihah, followed by another short surah." },
+  { pose: "ruku", name: "Ruku' (Bowing)", hint: "Saying 'Allahu Akbar,' bow forward at the waist. Place your hands firmly on your knees with fingers spread, and keep your back flat — parallel to the ground. Your gaze stays on the spot where your forehead will rest in prostration." },
+  { pose: "qiyam", name: "I'tidal (Standing after Ruku')", hint: "As you rise from Ruku', say 'Sami'-Allahu liman hamidah.' Stand fully upright with your hands at your sides, then say 'Rabbana lakal hamd.'" },
+  { pose: "sujood", name: "Sujood (Prostration)", hint: "Saying 'Allahu Akbar,' lower yourself to the ground in prostration. Seven body parts must touch the floor: forehead, nose, both palms, both knees, and the toes of both feet (curled forward toward the qibla). Place your palms on the ground beside your head, with elbows lifted away from your sides." },
+  { pose: "jalsah", name: "Jalsah (Sit briefly)", hint: "Saying 'Allahu Akbar,' rise from prostration into a sitting position. Sit on the flat of your left foot, with your right foot upright — toes curled forward toward the qibla. Place your palms flat on your thighs, just above the knees. Briefly recite a short dua before returning to the second prostration." },
+  { pose: "sujood", name: "Second Sujood", hint: "Saying 'Allahu Akbar,' return to prostration. The same seven body parts touch the ground: forehead, nose, both palms, both knees, and the curled toes of both feet. Recite the same tasbih as before. This completes one rakah." },
+  { pose: "jalsah", name: "Tashahhud (Sitting)", hint: "Sit in the same position as Jalsah — left foot folded under the body, right foot upright with toes curled forward. Place your hands flat on your thighs, just above the knees. Recite the Tashahhud. When you reach the words 'La ilaha illa Allah' in the testimony of faith, raise the index finger of your right hand (with the other fingers gently closed into a fist), then lower it. After tashahhud (in the final sitting), recite the Durood (blessings on the Prophet ﷺ) and a brief personal dua." },
+  { pose: "tasleem", name: "Tasleem (Closing)", hint: "Remaining in the sitting position, end the prayer by turning your head to the right and saying 'As-salamu 'alaykum wa rahmat-Ullah.' Then turn your head to the left and repeat the same words. Your prayer is now complete." },
 ];
 
+const DISCLAIMER_KEY = "salah-guide-disclaimer-acknowledged";
+
 export default function SalahGuidePage() {
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      setShowDisclaimer(true);
+    }
+  }, []);
+
+  const handleDismiss = () => {
+    localStorage.setItem(DISCLAIMER_KEY, "true");
+    setShowDisclaimer(false);
+  };
+
   return (
     <div className="min-h-screen bg-background pb-nav">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg pt-safe border-b border-border">
         <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
+            <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2" data-testid="text-page-title">
               Salah Guide
+              <button
+                onClick={() => setShowDisclaimer(true)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="About this guide"
+              >
+                <Info className="w-4 h-4" />
+              </button>
             </h1>
             <p className="text-xs text-muted-foreground">Step-by-step prayer instructions</p>
           </div>
@@ -336,6 +367,23 @@ export default function SalahGuidePage() {
 
       <BannerAd />
       <BottomNav />
+
+      <Dialog open={showDisclaimer} onOpenChange={setShowDisclaimer}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>A Note on This Guide</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This Salah Guide is intended for general use. The basic structure of prayer is universally agreed upon, but may vary between the four schools of thought.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            For matters specific to your tradition or fiqh rulings, please consult your local imam or a qualified scholar.
+          </p>
+          <Button onClick={handleDismiss} className="w-full mt-2">
+            I understand
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
