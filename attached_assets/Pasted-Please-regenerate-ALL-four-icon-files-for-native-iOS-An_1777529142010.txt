@@ -1,0 +1,40 @@
+Please regenerate ALL four icon files for native iOS/Android app builds. The previous versions have technical issues for native builds, AND I want to remove the "KHUTBAH COMPANION" text from the icon entirely.
+
+DESIGN CHANGES:
+- Remove the "KHUTBAH COMPANION" text completely from all icon files
+- Keep the dome design (green dome with gold geometric patterns, gold dome base, gold crescent on top)
+- Enlarge the dome so it fills approximately 70-80% of the canvas (no empty space at the bottom where text used to be)
+- Keep the dark green/black gradient background
+
+FILES TO GENERATE:
+
+File 1: icon.png
+- 1024 × 1024 PNG
+- Dark green/black gradient background filling the whole canvas
+- Dome + crescent illustration centered, approximately 75% of canvas size
+- NO text
+- This is the master icon — represents the app at full quality
+
+File 2: icon-foreground.png
+- 1024 × 1024 PNG
+- Background: 100% TRANSPARENT (alpha channel = 0)
+- Foreground: ONLY the dome + crescent + gold base from icon.png (NO text, NO background, NO other elements)
+- The dome should fit inside the MIDDLE 60% of the canvas (so roughly central 614×614 pixels). Transparent padding of about 200px on all sides.
+- Save as PNG with full alpha transparency
+
+File 3: icon-background.png
+- 1024 × 1024 PNG
+- 100% SOLID COLOR — no design, no pattern, no illustration, no gradient, no text
+- Use the darkest dark green/black color from icon.png's background (around #0a1f1a or similar)
+- This is just a flat colored rectangle — Android composites this BEHIND the foreground
+
+File 4: splash.png
+- 2732 × 2732 PNG (SQUARE, not portrait)
+- Same dark green/black gradient background as icon.png
+- Dome + crescent illustration centered, approximately 800×800 pixels
+- NO text, NO decorative borders, NO patterns
+- Minimal — just the dome on the gradient background
+
+All files MUST be PNG format. Dimensions MUST be exact. icon-foreground.png MUST have full alpha transparency in the padding areas (not white pretending to be transparent).
+
+DO NOT include the existing teal/white/minaret variants from previous generations. Use ONLY the dark green dome design from the original icon.png aesthetic.

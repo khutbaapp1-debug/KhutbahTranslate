@@ -36,3 +36,9 @@ id = "yAse3nnFH2tAdbkNk3Rkj"
 uri = "file://attached_assets/salah/tasleem.png"
 type = "image"
 title = "generated_image"
+
+[[generated]]
+id = "gv4wbSmKPo_4M4_KsknnI"
+uri = "file://attached_assets/generated_images/dome_master.png"
+type = "image"
+title = "generated_image"
