@@ -1,0 +1,101 @@
+Hi — I need you to populate the "witr" key in client/src/data/prayer-flows.ts with the 3-rakat Witr prayer flow content (with one sitting and Dua Qunoot in Rakah 3).
+
+The file currently has all the type definitions, shared constants, populated twoRakat, fourRakat, and maghrib arrays. The "witr" key is currently an empty array.
+
+CRITICAL: Reuse all existing shared constants. Do not redefine anything. The Arabic must stay identical to what's in the verified shared constants. ONE new constant is needed (Dua Qunoot) — see below.
+
+═══════════════════════════════════════════════════════════
+WITR STRUCTURE — KEY DIFFERENCES FROM OTHER FLOWS
+═══════════════════════════════════════════════════════════
+
+This Witr is taught with the "3 rakat with 1 sitting" structure (only Final Tashahhud, NO First Tashahhud after Rakah 2). Other key features:
+
+1. After Rakah 2's Second Sujood: STAND DIRECTLY for Rakah 3 (no First Tashahhud)
+2. Rakah 3 includes: Bismillah → Fatihah → a short surah → ADDITIONAL TAKBIR (raise hands and say "Allahu Akbar") → fold hands again → DUA QUNOOT (silently)
+3. Then continue as normal: Ruku → I'tidal → Sujood → Jalsah → Sujood → sit for Final Tashahhud → Tasleem
+4. Witr is recited silently throughout (per the user's tradition)
+
+═══════════════════════════════════════════════════════════
+NEW SHARED CONSTANT TO ADD
+═══════════════════════════════════════════════════════════
+
+Add a new shared constant near the other recitation constants:
+
+const DUA_QUNOOT: PrayerFlowRecitation = {
+  name: "Dua Qunoot",
+  arabic: "اللَّهُمَّ اهْدِنِي فِيمَنْ هَدَيْتَ وَعَافِنِي فِيمَنْ عَافَيْتَ وَتَوَلَّنِي فِيمَنْ تَوَلَّيْتَ وَبَارِكْ لِي فِيمَا أَعْطَيْتَ وَقِنِي شَرَّ مَا قَضَيْتَ إِنَّكَ تَقْضِي وَلَا يُقْضَى عَلَيْكَ وَإِنَّهُ لَا يَذِلُّ مَنْ وَالَيْتَ وَلَا يَعِزُّ مَنْ عَادَيْتَ تَبَارَكْتَ رَبَّنَا وَتَعَالَيْتَ",
+  transliteration: "Allahumma ihdini feeman hadayt, wa 'afini feeman 'afayt, wa tawallani feeman tawallayt, wa barik li feema a'tayt, wa qini sharra ma qadayt, innaka taqdi wa la yuqda 'alayk, wa innahu la yadhillu man walayt, wa la ya'izzu man 'adayt, tabarakta Rabbana wa ta'alayt.",
+  meaning: "O Allah, guide me among those You have guided, grant me wellbeing among those You have granted wellbeing, take me into Your protection among those You have protected, bless what You have given me, and protect me from the evil that You have decreed. For verily You decree and none can overrule You. He whom You have befriended is never humiliated, and he whom You have set Yourself against is never honored. Blessed are You, our Lord, and Exalted.",
+};
+
+This is the Shafi'i version of Dua Qunoot, sourced from Alim.org.
+
+═══════════════════════════════════════════════════════════
+THE 24 CARDS for witr array
+═══════════════════════════════════════════════════════════
+
+Cards 1-15: IDENTICAL to twoRakat cards 1-15 (use spread: ...twoRakat.slice(0, 15))
+
+Card 16: Sujood (Second Prostration) — End of Rakah 2 in Witr (NEW, no Tashahhud, stand directly)
+title: "16. Sujood (Second Prostration)"
+description: "Saying \"Allahu Akbar,\" return to prostration. The same seven body parts touch the ground: forehead, nose, both palms, both knees, and the curled toes of both feet. Place your palms beside your head as before. Recite the same tasbih at least three times:\n\nThis completes Rakah 2. **In Witr, you do not sit for a First Tashahhud.** Saying \"Allahu Akbar,\" stand directly to begin Rakah 3."
+recitations: [TASBIH_SUJOOD]
+
+Card 17: Qiyam (Standing) — Rakah 3 with Dua Qunoot (NEW, the most distinctive Witr card)
+title: "17. Qiyam (Standing) — Rakah 3 with Dua Qunoot"
+description: "Place your right hand over your left, between the chest and navel. Keep your gaze focused on the spot where your forehead will rest in prostration. Recite the following, in order:\n\nAfter completing the surah, raise both hands to your ears (as in the opening Takbir) and say \"Allahu Akbar.\" Then place your right hand over your left, between the chest and navel — as in standard Qiyam. Recite Dua Qunoot silently."
+recitations: [BISMILLAH, SURAH_FATIHAH, SURAH_IKHLAS, DUA_QUNOOT]
+note: "Witr is recited silently."
+
+Card 18: Ruku' (same as twoRakat Card 6, but numbered 18)
+title: "18. Ruku' (Bowing)"
+description: RUKU_DESCRIPTION
+recitations: [TASBIH_RUKU]
+
+Card 19: I'tidal
+title: "19. I'tidal (Standing After Ruku')"
+description: ITIDAL_DESCRIPTION
+recitations: itidalRecitations
+
+Card 20: First Sujood
+title: "20. Sujood (First Prostration)"
+description: FIRST_SUJOOD_DESCRIPTION
+recitations: [TASBIH_SUJOOD]
+
+Card 21: Jalsah
+title: "21. Jalsah (Sitting Briefly)"
+description: JALSAH_DESCRIPTION
+recitations: [JALSAH_DUA]
+
+Card 22: Sujood (Second Prostration) — End of Rakah 3 in Witr (NEW)
+title: "22. Sujood (Second Prostration)"
+description: "Saying \"Allahu Akbar,\" return to prostration. The same seven body parts touch the ground: forehead, nose, both palms, both knees, and the curled toes of both feet. Place your palms beside your head as before. Recite the same tasbih at least three times:\n\nThis completes Rakah 3 — the final rakah of Witr. Saying \"Allahu Akbar,\" sit up for the Final Tashahhud."
+recitations: [TASBIH_SUJOOD]
+
+Card 23: Final Tashahhud
+title: "23. Final Tashahhud (Sitting)"
+description: FINAL_TASHAHHUD_DESCRIPTION
+recitations: finalTashahhudRecitations
+note: FINAL_TASHAHHUD_NOTE
+
+Card 24: Tasleem
+title: "24. Tasleem (Closing the Prayer)"
+description: "Remaining in the sitting position, end the prayer by turning your head to the right and saying the salam. Then turn your head to the left and repeat the same words. Your prayer is now complete.\n\nYour 3-rakat Witr prayer is complete. May Allah accept it from you."
+recitations: TASLEEM_RECITATIONS
+
+═══════════════════════════════════════════════════════════
+INSTRUCTIONS
+═══════════════════════════════════════════════════════════
+
+1. Add the DUA_QUNOOT constant near the other recitation constants
+2. Define the witr array with 24 cards as described
+3. Cards 1-15 should use the spread operator from twoRakat (...twoRakat.slice(0, 15))
+4. Set prayerFlows["witr"] = witr
+5. Run npx tsc to confirm no TypeScript errors
+6. Verify the witr array has exactly 24 cards numbered 1-24 sequentially
+
+CRITICAL:
+- Reuse existing constants — do not retype Arabic that's already shared
+- Card 16's description has a markdown-style bold (**...**) for the "you do not sit for a First Tashahhud" line — preserve the asterisks exactly so they render bold in the FlowCard component
+- Card 17 is the most religiously distinctive — preserve all instructions about the additional Takbir and silent Dua Qunoot
+- Use existing FINAL_TASHAHHUD_DESCRIPTION, finalTashahhudRecitations, FINAL_TASHAHHUD_NOTE, and TASLEEM_RECITATIONS for the closing cards

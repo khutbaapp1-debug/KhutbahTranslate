@@ -96,6 +96,16 @@ const PERSONAL_DUA_RECITATION: PrayerFlowRecitation = {
     "Our Lord, grant us good in this world and good in the Hereafter, and protect us from the punishment of the Fire.",
 };
 
+const DUA_QUNOOT: PrayerFlowRecitation = {
+  name: "Dua Qunoot",
+  arabic:
+    "اللَّهُمَّ اهْدِنِي فِيمَنْ هَدَيْتَ، وَعَافِنِي فِيمَنْ عَافَيْتَ، وَتَوَلَّنِي فِيمَنْ تَوَلَّيْتَ، وَبَارِكْ لِي فِيمَا أَعْطَيْتَ، وَقِنِي شَرَّ مَا قَضَيْتَ، إِنَّكَ تَقْضِي وَلَا يُقْضَىٰ عَلَيْكَ، وَإِنَّهُ لَا يَذِلُّ مَنْ وَالَيْتَ، وَلَا يَعِزُّ مَنْ عَادَيْتَ، تَبَارَكْتَ رَبَّنَا وَتَعَالَيْتَ",
+  transliteration:
+    "Allahumma ihdini feeman hadayt, wa 'afini feeman 'afayt, wa tawallani feeman tawallayt, wa barik li feema a'tayt, wa qini sharra ma qadayt, innaka taqdi wa la yuqda 'alayk, wa innahu la yadhillu man walayt, wa la ya'izzu man 'adayt, tabarakta Rabbana wa ta'alayt.",
+  meaning:
+    "O Allah, guide me among those You have guided, grant me wellbeing among those You have granted wellbeing, take me into Your protection among those You have protected, bless what You have given me, and protect me from the evil that You have decreed. For verily You decree and none can overrule You. He whom You have befriended is never humiliated, and he whom You have set Yourself against is never honored. Blessed are You, our Lord, and Exalted.",
+};
+
 const SALAM_TASLEEM: PrayerFlowRecitation = {
   name: "Salam (Tasleem)",
   label: "Said twice — once to the right, once to the left",
@@ -437,9 +447,74 @@ const maghrib: PrayerFlowCard[] = [
   },
 ];
 
+const witr: PrayerFlowCard[] = [
+  // Cards 1-15: identical to twoRakat[0..14]
+  ...twoRakat.slice(0, 15),
+  {
+    number: 16,
+    title: "16. Sujood (Second Prostration)",
+    description:
+      "Saying \"Allahu Akbar,\" return to prostration. The same seven body parts touch the ground: forehead, nose, both palms, both knees, and the curled toes of both feet. Place your palms beside your head as before. Recite the same tasbih at least three times:\n\nThis completes Rakah 2. **In Witr, you do not sit for a First Tashahhud.** Saying \"Allahu Akbar,\" stand directly to begin Rakah 3.",
+    recitations: [TASBIH_SUJOOD],
+  },
+  {
+    number: 17,
+    title: "17. Qiyam (Standing) — Rakah 3 with Dua Qunoot",
+    description:
+      "Place your right hand over your left, between the chest and navel. Keep your gaze focused on the spot where your forehead will rest in prostration. Recite the following, in order:\n\nAfter completing the surah, raise both hands to your ears (as in the opening Takbir) and say \"Allahu Akbar.\" Then place your right hand over your left, between the chest and navel — as in standard Qiyam. Recite Dua Qunoot silently.",
+    recitations: [BISMILLAH, SURAH_FATIHAH, SURAH_IKHLAS, DUA_QUNOOT],
+    note: "Witr is recited silently.",
+  },
+  {
+    number: 18,
+    title: "18. Ruku' (Bowing)",
+    description: RUKU_DESCRIPTION,
+    recitations: [TASBIH_RUKU],
+  },
+  {
+    number: 19,
+    title: "19. I'tidal (Standing After Ruku')",
+    description: ITIDAL_DESCRIPTION,
+    recitations: itidalRecitations,
+  },
+  {
+    number: 20,
+    title: "20. Sujood (First Prostration)",
+    description: FIRST_SUJOOD_DESCRIPTION,
+    recitations: [TASBIH_SUJOOD],
+  },
+  {
+    number: 21,
+    title: "21. Jalsah (Sitting Briefly)",
+    description: JALSAH_DESCRIPTION,
+    recitations: [JALSAH_DUA],
+  },
+  {
+    number: 22,
+    title: "22. Sujood (Second Prostration)",
+    description:
+      "Saying \"Allahu Akbar,\" return to prostration. The same seven body parts touch the ground: forehead, nose, both palms, both knees, and the curled toes of both feet. Place your palms beside your head as before. Recite the same tasbih at least three times:\n\nThis completes Rakah 3 — the final rakah of Witr. Saying \"Allahu Akbar,\" sit up for the Final Tashahhud.",
+    recitations: [TASBIH_SUJOOD],
+  },
+  {
+    number: 23,
+    title: "23. Final Tashahhud (Sitting)",
+    description: FINAL_TASHAHHUD_DESCRIPTION,
+    recitations: finalTashahhudRecitations,
+    note: FINAL_TASHAHHUD_NOTE,
+  },
+  {
+    number: 24,
+    title: "24. Tasleem (Closing the Prayer)",
+    description:
+      "Remaining in the sitting position, end the prayer by turning your head to the right and saying the salam. Then turn your head to the left and repeat the same words. Your prayer is now complete.\n\nYour 3-rakat Witr prayer is complete. May Allah accept it from you.",
+    recitations: TASLEEM_RECITATIONS,
+  },
+];
+
 export const prayerFlows: Record<PrayerType, PrayerFlowCard[]> = {
   "2rakat": twoRakat,
   "4rakat": fourRakat,
   "maghrib": maghrib,
-  "witr": [],
+  "witr": witr,
 };
