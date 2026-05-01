@@ -12,7 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { SalahPosture, type Pose } from "@/components/salah-posture";
+import { FlowCard } from "@/components/flow-card";
+import { wuduSteps } from "@/data/wudu-steps";
+import { prayerFlows, type PrayerType } from "@/data/prayer-flows";
 
 type Prayer = {
   id: string;
@@ -74,142 +76,11 @@ const prayers: Prayer[] = [
   },
 ];
 
-type Step = {
-  position: string;
-  arabic: string;
-  transliteration: string;
-  translation: string;
-  notes?: string;
-  pose?: Pose;
-};
-
-const steps: Step[] = [
-  {
-    position: "1. Niyyah (Intention)",
-    arabic: "",
-    transliteration: "",
-    translation: "Make the intention in your heart for the specific prayer you are about to perform. The intention does not need to be spoken aloud.",
-  },
-  {
-    position: "2. Takbir al-Ihram (Opening Takbir)",
-    arabic: "اللَّهُ أَكْبَرُ",
-    transliteration: "Allaahu Akbar",
-    translation: "Allah is the Greatest",
-    notes: "Raise both hands and say 'Allahu Akbar.' This officially begins the prayer. After saying the Takbir, place your right hand over your left, between the chest and navel.",
-    pose: "takbir",
-  },
-  {
-    position: "3. Opening Supplication (Du'a al-Istiftah)",
-    arabic: "سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ، وَتَبَارَكَ اسْمُكَ، وَتَعَالَى جَدُّكَ، وَلَا إِلَهَ غَيْرُكَ",
-    transliteration: "Subhaanaka Allaahumma wa bihamdika, wa tabaarakasmuka, wa ta'aala jadduka, wa laa ilaaha ghayruk",
-    translation: "Glory be to You, O Allah, and praise. Blessed is Your Name, and exalted is Your Majesty. There is no god but You.",
-  },
-  {
-    position: "4. Seeking Refuge & Bismillah",
-    arabic: "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ ۝ بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    transliteration: "A'oodhu billaahi minash-Shaytaanir-rajeem. Bismillaahir-Rahmaanir-Raheem",
-    translation: "I seek refuge in Allah from Satan, the accursed. In the name of Allah, the Most Gracious, the Most Merciful.",
-  },
-  {
-    position: "5. Recite Surah Al-Fatiha",
-    arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ۝ الرَّحْمَٰنِ الرَّحِيمِ ۝ مَالِكِ يَوْمِ الدِّينِ ۝ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ۝ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ۝ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
-    transliteration: "Alhamdu lillaahi Rabbil-'aalameen. Ar-Rahmaanir-Raheem. Maaliki Yawmid-Deen. Iyyaaka na'budu wa iyyaaka nasta'een. Ihdinas-Siraatal-Mustaqeem. Siraatal-ladheena an'amta 'alayhim, ghayril-maghdoobi 'alayhim wa lad-daalleen",
-    translation: "All praise is for Allah, Lord of all worlds. The Most Gracious, the Most Merciful. Master of the Day of Judgment. You alone we worship and You alone we ask for help. Guide us to the straight path. The path of those You have blessed, not of those who incurred Your wrath, nor of those who went astray.",
-    notes: "Say 'Ameen' at the end (some traditions say it silently, others aloud).",
-    pose: "qiyam",
-  },
-  {
-    position: "6. Recite a Surah or Verses",
-    arabic: "",
-    transliteration: "",
-    translation: "Recite a short surah or a few verses from the Qur'an after Al-Fatiha. This is required in the first two rakahs of every prayer. Common short surahs include Al-Ikhlas, Al-Falaq, An-Nas, or Al-Kawthar.",
-  },
-  {
-    position: "7. Ruku' (Bowing)",
-    arabic: "سُبْحَانَ رَبِّيَ الْعَظِيمِ",
-    transliteration: "Subhaana Rabbiyal-'Adheem",
-    translation: "Glory is to my Lord, the Most Great",
-    notes: "Say 'Allaahu Akbar', then bow forward, placing your hands on your knees with your back straight. Recite the above 3 times.",
-    pose: "ruku",
-  },
-  {
-    position: "8. Standing from Ruku' (I'tidal)",
-    arabic: "سَمِعَ اللَّهُ لِمَنْ حَمِدَهُ ۝ رَبَّنَا وَلَكَ الْحَمْدُ",
-    transliteration: "Sami'a Allaahu liman hamidah. Rabbanaa wa lakal-hamd",
-    translation: "Allah hears the one who praises Him. Our Lord, all praise is for You.",
-    notes: "Rise back to standing position fully.",
-    pose: "qiyam",
-  },
-  {
-    position: "9. First Sujood (Prostration)",
-    arabic: "سُبْحَانَ رَبِّيَ الْأَعْلَىٰ",
-    transliteration: "Subhaana Rabbiyal-A'laa",
-    translation: "Glory is to my Lord, the Most High",
-    notes: "Say 'Allaahu Akbar', then prostrate, placing forehead, nose, both palms, both knees, and toes on the ground. Recite the above 3 times.",
-    pose: "sujood",
-  },
-  {
-    position: "10. Sitting Between Sujoods (Jalsah)",
-    arabic: "رَبِّ اغْفِرْ لِي",
-    transliteration: "Rabbighfir lee",
-    translation: "My Lord, forgive me",
-    notes: "Say 'Allaahu Akbar', then sit up briefly. Recite the above 1-3 times.",
-    pose: "jalsah",
-  },
-  {
-    position: "11. Second Sujood",
-    arabic: "سُبْحَانَ رَبِّيَ الْأَعْلَىٰ",
-    transliteration: "Subhaana Rabbiyal-A'laa",
-    translation: "Glory is to my Lord, the Most High",
-    notes: "Say 'Allaahu Akbar' and prostrate again, repeating as before. This completes one rakah.",
-    pose: "sujood",
-  },
-  {
-    position: "12. Tashahhud (After Every 2 Rakahs)",
-    arabic: "التَّحِيَّاتُ لِلَّهِ وَالصَّلَوَاتُ وَالطَّيِّبَاتُ، السَّلَامُ عَلَيْكَ أَيُّهَا النَّبِيُّ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ، السَّلَامُ عَلَيْنَا وَعَلَىٰ عِبَادِ اللَّهِ الصَّالِحِينَ، أَشْهَدُ أَنْ لَا إِلَٰهَ إِلَّا اللَّهُ، وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُولُهُ",
-    transliteration: "At-tahiyyaatu lillaahi was-salawaatu wat-tayyibaat. As-salaamu 'alayka ayyuhan-Nabiyyu wa rahmatullaahi wa barakaatuh. As-salaamu 'alaynaa wa 'alaa 'ibaadillaahis-saaliheen. Ash-hadu an laa ilaaha illallaah, wa ash-hadu anna Muhammadan 'abduhu wa rasooluh",
-    translation: "All compliments, prayers, and pure words are for Allah. Peace be upon you, O Prophet, and the mercy of Allah and His blessings. Peace be upon us and upon the righteous servants of Allah. I bear witness that there is no god but Allah, and I bear witness that Muhammad is His servant and messenger.",
-    notes: "Sit with the right foot upright (toes curled) and the left foot folded under you. When you reach 'La ilaha illa Allah,' close the other fingers of your right hand into a fist and raise the index finger; then lower it.",
-    pose: "jalsah",
-  },
-  {
-    position: "13. Salawat (Final Tashahhud Only)",
-    arabic: "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ ۝ اللَّهُمَّ بَارِكْ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ، كَمَا بَارَكْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ",
-    transliteration: "Allaahumma salli 'alaa Muhammad, wa 'alaa aali Muhammad, kamaa sallayta 'alaa Ibraaheema wa 'alaa aali Ibraaheem, innaka Hameedun Majeed. Allaahumma baarik 'alaa Muhammad, wa 'alaa aali Muhammad, kamaa baarakta 'alaa Ibraaheema wa 'alaa aali Ibraaheem, innaka Hameedun Majeed",
-    translation: "O Allah, send Your prayers upon Muhammad and the family of Muhammad, as You sent prayers upon Ibrahim and the family of Ibrahim. Indeed You are Praiseworthy, Glorious. O Allah, send Your blessings upon Muhammad and the family of Muhammad, as You sent blessings upon Ibrahim and the family of Ibrahim. Indeed You are Praiseworthy, Glorious.",
-  },
-  {
-    position: "14. Tasleem (Closing Salam)",
-    arabic: "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ",
-    transliteration: "As-salaamu 'alaykum wa rahmatullaah",
-    translation: "Peace and the mercy of Allah be upon you",
-    notes: "Turn your head to the right and say it, then turn to the left and repeat. This ends the prayer.",
-    pose: "tasleem",
-  },
-];
-
-type PostureItem = {
-  pose: Pose;
-  name: string;
-  hint: string;
-};
-
-const postureItems: PostureItem[] = [
-  { pose: "takbir", name: "Takbir al-Ihram", hint: "Begin with the intention (niyyah) in your heart for the prayer you are about to perform. Raise your hands and say 'Allahu Akbar' (Allah is the Greatest). This officially begins the prayer." },
-  { pose: "qiyam", name: "Qiyam (Standing)", hint: "Place your right hand over your left, between the chest and navel. Keep your gaze focused on the spot where your forehead will rest in prostration. Recite the opening dua, then Surah al-Fatihah, followed by another short surah." },
-  { pose: "ruku", name: "Ruku' (Bowing)", hint: "Saying 'Allahu Akbar,' bow forward at the waist. Place your hands firmly on your knees with fingers spread, and keep your back flat — parallel to the ground. Your gaze stays on the spot where your forehead will rest in prostration." },
-  { pose: "qiyam", name: "I'tidal (Standing after Ruku')", hint: "As you rise from Ruku', say 'Sami'-Allahu liman hamidah.' Stand fully upright with your hands at your sides, then say 'Rabbana lakal hamd.'" },
-  { pose: "sujood", name: "Sujood (Prostration)", hint: "Saying 'Allahu Akbar,' lower yourself to the ground in prostration. Seven body parts must touch the floor: forehead, nose, both palms, both knees, and the toes of both feet (curled forward toward the qibla). Place your palms on the ground beside your head, with elbows lifted away from your sides." },
-  { pose: "jalsah", name: "Jalsah (Sit briefly)", hint: "Saying 'Allahu Akbar,' rise from prostration into a sitting position. Sit on the flat of your left foot, with your right foot upright — toes curled forward toward the qibla. Place your palms flat on your thighs, just above the knees. Briefly recite a short dua before returning to the second prostration." },
-  { pose: "sujood", name: "Second Sujood", hint: "Saying 'Allahu Akbar,' return to prostration. The same seven body parts touch the ground: forehead, nose, both palms, both knees, and the curled toes of both feet. Recite the same tasbih as before. This completes one rakah." },
-  { pose: "jalsah", name: "Tashahhud (Sitting)", hint: "Sit in the same position as Jalsah — left foot folded under the body, right foot upright with toes curled forward. Place your hands flat on your thighs, just above the knees. Recite the Tashahhud. When you reach the words 'La ilaha illa Allah' in the testimony of faith, raise the index finger of your right hand (with the other fingers gently closed into a fist), then lower it. After tashahhud (in the final sitting), recite the Durood (blessings on the Prophet ﷺ) and a brief personal dua." },
-  { pose: "tasleem", name: "Tasleem (Closing)", hint: "Remaining in the sitting position, end the prayer by turning your head to the right and saying 'As-salamu 'alaykum wa rahmat-Ullah.' Then turn your head to the left and repeat the same words. Your prayer is now complete." },
-];
-
 const DISCLAIMER_KEY = "salah-guide-disclaimer-acknowledged";
 
 export default function SalahGuidePage() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [selectedPrayerType, setSelectedPrayerType] = useState<PrayerType>("2rakat");
 
   useEffect(() => {
     if (!localStorage.getItem(DISCLAIMER_KEY)) {
@@ -243,72 +114,51 @@ export default function SalahGuidePage() {
       </header>
 
       <main className="p-4 max-w-screen-md mx-auto space-y-4">
-        <Tabs defaultValue="postures">
+        <Tabs defaultValue="wudu">
           <TabsList className="w-full grid grid-cols-3">
-            <TabsTrigger value="postures" data-testid="tab-postures">Postures</TabsTrigger>
-            <TabsTrigger value="say" data-testid="tab-say">What to say</TabsTrigger>
+            <TabsTrigger value="wudu" data-testid="tab-wudu">Wudu</TabsTrigger>
+            <TabsTrigger value="how-to-pray" data-testid="tab-how-to-pray">How to Pray</TabsTrigger>
             <TabsTrigger value="prayers" data-testid="tab-prayers">Prayers</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="postures" className="space-y-4 mt-4">
+          <TabsContent value="wudu" className="space-y-4 mt-4">
             <p className="text-sm text-muted-foreground px-1">
-              The physical postures of one rakah, in order. Repeat these for each rakah of any prayer.
+              Wudu (ablution) is required before each prayer. Follow these steps in order.
             </p>
-            <div className="grid grid-cols-2 gap-3">
-              {postureItems.map((item, idx) => (
-                <Card key={`${item.pose}-${idx}`} data-testid={`posture-card-${idx + 1}`}>
-                  <CardContent className="p-4 space-y-2 flex flex-col items-center text-center">
-                    <div className="w-28 h-28 rounded-md overflow-hidden flex items-center justify-center">
-                      <SalahPosture pose={item.pose} className="w-full h-full" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        {idx + 1}. {item.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">{item.hint}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {wuduSteps.map((step) => (
+              <FlowCard key={step.number} card={step} />
+            ))}
           </TabsContent>
 
-          <TabsContent value="say" className="space-y-3 mt-4">
+          <TabsContent value="how-to-pray" className="space-y-4 mt-4">
             <p className="text-sm text-muted-foreground px-1">
-              Words to recite at each step of one rakah. Repeat steps 4–11 in every rakah, then perform Tashahhud after every 2 rakahs and again at the end.
+              Choose the type of prayer below to see a step-by-step guide.
             </p>
-            {steps.map((step, idx) => (
-              <Card key={idx} data-testid={`step-${idx + 1}`}>
-                <CardContent className="p-5 space-y-3">
-                  <h4 className="font-semibold text-foreground">{step.position}</h4>
-
-                  {step.arabic && (
-                    <p className="text-2xl font-arabic text-foreground leading-loose text-right" dir="rtl">
-                      {step.arabic}
-                    </p>
-                  )}
-
-                  {step.transliteration && (
-                    <p className="text-sm italic text-muted-foreground">{step.transliteration}</p>
-                  )}
-
-                  {step.translation && (
-                    <p className="text-sm text-foreground">{step.translation}</p>
-                  )}
-
-                  {step.notes && (
-                    <div className="text-xs text-muted-foreground bg-muted rounded-md p-3 mt-2">
-                      {step.notes}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            <div className="flex flex-wrap gap-2">
+              {([
+                { value: "2rakat",  label: "2 Rakat" },
+                { value: "4rakat",  label: "4 Rakat" },
+                { value: "maghrib", label: "Maghrib (3 Rakat)" },
+                { value: "witr",    label: "Witr (3 Rakat)" },
+              ] as { value: PrayerType; label: string }[]).map(({ value, label }) => (
+                <Button
+                  key={value}
+                  variant={selectedPrayerType === value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedPrayerType(value)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            {prayerFlows[selectedPrayerType].map((card) => (
+              <FlowCard key={card.number} card={card} />
             ))}
           </TabsContent>
 
           <TabsContent value="prayers" className="space-y-3 mt-4">
             <p className="text-sm text-muted-foreground px-1">
-              Each daily prayer has a different number of rakahs. Use the postures and words above for every rakah.
+              Below is what each daily prayer consists of, including sunnah and fard rakat for each.
             </p>
             {prayers.map((prayer) => (
               <Card key={prayer.id} data-testid={`prayer-${prayer.id}`}>
