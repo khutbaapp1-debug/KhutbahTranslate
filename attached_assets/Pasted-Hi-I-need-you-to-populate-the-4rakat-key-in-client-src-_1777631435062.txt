@@ -1,0 +1,127 @@
+Hi — I need you to populate the "4rakat" key in client/src/data/prayer-flows.ts with the 4-rakat prayer flow content (for Dhuhr, Asr, Isha).
+
+The file currently has the type definitions, shared constants (BISMILLAH, SURAH_FATIHAH, SURAH_IKHLAS, TASBIH_RUKU, TASBIH_SUJOOD, JALSAH_DUA, QIYAM_RECITE_NOTE, itidalRecitations), and the populated twoRakat array. The "4rakat" key is currently an empty array.
+
+CRITICAL: Reuse the existing shared constants (BISMILLAH, SURAH_FATIHAH, etc.) — do not redefine them. The Arabic must come from the same constants we already verified for the 2-rakat flow.
+
+═══════════════════════════════════════════════════════════
+ARCHITECTURE NOTE
+═══════════════════════════════════════════════════════════
+
+The 4-rakat flow has 31 cards. Many cards are identical or very similar to cards in twoRakat. The new/changed elements are:
+
+1. After Rakah 2's Second Sujood, the user sits for the FIRST Tashahhud (testimony only, NO Durood) — this is a new card
+2. The FIRST Tashahhud card needs a new shared constant for the testimony recitation
+3. After First Tashahhud, the user stands for Rakah 3
+4. Rakah 3 and Rakah 4 Qiyam cards: Bismillah + Fatihah ONLY (no short surah)
+5. Rakah 3 and Rakah 4 Ruku/I'tidal/Sujood/Jalsah/Sujood: same as Rakah 1/2
+6. After Rakah 4's Second Sujood, the user sits for the FINAL Tashahhud (full content + Durood + dua) — same as twoRakat Card 17
+7. Tasleem same as twoRakat Card 18
+
+═══════════════════════════════════════════════════════════
+NEW SHARED CONSTANT TO ADD
+═══════════════════════════════════════════════════════════
+
+Add a new shared constant ABOVE the twoRakat array (next to the other constants):
+
+const TASHAHHUD_RECITATION: PrayerFlowRecitation = {
+  name: "Tashahhud (At-tahiyyat)",
+  arabic: [same as in Card 17 of twoRakat],
+  transliteration: [same],
+  meaning: [same],
+};
+
+This way it can be reused both in First Tashahhud (4-rakat Card 17, etc.) and Final Tashahhud (twoRakat Card 17 — please refactor that to use this constant too).
+
+═══════════════════════════════════════════════════════════
+THE 31 CARDS for fourRakat array
+═══════════════════════════════════════════════════════════
+
+Cards 1-15: IDENTICAL to twoRakat cards 1-15 (just reuse them — same content)
+
+Card 16: End of Rakah 2 (CHANGED from twoRakat Card 16)
+title: "16. Sujood (Second Prostration) — End of Rakah 2"
+description: "Saying \"Allahu Akbar,\" return to prostration. The same seven body parts touch the ground: forehead, nose, both palms, both knees, and the curled toes of both feet. Place your palms beside your head as before. Recite the same tasbih at least three times:\n\nThis completes Rakah 2. Saying \"Allahu Akbar,\" sit up for the First Tashahhud."
+recitations: [TASBIH_SUJOOD]
+No note.
+
+Card 17: First Tashahhud (NEW for 4-rakat)
+title: "17. First Tashahhud (Sitting)"
+description: "Sit in the same position as Jalsah — left foot folded under the body, right foot upright with toes curled forward. Place your hands flat on your thighs, just above the knees. Recite the testimony of faith below. Do NOT add the Durood (Salawat) or any personal dua at this sitting — those are reserved for the final Tashahhud."
+recitations: [TASHAHHUD_RECITATION]
+note: "When you reach \"La ilaha illa Allah\" in the testimony, raise the index finger of your right hand (other fingers gently closed into a fist), then lower it. Once you have lowered your finger and completed the testimony, saying \"Allahu Akbar,\" stand up to begin Rakah 3."
+
+Card 18: Qiyam — Rakah 3 (CHANGED — Fatihah only, no short surah)
+title: "18. Qiyam (Standing) — Rakah 3"
+description: "Place your right hand over your left, between the chest and navel. Keep your gaze focused on the spot where your forehead will rest in prostration. In Rakah 3, recite only the Bismillah followed by Surah al-Fatihah — do not add a short surah."
+recitations: [BISMILLAH, SURAH_FATIHAH]
+note: QIYAM_RECITE_NOTE
+
+Card 19: Ruku' (same as twoRakat Card 6)
+title: "19. Ruku' (Bowing)"
+description: [same as Card 6]
+recitations: [TASBIH_RUKU]
+
+Card 20: I'tidal (same as twoRakat Card 7)
+title: "20. I'tidal (Standing After Ruku')"
+description: [same]
+recitations: itidalRecitations
+
+Card 21: First Sujood (same as twoRakat Card 8)
+title: "21. Sujood (First Prostration)"
+description: [same]
+recitations: [TASBIH_SUJOOD]
+
+Card 22: Jalsah (same as twoRakat Card 9)
+title: "22. Jalsah (Sitting Briefly)"
+description: [same]
+recitations: [JALSAH_DUA]
+
+Card 23: Sujood (Second Prostration) — End of Rakah 3 (CHANGED — stand for Rakah 4)
+title: "23. Sujood (Second Prostration)"
+description: "Saying \"Allahu Akbar,\" return to prostration. The same seven body parts touch the ground: forehead, nose, both palms, both knees, and the curled toes of both feet. Place your palms beside your head as before. Recite the same tasbih at least three times:\n\nThis completes Rakah 3. Saying \"Allahu Akbar,\" stand back up to begin Rakah 4."
+recitations: [TASBIH_SUJOOD]
+
+Card 24: Qiyam — Rakah 4 (CHANGED — Fatihah only, like Card 18)
+title: "24. Qiyam (Standing) — Rakah 4"
+description: "Place your right hand over your left, between the chest and navel. Keep your gaze focused on the spot where your forehead will rest in prostration. As in Rakah 3, recite only the Bismillah followed by Surah al-Fatihah — do not add a short surah."
+recitations: [BISMILLAH, SURAH_FATIHAH]
+note: QIYAM_RECITE_NOTE
+
+Card 25-29: Ruku', I'tidal, Sujood, Jalsah, Sujood for Rakah 4
+Card 25: title: "25. Ruku' (Bowing)" — same as Card 19
+Card 26: title: "26. I'tidal (Standing After Ruku')" — same as Card 20
+Card 27: title: "27. Sujood (First Prostration)" — same as Card 21
+Card 28: title: "28. Jalsah (Sitting Briefly)" — same as Card 22
+
+Card 29: Sujood (Second Prostration) — End of Rakah 4 (CHANGED — sit for Final Tashahhud)
+title: "29. Sujood (Second Prostration)"
+description: "Saying \"Allahu Akbar,\" return to prostration. The same seven body parts touch the ground: forehead, nose, both palms, both knees, and the curled toes of both feet. Place your palms beside your head as before. Recite the same tasbih at least three times:\n\nThis completes Rakah 4. Saying \"Allahu Akbar,\" sit up for the Final Tashahhud."
+recitations: [TASBIH_SUJOOD]
+
+Card 30: Final Tashahhud (SAME as twoRakat Card 17)
+title: "30. Final Tashahhud (Sitting)"
+description: [same as twoRakat Card 17 — full description]
+recitations: [TASHAHHUD_RECITATION, Durood, Personal Dua] — same content as twoRakat Card 17
+note: same as twoRakat Card 17
+
+Card 31: Tasleem (SAME as twoRakat Card 18)
+title: "31. Tasleem (Closing the Prayer)"
+description: "Remaining in the sitting position, end the prayer by turning your head to the right and saying the salam. Then turn your head to the left and repeat the same words. Your prayer is now complete.\n\nYour 4-rakat prayer is complete. May Allah accept it from you."
+recitations: [Salam — same as twoRakat Card 18]
+
+═══════════════════════════════════════════════════════════
+INSTRUCTIONS
+═══════════════════════════════════════════════════════════
+
+1. Add the TASHAHHUD_RECITATION constant near the other shared constants
+2. Refactor twoRakat Card 17 to use TASHAHHUD_RECITATION (so it's referenced from one place)
+3. Define the fourRakat array with 31 cards as described
+4. Set prayerFlows["4rakat"] = fourRakat
+5. Run npx tsc to confirm no TypeScript errors
+6. Verify all Arabic looks correct (RTL, connected letters, diacritics)
+
+CRITICAL:
+- Reuse existing constants — do not retype Arabic that's already in shared constants
+- For card numbering, use 1-31 sequentially
+- Preserve all Arabic exactly from the existing constants
