@@ -30,7 +30,8 @@ const PostgresSessionStore = connectPg(session);
 export interface IStorage {
   // User management
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  // getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserSubscription(userId: string, tier: string, expiresAt: Date | null): Promise<void>;
   deleteUser(userId: string): Promise<void>;
@@ -82,10 +83,11 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
-  }
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  // async getUserByUsername(username: string): Promise<User | undefined> {
+  //   const [user] = await db.select().from(users).where(eq(users.username, username));
+  //   return user || undefined;
+  // }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();

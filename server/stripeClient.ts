@@ -9,7 +9,7 @@ export function getStripeClient(): Stripe {
       throw new Error('Stripe secret key not found. Set TESTING_STRIPE_SECRET_KEY or STRIPE_SECRET_KEY.');
     }
     stripeClient = new Stripe(secretKey, {
-      apiVersion: '2025-01-27.acacia',
+      apiVersion: '2025-10-29.clover',
     });
   }
   return stripeClient;

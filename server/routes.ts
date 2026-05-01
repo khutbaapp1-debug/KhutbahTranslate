@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import { storage } from "./storage";
-import { setupAuth, registerAuthRoutes, isAuthenticated, authStorage } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes/*, isAuthenticated, authStorage*/ } from "./replit_integrations/auth";
 import {
   transcribeArabicAudio,
   translateArabicToEnglish,
@@ -14,21 +14,23 @@ import { insertSermonSchema, insertNoteSchema, insertKhutbahGuidelineSchema, ins
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
-import { checkTranslationLimit, addTranslationMinutes, getUserUsageInfo, redeemAdCredit } from "./translation-limits";
+import { checkTranslationLimit, addTranslationMinutes/*, getUserUsageInfo, redeemAdCredit*/ } from "./translation-limits";
 import rateLimit from "express-rate-limit";
 
+// DISABLED: requires auth — hidden in v1 (anonymous release)
+/*
 // Middleware for authenticated routes - gets full user from database
 async function requireAuth(req: any, res: any, next: any) {
   if (!req.isAuthenticated() || !req.user?.claims?.sub) {
     return res.status(401).json({ error: "Authentication required" });
   }
-  
+
   // Get full user from database using OIDC subject
   const user = await authStorage.getUserByOidcSubject(req.user.claims.sub);
   if (!user) {
     return res.status(401).json({ error: "User not found" });
   }
-  
+
   // Attach full user to request
   req.dbUser = user;
   next();
@@ -37,24 +39,24 @@ async function requireAuth(req: any, res: any, next: any) {
 // Middleware for admin users only (requires admin API key)
 function requireAdmin(req: any, res: any, next: any) {
   const adminApiKey = process.env.ADMIN_API_KEY;
-  
+
   // If no admin API key is set, deny all admin requests for security
   if (!adminApiKey) {
     return res.status(403).json({ error: "Admin functionality not configured" });
   }
-  
+
   // Check for admin API key in Authorization header
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: "Admin authentication required. Provide admin API key in Authorization header." });
   }
-  
+
   const providedKey = authHeader.slice(7); // Remove 'Bearer ' prefix
-  
+
   if (providedKey !== adminApiKey) {
     return res.status(403).json({ error: "Invalid admin API key" });
   }
-  
+
   next();
 }
 
@@ -62,6 +64,7 @@ function requireAdmin(req: any, res: any, next: any) {
 function requirePremium(_req: any, _res: any, next: any) {
   return next();
 }
+*/ // END DISABLED: auth middleware
 
 // Configure multer for audio uploads
 const upload = multer({
@@ -98,8 +101,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register /api/auth/user endpoint
   registerAuthRoutes(app);
 
-  // ============ SERMON ROUTES ============
-  
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ SERMON ROUTES ============
+
   // Get user's sermons
   app.get("/api/sermons", requireAuth, async (req, res) => {
     try {
@@ -194,7 +198,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============ ACCOUNT MANAGEMENT ============
+  */ // END DISABLED: SERMON ROUTES
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ ACCOUNT MANAGEMENT ============
 
   // Delete the authenticated user's account and all associated data
   app.delete("/api/account", requireAuth, async (req, res) => {
@@ -216,8 +223,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============ AUDIO TRANSCRIPTION & TRANSLATION ============
-  
+  */ // END DISABLED: ACCOUNT MANAGEMENT
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ AUDIO TRANSCRIPTION & TRANSLATION (usage tracking) ============
+
   // Get translation usage info (authenticated users only)
   app.get("/api/translation/usage", requireAuth, async (req, res) => {
     try {
@@ -227,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Redeem ad credit: +30 minutes after watching ad (authenticated users only)
   app.post("/api/translation/redeem-ad", requireAuth, async (req, res) => {
     try {
@@ -241,7 +251,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ error: error.message });
     }
   });
-  
+
+  */ // END DISABLED: TRANSLATION USAGE TRACKING
+
   // Transcribe and translate audio chunk
   // Free tier: 1 hour per month base (60 minutes) + up to 2 hours from ads (120 minutes)
   // Premium: unlimited
@@ -254,15 +266,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Transcribe audio with auto-detection (supports Arabic, Urdu, Hindi, French, etc.)
       const transcription = await transcribeArabicAudio(req.file.buffer);
-      
+
       // Translate from detected language to target language
       const translation = await translateArabicToEnglish(transcription.text);
 
-      // Track usage for authenticated users (10 seconds per chunk = 0.167 minutes)
-      if (req.user) {
-        const chunkDurationMinutes = 10 / 60; // 10 seconds = 0.167 minutes
-        await addTranslationMinutes(req.user.id, chunkDurationMinutes);
-      }
+      // Usage tracking disabled in v1: app ships anonymous, no user accounts
+      // if (req.user) {
+      //   const chunkDurationMinutes = 10 / 60; // 10 seconds = 0.167 minutes
+      //   await addTranslationMinutes(req.user.id, chunkDurationMinutes);
+      // }
 
       // If sermonId is provided, save the transcript
       if (req.body.sermonId) {
@@ -287,7 +299,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============ PREMIUM AI FEATURES ============
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ PREMIUM AI FEATURES ============
 
   // Generate action points (premium only)
   app.post("/api/sermons/:id/action-points", requireAuth, requirePremium, async (req, res) => {
@@ -326,7 +339,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============ NOTES ROUTES ============
+  */ // END DISABLED: PREMIUM AI FEATURES
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ NOTES ROUTES ============
 
   // Get user notes
   app.get("/api/notes", requireAuth, async (req, res) => {
@@ -375,7 +391,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============ ANALYTICS ROUTES (Premium) ============
+  */ // END DISABLED: NOTES ROUTES
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ ANALYTICS ROUTES (Premium) ============
 
   // Get user analytics
   app.get("/api/analytics", requireAuth, requirePremium, async (req, res) => {
@@ -397,7 +416,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============ PREFERENCES ROUTES ============
+  */ // END DISABLED: ANALYTICS ROUTES
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ PREFERENCES ROUTES ============
 
   // Get preferences
   app.get("/api/preferences", requireAuth, async (req, res) => {
@@ -419,7 +441,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============ KHUTBAH GUIDELINES ROUTES ============
+  */ // END DISABLED: PREFERENCES ROUTES
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ KHUTBAH GUIDELINES ROUTES ============
 
   // Get all guidelines for user
   app.get("/api/khutbah-guidelines", requireAuth, async (req, res) => {
@@ -456,14 +481,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/khutbah-guidelines", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
-      
+
       // Validate only client-provided fields
       const schema = z.object({
         sermonId: z.string(),
         title: z.string().optional(),
       });
       const validated = schema.parse(req.body);
-      
+
       // Fetch sermon details for AI generation
       const [sermon] = await db.select().from(sermons).where(eq(sermons.id, validated.sermonId));
       if (!sermon) {
@@ -503,7 +528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req.user as any).id;
       const { id } = req.params;
-      
+
       // Validate PATCH payload - only allow suggestions updates
       const schema = z.object({
         suggestions: z.array(z.object({
@@ -553,7 +578,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============ MISSED PRAYERS (QADA) ROUTES ============
+  */ // END DISABLED: KHUTBAH GUIDELINES ROUTES
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ MISSED PRAYERS (QADA) ROUTES ============
 
   // Get all missed prayers for user
   app.get("/api/missed-prayers", requireAuth, async (req, res) => {
@@ -573,7 +601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/missed-prayers/stats", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
-      
+
       // Count total missed and made-up prayers
       const [stats] = await db.select({
         total: sql<number>`COUNT(*)`,
@@ -601,7 +629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/missed-prayers", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
-      
+
       // Validate only client-provided fields
       const schema = z.object({
         prayerType: z.enum(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']),
@@ -632,7 +660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req.user as any).id;
       const { id } = req.params;
-      
+
       // Validate PATCH payload
       const schema = z.object({
         madeUp: z.boolean(),
@@ -687,8 +715,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  */ // END DISABLED: MISSED PRAYERS (QADA) ROUTES
+
   // ============ PRAYER TIMES ROUTES ============
-  
+
   // Get prayer times for a location
   app.get("/api/prayer-times", async (req, res) => {
     try {
@@ -696,7 +726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const longitude = parseFloat(req.query.longitude as string);
       const method = (req.query.method as string)?.toUpperCase() || 'ISNA';
       const asrMethod = req.query.asrMethod === 'hanafi' ? 2 : 1;
-      
+
       if (isNaN(latitude) || isNaN(longitude)) {
         return res.status(400).json({ error: "Valid latitude and longitude required" });
       }
@@ -706,16 +736,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!validMethods.includes(method)) {
         return res.status(400).json({ error: "Invalid calculation method" });
       }
-      
+
       const { calculatePrayerTimes, getTimeUntilNextPrayer } = await import("./prayer-times");
-      const prayerTimes = calculatePrayerTimes({ 
-        latitude, 
+      const prayerTimes = calculatePrayerTimes({
+        latitude,
         longitude,
         method: method as any,
         asrMethod: asrMethod === 2 ? 'hanafi' : 'standard',
       });
       const nextPrayerInfo = getTimeUntilNextPrayer(prayerTimes, prayerTimes.timezone);
-      
+
       res.json({
         ...prayerTimes,
         nextPrayer: nextPrayerInfo,
@@ -829,7 +859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============ QURAN ROUTES ============
-  
+
   // Get all surahs (index)
   // In-memory caches (Quran data is static — safe to cache forever)
   const surahsListCache: { data: any | null } = { data: null };
@@ -909,12 +939,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============ DUAS ROUTES ============
-  
+
   // Get all duas (optionally filtered by category)
   app.get("/api/duas", async (req, res) => {
     try {
       const { category } = req.query;
-      
+
       if (category && typeof category === "string") {
         const categoryDuas = await db
           .select()
@@ -922,19 +952,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(eq(duas.category, category));
         return res.json(categoryDuas);
       }
-      
+
       const allDuas = await db.select().from(duas);
       res.json(allDuas);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ DUAS FAVORITES ============
+
   // Get user's favorited duas
   app.get("/api/duas/favorites", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
-      
+
       const favorites = await db
         .select({
           id: duas.id,
@@ -950,19 +983,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(favoriteDuas)
         .innerJoin(duas, eq(favoriteDuas.duaId, duas.id))
         .where(eq(favoriteDuas.userId, userId));
-      
+
       res.json(favorites);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Add a dua to favorites
   app.post("/api/duas/:id/favorite", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
       const duaId = req.params.id;
-      
+
       // Check if already favorited
       const existing = await db
         .select()
@@ -971,60 +1004,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(favoriteDuas.userId, userId),
           eq(favoriteDuas.duaId, duaId)
         ));
-      
+
       if (existing.length > 0) {
         return res.status(409).json({ error: "Dua already favorited" });
       }
-      
+
       const [favorite] = await db
         .insert(favoriteDuas)
         .values({ userId, duaId })
         .returning();
-      
+
       res.status(201).json(favorite);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Remove a dua from favorites
   app.delete("/api/duas/:id/favorite", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
       const duaId = req.params.id;
-      
+
       await db
         .delete(favoriteDuas)
         .where(and(
           eq(favoriteDuas.userId, userId),
           eq(favoriteDuas.duaId, duaId)
         ));
-      
+
       res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
+  */ // END DISABLED: DUAS FAVORITES
+
   // ============ HADITH ROUTES ============
-  
+
   // Get daily hadith (rotates daily based on date)
   app.get("/api/hadiths/daily", async (req, res) => {
     try {
       // Get all hadiths
       const allHadiths = await db.select().from(hadiths);
-      
+
       if (allHadiths.length === 0) {
         return res.status(404).json({ error: "No hadiths available" });
       }
-      
+
       // Use UTC date to deterministically select a hadith (consistent globally)
       const today = new Date();
       const utcDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
       const dayOfYear = Math.floor((utcDate.getTime() - Date.UTC(today.getUTCFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
       const index = dayOfYear % allHadiths.length;
       const dailyHadith = allHadiths[index];
-      
+
       // If user is authenticated, check if it's favorited
       let isFavorited = false;
       if (req.isAuthenticated() && req.user) {
@@ -1038,26 +1073,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ));
         isFavorited = favorite.length > 0;
       }
-      
+
       res.json({ ...dailyHadith, isFavorited });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Get all hadiths
   app.get("/api/hadiths", async (req, res) => {
     try {
       const category = req.query.category as string | undefined;
-      
+
       let query = db.select().from(hadiths);
-      
+
       if (category) {
         query = query.where(eq(hadiths.category, category)) as any;
       }
-      
+
       const allHadiths = await query;
-      
+
       // If user is authenticated, include favorite status
       if (req.isAuthenticated() && req.user) {
         const userId = (req.user as any).id;
@@ -1065,27 +1100,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .select()
           .from(favoriteHadiths)
           .where(eq(favoriteHadiths.userId, userId));
-        
+
         const favoriteIds = new Set(favorites.map(f => f.hadithId));
         const hadithsWithFavorites = allHadiths.map(h => ({
           ...h,
           isFavorited: favoriteIds.has(h.id),
         }));
-        
+
         return res.json(hadithsWithFavorites);
       }
-      
+
       res.json(allHadiths.map(h => ({ ...h, isFavorited: false })));
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ HADITH FAVORITES ============
+
   // Get user's favorited hadiths
   app.get("/api/hadiths/favorites", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
-      
+
       const favorites = await db
         .select({
           id: hadiths.id,
@@ -1104,19 +1142,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(favoriteHadiths)
         .innerJoin(hadiths, eq(favoriteHadiths.hadithId, hadiths.id))
         .where(eq(favoriteHadiths.userId, userId));
-      
+
       res.json(favorites);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Toggle favorite hadith
   app.post("/api/hadiths/:id/favorite", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
       const hadithId = req.params.id;
-      
+
       // Check if already favorited
       const existing = await db
         .select()
@@ -1125,7 +1163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(favoriteHadiths.userId, userId),
           eq(favoriteHadiths.hadithId, hadithId)
         ));
-      
+
       if (existing.length > 0) {
         // Remove from favorites
         await db
@@ -1134,33 +1172,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eq(favoriteHadiths.userId, userId),
             eq(favoriteHadiths.hadithId, hadithId)
           ));
-        
+
         return res.json({ isFavorited: false });
       }
-      
+
       // Add to favorites
       await db
         .insert(favoriteHadiths)
         .values({ userId, hadithId });
-      
+
       res.json({ isFavorited: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  // ============ NOTIFICATION SETTINGS ROUTES ============
-  
+  */ // END DISABLED: HADITH FAVORITES
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ NOTIFICATION SETTINGS ROUTES ============
+
   // Get user notification preferences
   app.get("/api/notifications/settings", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
-      
+
       const [prefs] = await db
         .select()
         .from(userPreferences)
         .where(eq(userPreferences.userId, userId));
-      
+
       if (!prefs) {
         // Create default preferences if they don't exist
         const [newPrefs] = await db
@@ -1169,18 +1210,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .returning();
         return res.json(newPrefs);
       }
-      
+
       res.json(prefs);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Update notification preferences
   app.patch("/api/notifications/settings", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
-      
+
       // Validate input with Zod schema
       const updateSchema = z.object({
         notificationsEnabled: z.boolean().optional(),
@@ -1212,15 +1253,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Push notification token
         pushToken: z.string().optional(),
       });
-      
+
       const validated = updateSchema.parse(req.body);
-      
+
       // Check if preferences exist
       const [existing] = await db
         .select()
         .from(userPreferences)
         .where(eq(userPreferences.userId, userId));
-      
+
       if (!existing) {
         // Create new preferences
         const [newPrefs] = await db
@@ -1229,14 +1270,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .returning();
         return res.json(newPrefs);
       }
-      
+
       // Update existing preferences
       const [updated] = await db
         .update(userPreferences)
         .set(validated)
         .where(eq(userPreferences.userId, userId))
         .returning();
-      
+
       res.json(updated);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -1245,30 +1286,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Register push notification token
   app.post("/api/notifications/register-token", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any).id;
       const { pushToken } = req.body;
-      
+
       if (!pushToken) {
         return res.status(400).json({ error: "Push token required" });
       }
-      
+
       await db
         .update(userPreferences)
         .set({ pushToken })
         .where(eq(userPreferences.userId, userId));
-      
+
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  // ============ ADMIN ROUTES ============
-  
+  */ // END DISABLED: NOTIFICATION SETTINGS ROUTES
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ ADMIN ROUTES ============
+
   // Grant complimentary premium access to a user
   app.post("/api/admin/grant-complimentary-access", requireAdmin, async (req, res) => {
     try {
@@ -1276,10 +1320,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const inputSchema = z.object({
         email: z.string().email("Valid email is required")
       });
-      
+
       const validated = inputSchema.parse(req.body);
       const { email } = validated;
-      
+
       // Use transaction to ensure atomic operation
       const result = await db.transaction(async (tx) => {
         // Find user by email (case-insensitive for consistency)
@@ -1287,15 +1331,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .select()
           .from(users)
           .where(sql`LOWER(${users.email}) = LOWER(${email})`);
-        
+
         if (!user) {
           throw new Error("User not found");
         }
-        
+
         if (user.hasComplimentaryAccess) {
           throw new Error("User already has complimentary access");
         }
-        
+
         // Atomically grant access only if count is below 15
         // This subquery ensures the limit is never exceeded even with concurrent requests
         const updateResult = await tx.execute(sql`
@@ -1307,26 +1351,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ) < 15
           RETURNING *
         `);
-        
+
         if (!updateResult.rows || updateResult.rows.length === 0) {
           throw new Error("Complimentary access limit reached. Maximum 15 users allowed.");
         }
-        
+
         const updated = updateResult.rows[0] as any;
-        
+
         // Get final count for response
         const [countResult] = await tx
           .select({ count: sql<number>`count(*)::int` })
           .from(users)
           .where(eq(users.hasComplimentaryAccess, true));
-        
+
         const newCount = countResult?.count || 0;
-        
+
         return { updated, newCount };
       });
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         message: `Granted complimentary access to ${email}`,
         user: {
           id: result.updated.id,
@@ -1342,7 +1386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Revoke complimentary premium access from a user
   app.post("/api/admin/revoke-complimentary-access", requireAdmin, async (req, res) => {
     try {
@@ -1350,33 +1394,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const inputSchema = z.object({
         email: z.string().email("Valid email is required")
       });
-      
+
       const validated = inputSchema.parse(req.body);
       const { email } = validated;
-      
+
       // Find user by email (case-insensitive for consistency)
       const [user] = await db
         .select()
         .from(users)
         .where(sql`LOWER(${users.email}) = LOWER(${email})`);
-      
+
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-      
+
       if (!user.hasComplimentaryAccess) {
         return res.status(400).json({ error: "User does not have complimentary access" });
       }
-      
+
       // Revoke complimentary access
       const [updated] = await db
         .update(users)
         .set({ hasComplimentaryAccess: false })
         .where(eq(users.id, user.id))
         .returning();
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         message: `Revoked complimentary access from ${email}`,
         user: {
           id: updated.id,
@@ -1391,7 +1435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // List all users with complimentary access
   app.get("/api/admin/complimentary-users", requireAdmin, async (req, res) => {
     try {
@@ -1406,8 +1450,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .from(users)
         .where(eq(users.hasComplimentaryAccess, true));
-      
-      res.json({ 
+
+      res.json({
         users: complimentaryUsers,
         count: complimentaryUsers.length,
         remainingSlots: 15 - complimentaryUsers.length
@@ -1417,17 +1461,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  */ // END DISABLED: ADMIN ROUTES
+
   // ============ TRANSLATION CACHE ROUTES ============
-  
+
   // Get translation cache statistics (public, for monitoring)
   app.get("/api/translation-cache/stats", async (req, res) => {
     try {
       const { translationCacheService } = await import("./translation-cache");
       const { getTranslationStats } = await import("./openai-service");
-      
+
       const cacheStats = await translationCacheService.getCacheStats();
       const sessionStats = getTranslationStats();
-      
+
       res.json({
         database: cacheStats,
         session: sessionStats,
@@ -1437,15 +1483,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ ADMIN: SEED PHRASES ============
+
   // Seed Islamic phrase dictionary (admin only)
   app.post("/api/admin/seed-phrases", requireAdmin, async (req, res) => {
     try {
       const { seedIslamicPhrases } = await import("./islamic-phrases-seed");
       const count = await seedIslamicPhrases();
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         message: `Seeded ${count} Islamic phrases to the dictionary`,
         phrasesAdded: count
       });
@@ -1454,7 +1503,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============ STRIPE ROUTES ============
+  */ // END DISABLED: ADMIN: SEED PHRASES
+
+  // DISABLED: requires auth — hidden in v1 (anonymous release)
+  /* ============ STRIPE ROUTES ============
 
   // Create a checkout session for premium subscription
   app.post("/api/stripe/checkout", requireAuth, async (req, res) => {
@@ -1488,7 +1540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Look for the $4.99/month price
       let priceId = prices.data.find(p => p.unit_amount === 499)?.id;
-      
+
       if (!priceId) {
         // Create the product and price if it doesn't exist
         const product = await stripe.products.create({
@@ -1603,6 +1655,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message });
     }
   });
+
+  */ // END DISABLED: STRIPE ROUTES
 
   const httpServer = createServer(app);
   return httpServer;
