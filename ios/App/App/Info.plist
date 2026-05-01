@@ -46,9 +46,9 @@
         <key>UIViewControllerBasedStatusBarAppearance</key>
         <true/>
         <key>NSMicrophoneUsageDescription</key>
-        <string>This app needs microphone access to record and translate khutbahs in real-time.</string>
+        <string>Khutbah Companion uses the microphone to record audio of khutbahs you wish to translate.</string>
         <key>NSLocationWhenInUseUsageDescription</key>
-        <string>This app needs your location to show accurate prayer times and find nearby mosques.</string>
+        <string>Khutbah Companion uses your location to provide accurate prayer times, Qibla direction, and to find nearby mosques.</string>
         <key>NSLocationAlwaysUsageDescription</key>
         <string>This app needs your location to provide prayer time notifications.</string>
         <key>UIBackgroundModes</key>
