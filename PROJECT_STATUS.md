@@ -169,8 +169,6 @@ Major decisions, locked in unless explicitly revisited:
 
 Bugs we've identified but haven't fixed:
 
-- **Mosque finder data quality:** Missing major well-known mosques even when user's location is correct. Cause not yet diagnosed. Investigation prompt prepared for next session:
-  > "Investigate the mosque finder data source. Read these files: client/src/pages/mosque-finder-page.tsx, server/routes.ts (search for /api/mosque), shared/schema.ts (look for mosque table), any seed file mentioning mosques. Determine: hardcoded/seeded vs API? If API, which one? Search radius? Cached?"
 - **Server-side TypeScript errors:** ~50+ pre-existing errors in `server/routes.ts`, `server/storage.ts`, `server/stripeClient.ts`. All from auth-hidden routes that depend on `req.dbUser`. Don't block runtime; need to be commented out before clean type check. ~30 minute task.
 - **Old leaked Google API key:** Earlier in the project a Google API key was leaked. Revocation status not yet confirmed.
 
@@ -221,7 +219,7 @@ Tracking items required for Google Play and App Store submission.
 Most recent at top.
 
 - **May 1, 2026 (today):** Salah Guide complete rebuild — 108 content items reviewed and approved, 4 prayer flows populated with verified Arabic, FlowCard component built, page restructured to Wudu/How to Pray/Per-Prayer tabs. App icons regenerated. iOS bundle ID fixed to match Android. Started permissions audit. PROJECT_STATUS.md created.
-- **Apr 30, 2026:** Premium UI cleanup, translation-limit modal removal, rate limiter on /api/transcribe, AdMob ATT integration fix, BannerAd component built and applied to 6 pages, AdMob console configured, Salah Guide content review begun. Mosque finder data quality issue identified.
+- **Apr 30, 2026:** Premium UI cleanup, translation-limit modal removal, rate limiter on /api/transcribe, AdMob ATT integration fix, BannerAd component built and applied to 6 pages, AdMob console configured, Salah Guide content review begun, mosque finder data quality fixed (working correctly).
 - **Apr 29, 2026:** App initial state assessment, monetization decision (free + ads, no auth), Closed Testing setup begun on Google Play Console.
 
 ---
