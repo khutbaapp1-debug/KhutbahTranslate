@@ -191,6 +191,7 @@ Tracking items required for Google Play and App Store submission.
 - [x] App icons regenerated for both platforms via @capacitor/assets (123 Android files + 10 iOS files)
 - [x] iOS bundle identifier fixed to match Android (`com.khutbahcompanion.app`)
 - [x] Server-side cleanup: 14 auth-protected route groups commented out, type check now clean (zero TypeScript errors)
+- [x] Privacy policy hosted at https://khutbah-translate.replit.app/privacy (anonymous app state, AdMob disclosure, current third-party services)
 
 ### Pending
 
@@ -198,7 +199,6 @@ Tracking items required for Google Play and App Store submission.
 - [ ] Android AndroidManifest.xml permissions verification (ACCESS_FINE_LOCATION, RECORD_AUDIO, ACCESS_COARSE_LOCATION)
 - [ ] Improved iOS permission usage descriptions (in progress — partial fix applied for location and microphone)
 - [ ] Mosque finder data quality investigation
-- [ ] Privacy policy hosted at a real public URL (must mention AdMob, advertising ID, location data, microphone audio sent to Groq/OpenAI, translation cache)
 - [ ] Other religious content reviews: Daily Hadith, Daily Duas, 99 Names, Quran translation choice, Khutbah translation disclaimers
 - [ ] App store metadata: descriptions, screenshots, content rating, data safety form
 - [ ] Build signed AAB in Android Studio (keystore exists and is backed up)
