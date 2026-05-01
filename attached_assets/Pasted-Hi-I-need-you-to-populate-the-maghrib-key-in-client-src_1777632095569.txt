@@ -1,0 +1,53 @@
+Hi — I need you to populate the "maghrib" key in client/src/data/prayer-flows.ts with the 3-rakat Maghrib prayer flow content.
+
+The file currently has the type definitions, all shared constants (BISMILLAH, SURAH_FATIHAH, SURAH_IKHLAS, TASBIH_RUKU, TASBIH_SUJOOD, JALSAH_DUA, TASHAHHUD_RECITATION, DUROOD_RECITATION, PERSONAL_DUA_RECITATION, SALAM_TASLEEM, finalTashahhudRecitations, FINAL_TASHAHHUD_DESCRIPTION, RUKU_DESCRIPTION, ITIDAL_DESCRIPTION, FIRST_SUJOOD_DESCRIPTION, JALSAH_DESCRIPTION, QIYAM_NEXT_RAKAH_DESCRIPTION, FINAL_TASHAHHUD_NOTE, QIYAM_RECITE_NOTE, itidalRecitations, TASLEEM_RECITATIONS), the populated twoRakat array, and the populated fourRakat array. The "maghrib" key is currently an empty array.
+
+CRITICAL: Reuse all existing shared constants. Do not redefine anything. The Arabic must stay identical to what's in the verified shared constants.
+
+═══════════════════════════════════════════════════════════
+ARCHITECTURE NOTE
+═══════════════════════════════════════════════════════════
+
+The Maghrib flow has 25 cards. Cards 1-22 are IDENTICAL to fourRakat cards 1-22 (which themselves reuse twoRakat cards 1-15 plus the new 16-22 from fourRakat). The maghrib-specific cards are 23, 24, 25 which close the prayer after Rakah 3.
+
+Easy implementation: 
+- Cards 1-22 reuse via spread: ...fourRakat.slice(0, 22)
+- Cards 23-25 are new
+
+═══════════════════════════════════════════════════════════
+THE 25 CARDS for maghrib array
+═══════════════════════════════════════════════════════════
+
+Cards 1-22: IDENTICAL to fourRakat cards 1-22 (use spread: ...fourRakat.slice(0, 22))
+
+Card 23: Sujood (Second Prostration) — End of Rakah 3 in Maghrib (NEW)
+title: "23. Sujood (Second Prostration)"
+description: "Saying \"Allahu Akbar,\" return to prostration. The same seven body parts touch the ground: forehead, nose, both palms, both knees, and the curled toes of both feet. Place your palms beside your head as before. Recite the same tasbih at least three times:\n\nThis completes Rakah 3 — the final rakah of Maghrib. Saying \"Allahu Akbar,\" sit up for the Final Tashahhud."
+recitations: [TASBIH_SUJOOD]
+
+Card 24: Final Tashahhud (REUSE same content as twoRakat Card 17 / fourRakat Card 30)
+title: "24. Final Tashahhud (Sitting)"
+description: FINAL_TASHAHHUD_DESCRIPTION
+recitations: finalTashahhudRecitations
+note: FINAL_TASHAHHUD_NOTE
+
+Card 25: Tasleem (very similar to Card 18 of twoRakat, but the closing line says "Your 3-rakat Maghrib prayer")
+title: "25. Tasleem (Closing the Prayer)"
+description: "Remaining in the sitting position, end the prayer by turning your head to the right and saying the salam. Then turn your head to the left and repeat the same words. Your prayer is now complete.\n\nYour 3-rakat Maghrib prayer is complete. May Allah accept it from you."
+recitations: TASLEEM_RECITATIONS
+
+═══════════════════════════════════════════════════════════
+INSTRUCTIONS
+═══════════════════════════════════════════════════════════
+
+1. Define the maghrib array with 25 cards as described
+2. Cards 1-22 should use the spread operator from fourRakat (or equivalent — whatever matches fourRakat cards 1-22 exactly)
+3. Add cards 23, 24, 25 with the content above
+4. Set prayerFlows["maghrib"] = maghrib
+5. Run npx tsc to confirm no TypeScript errors
+6. Verify the maghrib array has exactly 25 cards numbered 1-25 sequentially
+
+CRITICAL:
+- Reuse existing constants — do not retype Arabic
+- Cards 1-22 must be IDENTICAL to fourRakat cards 1-22
+- Use existing FINAL_TASHAHHUD_DESCRIPTION, finalTashahhudRecitations, FINAL_TASHAHHUD_NOTE, and TASLEEM_RECITATIONS

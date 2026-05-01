@@ -411,9 +411,35 @@ const fourRakat: PrayerFlowCard[] = [
   },
 ];
 
+const maghrib: PrayerFlowCard[] = [
+  // Cards 1-22: identical to fourRakat[0..21]
+  ...fourRakat.slice(0, 22),
+  {
+    number: 23,
+    title: "23. Sujood (Second Prostration)",
+    description:
+      "Saying \"Allahu Akbar,\" return to prostration. The same seven body parts touch the ground: forehead, nose, both palms, both knees, and the curled toes of both feet. Place your palms beside your head as before. Recite the same tasbih at least three times:\n\nThis completes Rakah 3 — the final rakah of Maghrib. Saying \"Allahu Akbar,\" sit up for the Final Tashahhud.",
+    recitations: [TASBIH_SUJOOD],
+  },
+  {
+    number: 24,
+    title: "24. Final Tashahhud (Sitting)",
+    description: FINAL_TASHAHHUD_DESCRIPTION,
+    recitations: finalTashahhudRecitations,
+    note: FINAL_TASHAHHUD_NOTE,
+  },
+  {
+    number: 25,
+    title: "25. Tasleem (Closing the Prayer)",
+    description:
+      "Remaining in the sitting position, end the prayer by turning your head to the right and saying the salam. Then turn your head to the left and repeat the same words. Your prayer is now complete.\n\nYour 3-rakat Maghrib prayer is complete. May Allah accept it from you.",
+    recitations: TASLEEM_RECITATIONS,
+  },
+];
+
 export const prayerFlows: Record<PrayerType, PrayerFlowCard[]> = {
   "2rakat": twoRakat,
   "4rakat": fourRakat,
-  "maghrib": [],
+  "maghrib": maghrib,
   "witr": [],
 };
