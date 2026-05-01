@@ -169,7 +169,6 @@ Major decisions, locked in unless explicitly revisited:
 
 Bugs we've identified but haven't fixed:
 
-- **Server-side TypeScript errors:** ~50+ pre-existing errors in `server/routes.ts`, `server/storage.ts`, `server/stripeClient.ts`. All from auth-hidden routes that depend on `req.dbUser`. Don't block runtime; need to be commented out before clean type check. ~30 minute task.
 - **Old leaked Google API key:** Earlier in the project a Google API key was leaked. Revocation status not yet confirmed.
 
 ---
@@ -191,13 +190,13 @@ Tracking items required for Google Play and App Store submission.
 - [x] All four prayer flows populated with verified Arabic (98 cards total)
 - [x] App icons regenerated for both platforms via @capacitor/assets (123 Android files + 10 iOS files)
 - [x] iOS bundle identifier fixed to match Android (`com.khutbahcompanion.app`)
+- [x] Server-side cleanup: 14 auth-protected route groups commented out, type check now clean (zero TypeScript errors)
 
 ### Pending
 
 - [ ] iOS Info.plist permissions audit (NSLocationAlwaysUsageDescription, UIBackgroundModes audio, SKAdNetworkItems)
 - [ ] Android AndroidManifest.xml permissions verification (ACCESS_FINE_LOCATION, RECORD_AUDIO, ACCESS_COARSE_LOCATION)
 - [ ] Improved iOS permission usage descriptions (in progress — partial fix applied for location and microphone)
-- [ ] Server cleanup: comment out dead auth routes, add Helmet + CORS middleware
 - [ ] Mosque finder data quality investigation
 - [ ] Privacy policy hosted at a real public URL (must mention AdMob, advertising ID, location data, microphone audio sent to Groq/OpenAI, translation cache)
 - [ ] Other religious content reviews: Daily Hadith, Daily Duas, 99 Names, Quran translation choice, Khutbah translation disclaimers
@@ -218,7 +217,7 @@ Tracking items required for Google Play and App Store submission.
 
 Most recent at top.
 
-- **May 1, 2026 (today):** Salah Guide complete rebuild — 108 content items reviewed and approved, 4 prayer flows populated with verified Arabic, FlowCard component built, page restructured to Wudu/How to Pray/Per-Prayer tabs. App icons regenerated. iOS bundle ID fixed to match Android. Started permissions audit. PROJECT_STATUS.md created.
+- **May 1, 2026 (today):** Salah Guide complete rebuild — 108 content items reviewed and approved, 4 prayer flows populated with verified Arabic, FlowCard component built, page restructured to Wudu/How to Pray/Per-Prayer tabs. App icons regenerated for both platforms. iOS bundle ID fixed to match Android (com.khutbahcompanion.app). iOS permission descriptions improved (location and microphone). Server cleanup completed: 14 auth-protected route groups commented out, type check now clean (zero TypeScript errors). PROJECT_STATUS.md created and maintained. NSLocationAlwaysUsageDescription, UIBackgroundModes audio, and SKAdNetworkItems entries still pending audit.
 - **Apr 30, 2026:** Premium UI cleanup, translation-limit modal removal, rate limiter on /api/transcribe, AdMob ATT integration fix, BannerAd component built and applied to 6 pages, AdMob console configured, Salah Guide content review begun, mosque finder data quality fixed (working correctly).
 - **Apr 29, 2026:** App initial state assessment, monetization decision (free + ads, no auth), Closed Testing setup begun on Google Play Console.
 
