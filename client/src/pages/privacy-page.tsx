@@ -46,7 +46,7 @@ export default function PrivacyPage() {
         <section className="space-y-2">
           <h2 className="text-lg font-semibold">Information the app accesses</h2>
           <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-            <li><strong className="text-foreground">Location:</strong> when you use Prayer Times, Qibla, or Mosque Finder. Your coordinates are used only to calculate prayer times, the direction of the Qibla, and to find nearby mosques. Coordinates are not stored on our servers.</li>
+            <li><strong className="text-foreground">Location:</strong> when you use Prayer Times, Qibla, or Mosque Finder. Prayer time and Qibla calculations happen on the fly and your coordinates are not stored on our servers. When you use Mosque Finder, your coordinates are sent to Google Places API to look up nearby mosques.</li>
             <li><strong className="text-foreground">Microphone audio:</strong> only while you actively use the Live Khutbah Translation feature. Audio is sent to our transcription provider (Groq, with OpenAI as a fallback), transcribed and translated, then discarded. We do not save the audio recordings.</li>
             <li><strong className="text-foreground">Translated text cache:</strong> the app stores translations of common Arabic phrases in a database to improve performance and reduce processing costs. This cache contains text only — no personal information, no audio, and no link to any user identity.</li>
             <li><strong className="text-foreground">Advertising identifier:</strong> Google AdMob, our advertising provider, may collect a device-level advertising identifier (Google Advertising ID on Android, IDFA on iOS) to serve non-personalized ads. You can reset or limit this identifier in your device settings.</li>
@@ -88,6 +88,8 @@ export default function PrivacyPage() {
             <li><strong className="text-foreground">OpenAI</strong> — fallback transcription and translation service</li>
             <li><strong className="text-foreground">Google AdMob</strong> — advertising provider</li>
             <li><strong className="text-foreground">Public Islamic content APIs</strong> — for Quran, hadith, and prayer-time data</li>
+            <li><strong className="text-foreground">Google Places API</strong> — provides nearby mosque data when you use Mosque Finder. Your location coordinates are sent to Google to perform the search.</li>
+            <li><strong className="text-foreground">OpenStreetMap</strong> — provides the map tiles displayed in Mosque Finder. Your IP address and the map area you view are visible to OpenStreetMap when tiles load.</li>
           </ul>
         </section>
 
