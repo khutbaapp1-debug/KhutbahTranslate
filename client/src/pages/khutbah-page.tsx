@@ -29,6 +29,7 @@ export default function KhutbahPage() {
     error,
     translations,
     nextTranslationIn,
+    isTranslating,
     startRecording,
     stopRecording,
     pauseRecording,
@@ -173,7 +174,7 @@ export default function KhutbahPage() {
                   <div className="flex items-center gap-2 text-sm">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                     <span className="text-muted-foreground" data-testid="text-countdown">
-                      Next translation in <span className="font-mono font-semibold text-primary">{nextTranslationIn}</span> seconds
+                      {isTranslating ? "Translating..." : `Next translation in ${nextTranslationIn}s`}
                     </span>
                   </div>
                 )}

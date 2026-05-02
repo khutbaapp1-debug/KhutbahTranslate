@@ -18,6 +18,7 @@ export interface AudioRecorderState {
   transcriptionError: string | null; // API errors from transcription (e.g., 429 limit reached)
   translations: TranslationSegment[];
   nextTranslationIn: number; // Countdown timer: seconds until next translation
+  isTranslating: boolean; // True while waiting for API response
 }
 
 export interface AudioRecorderControls {
@@ -37,8 +38,8 @@ export interface AudioRecorderOptions {
 }
 
 const SAMPLE_RATE = 16000; // 16kHz is optimal for speech recognition
-const FIRST_CHUNK_DURATION = 5; // seconds - shorter first chunk so user sees translation faster
-const CHUNK_DURATION = 10; // seconds - longer chunks provide better context and reduce costs by 50%
+const FIRST_CHUNK_DURATION = 15; // seconds - shorter first chunk so user sees translation faster
+const CHUNK_DURATION = 12; // seconds - longer chunks provide better context and reduce costs by 50%
 const CHUNK_COST_MINUTES = CHUNK_DURATION / 60; // ~0.167 minutes per chunk
 const SAFETY_BUFFER_CHUNKS = 3; // Stop recording with buffer for 3 chunks (0.5 min) to prevent mid-khutbah interruption
 const MINIMUM_MINUTES_REQUIRED = CHUNK_COST_MINUTES * SAFETY_BUFFER_CHUNKS; // ~0.5 minutes minimum
@@ -59,7 +60,8 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
   const [error, setError] = useState<string | null>(null);
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
   const [translations, setTranslations] = useState<TranslationSegment[]>([]);
-  const [nextTranslationIn, setNextTranslationIn] = useState(CHUNK_DURATION);
+  const [nextTranslationIn, setNextTranslationIn] = useState(FIRST_CHUNK_DURATION);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -171,26 +173,27 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
     if (hasQuotaSystem) {
       pendingConsumptionRef.current += CHUNK_COST_MINUTES;
     }
-    
+
+    setIsTranslating(true);
     try {
       const formData = new FormData();
       formData.append("audio", blob, "audio.wav");
       formData.append("sequenceNumber", sequenceNumber.toString());
-      
+
       const response = await fetch("/api/transcribe", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        
+
         // Rollback pending consumption on failure (only for quota system users)
         if (hasQuotaSystem) {
           pendingConsumptionRef.current = Math.max(0, pendingConsumptionRef.current - CHUNK_COST_MINUTES);
         }
-        
+
         // Set transcription error for 429 (limit reached) or other API errors
         if (response.status === 429) {
           setTranscriptionError("limit_reached");
@@ -203,12 +206,12 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
         }
         return;
       }
-      
+
       // Clear transcription error on successful response
       setTranscriptionError(null);
-      
+
       const result = await response.json();
-      
+
       if (result.arabic && result.translation) {
         const segment: TranslationSegment = {
           id: Date.now() + sequenceNumber,
@@ -216,9 +219,9 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
           english: result.translation, // Keep "english" property name for backward compatibility in frontend
           timestamp: sequenceNumber * CHUNK_DURATION,
         };
-        
+
         setTranslations(prev => [...prev, segment]);
-        
+
         // Notify parent that chunk was successfully sent (so usage can be refreshed)
         if (onChunkSent) {
           onChunkSent();
@@ -230,6 +233,8 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
         pendingConsumptionRef.current = Math.max(0, pendingConsumptionRef.current - CHUNK_COST_MINUTES);
       }
       console.error("Failed to transcribe chunk:", err);
+    } finally {
+      setIsTranslating(false);
     }
   }, [minutesRemaining, onLimitReached, onChunkSent]);
 
@@ -394,6 +399,7 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
     transcriptionError,
     translations,
     nextTranslationIn,
+    isTranslating,
     startRecording,
     stopRecording,
     pauseRecording,
