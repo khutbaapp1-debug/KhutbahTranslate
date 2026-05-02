@@ -1,3 +1,8 @@
+// DISABLED: This auth hook references username/password from a previous version
+// of the codebase. Auth is hidden in v1 (anonymous release). The active useAuth
+// hook is in use-auth.ts (OAuth-based). This .tsx file is preserved for reference
+// but is not used by any active code.
+/*
 // Authentication hook - based on javascript_auth_all_persistance blueprint
 import { createContext, ReactNode, useContext } from "react";
 import {
@@ -118,3 +123,4 @@ export function useAuth() {
   }
   return context;
 }
+*/
