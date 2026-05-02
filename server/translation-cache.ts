@@ -46,9 +46,9 @@ export class TranslationCacheService {
   }
 
   // Check translation cache (previously translated segments)
-  async checkTranslationCache(arabicText: string, targetLanguage: string = "English"): Promise<string | null> {
+  async checkTranslationCache(arabicText: string, targetLanguage: string = "English"): Promise<{ translatedText: string; isScripture: boolean } | null> {
     const normalized = normalizeArabicText(arabicText);
-    
+
     try {
       // Query by both normalizedText AND targetLanguage for proper multi-language support
       const [cached] = await db
@@ -61,20 +61,20 @@ export class TranslationCacheService {
           )
         )
         .limit(1);
-      
+
       if (cached) {
         // Update hit count and last used timestamp
         await db
           .update(translationCache)
-          .set({ 
+          .set({
             hitCount: sql`${translationCache.hitCount} + 1`,
             lastUsedAt: new Date()
           })
           .where(eq(translationCache.id, cached.id));
-        
-        return cached.translatedText;
+
+        return { translatedText: cached.translatedText, isScripture: cached.isScripture };
       }
-      
+
       return null;
     } catch (error) {
       console.error('Translation cache lookup failed:', error);
@@ -87,23 +87,25 @@ export class TranslationCacheService {
     originalText: string,
     translatedText: string,
     sourceLanguage: string = "Arabic",
-    targetLanguage: string = "English"
+    targetLanguage: string = "English",
+    isScripture: boolean = false
   ): Promise<void> {
     const normalized = normalizeArabicText(originalText);
-    
+
     // Skip caching very short or empty text
     if (normalized.length < 3 || !translatedText.trim()) {
       return;
     }
-    
+
     try {
       // Use raw SQL for proper composite key upsert
       await db.execute(sql`
-        INSERT INTO translation_cache (normalized_text, original_text, translated_text, source_language, target_language, hit_count, created_at, last_used_at)
-        VALUES (${normalized}, ${originalText}, ${translatedText}, ${sourceLanguage}, ${targetLanguage}, 1, NOW(), NOW())
+        INSERT INTO translation_cache (normalized_text, original_text, translated_text, source_language, target_language, is_scripture, hit_count, created_at, last_used_at)
+        VALUES (${normalized}, ${originalText}, ${translatedText}, ${sourceLanguage}, ${targetLanguage}, ${isScripture}, 1, NOW(), NOW())
         ON CONFLICT (normalized_text, target_language) DO UPDATE SET
           translated_text = EXCLUDED.translated_text,
           source_language = EXCLUDED.source_language,
+          is_scripture = EXCLUDED.is_scripture,
           hit_count = translation_cache.hit_count + 1,
           last_used_at = NOW()
       `);

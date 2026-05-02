@@ -292,6 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         translation: translation.translatedText,
         sourceLanguage: translation.sourceLanguage,
         targetLanguage: translation.targetLanguage,
+        isScripture: translation.isScripture,
         duration: transcription.duration,
       });
     } catch (error: any) {

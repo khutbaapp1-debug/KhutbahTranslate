@@ -6,6 +6,7 @@ export interface TranslationSegment {
   arabic: string;
   english: string;
   timestamp: number;
+  isScripture: boolean;
 }
 
 export interface AudioRecorderState {
@@ -216,6 +217,7 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
           arabic: result.arabic,
           english: result.translation, // Keep "english" property name for backward compatibility in frontend
           timestamp: sequenceNumber * CHUNK_DURATION,
+          isScripture: result.isScripture ?? false,
         };
 
         setTranslations(prev => [...prev, segment]);

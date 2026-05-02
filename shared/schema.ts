@@ -219,6 +219,7 @@ export const translationCache = pgTable("translation_cache", {
   translatedText: text("translated_text").notNull(), // English translation
   sourceLanguage: text("source_language").notNull().default("Arabic"),
   targetLanguage: text("target_language").notNull().default("English"),
+  isScripture: boolean("is_scripture").notNull().default(false),
   hitCount: integer("hit_count").notNull().default(1), // How many times this translation was used
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastUsedAt: timestamp("last_used_at").notNull().defaultNow(),

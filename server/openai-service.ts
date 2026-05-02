@@ -31,6 +31,7 @@ export interface TranslationResult {
   originalText: string;
   sourceLanguage?: string;
   targetLanguage: string;
+  isScripture: boolean;
 }
 
 export interface ActionPoint {
@@ -93,21 +94,21 @@ export async function translateArabicToEnglish(sourceText: string): Promise<Tran
     const targetLanguage = languageConfig.targetLanguage;
 
     if (!sourceText || sourceText.trim().length < 2) {
-      return { translatedText: "", originalText: sourceText, targetLanguage: languageConfig.displayName };
+      return { translatedText: "", originalText: sourceText, targetLanguage: languageConfig.displayName, isScripture: false };
     }
 
     // STEP 1: Check Islamic phrase dictionary (instant, free)
     const phraseMatch = await translationCacheService.checkPhraseDictionary(sourceText);
     if (phraseMatch) {
       cacheHits++;
-      return { translatedText: phraseMatch, originalText: sourceText, sourceLanguage: "Arabic", targetLanguage: languageConfig.displayName };
+      return { translatedText: phraseMatch, originalText: sourceText, sourceLanguage: "Arabic", targetLanguage: languageConfig.displayName, isScripture: false };
     }
 
     // STEP 2: Check translation cache
     const cachedTranslation = await translationCacheService.checkTranslationCache(sourceText, targetLanguage);
     if (cachedTranslation) {
       cacheHits++;
-      return { translatedText: cachedTranslation, originalText: sourceText, sourceLanguage: "Arabic", targetLanguage: languageConfig.displayName };
+      return { translatedText: cachedTranslation.translatedText, originalText: sourceText, sourceLanguage: "Arabic", targetLanguage: languageConfig.displayName, isScripture: cachedTranslation.isScripture };
     }
 
     // STEP 3: Call AI
@@ -131,10 +132,23 @@ RULES:
 8. NEVER include translator names or attributions
 9. If source is already in target language, return it as-is
 
+SCRIPTURE CLASSIFICATION:
+Set isScripture to TRUE only if the passage is a verbatim quotation of:
+- A Quranic verse (recited word-for-word from the Mushaf)
+- A Prophetic hadith (a direct quotation of the Prophet's \u{FDFA} words)
+- A well-known dua (supplication) recited word-for-word
+
+Set isScripture to FALSE for:
+- The imam's own commentary, even if discussing scripture
+- Paraphrased or summarized scripture
+- References to scripture without quoting it directly
+- Mixed content (mostly commentary with brief scripture quote)
+When in doubt, return FALSE. It is religiously safer to mark genuine scripture as commentary than to mark commentary as scripture.
+
 Text to translate:
 ${sourceText}
 
-Respond in JSON: { "translation": "the translation only", "detectedLanguage": "detected source language name" }`;
+Respond in JSON: { "translation": "the translation only", "detectedLanguage": "detected source language name", "isScripture": false }`;
 
     const content = await chatComplete(
       [
@@ -150,6 +164,7 @@ Respond in JSON: { "translation": "the translation only", "detectedLanguage": "d
     const result = JSON.parse(content || "{}");
     let translation = result.translation || "";
     const detectedLanguage = result.detectedLanguage || "Unknown";
+    const isScripture = result.isScripture === true;
 
     // Filter out unwanted AI commentary phrases
     const unwantedPhrases = [
@@ -179,10 +194,10 @@ Respond in JSON: { "translation": "the translation only", "detectedLanguage": "d
 
     // STEP 4: Save to cache
     if (translation.length > 0) {
-      await translationCacheService.saveToCache(sourceText, translation, detectedLanguage, targetLanguage);
+      await translationCacheService.saveToCache(sourceText, translation, detectedLanguage, targetLanguage, isScripture);
     }
 
-    return { translatedText: translation, originalText: sourceText, sourceLanguage: detectedLanguage, targetLanguage: languageConfig.displayName };
+    return { translatedText: translation, originalText: sourceText, sourceLanguage: detectedLanguage, targetLanguage: languageConfig.displayName, isScripture };
   } catch (error: any) {
     throw new Error("Failed to translate: " + error.message);
   }
