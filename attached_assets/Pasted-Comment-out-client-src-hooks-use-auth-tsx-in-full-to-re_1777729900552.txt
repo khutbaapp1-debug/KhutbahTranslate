@@ -1,0 +1,47 @@
+Comment out client/src/hooks/use-auth.tsx in full to remove dead auth code that references soon-to-be-removed username/password columns. The active auth hook is the .ts version (use-auth.ts) which is OAuth-based and works correctly without username/password.
+
+═══════════════════════════════════════════════════════════
+INVESTIGATION FIRST (no changes yet)
+═══════════════════════════════════════════════════════════
+
+1. Read C:\Users\Dell\KhutbahTranslate\client\src\hooks\use-auth.tsx in full
+2. Read C:\Users\Dell\KhutbahTranslate\client\src\hooks\use-auth.ts in full
+3. Confirm:
+   - Both files export useAuth
+   - .ts version is the active one (clean, OAuth-based, no username/password)
+   - .tsx version is dead code referencing username/password
+4. Search the project for any imports that specifically target use-auth.tsx (with the .tsx extension explicitly): "use-auth.tsx" or "from "../hooks/use-auth.tsx""
+
+Report findings.
+
+═══════════════════════════════════════════════════════════
+WHAT TO BUILD
+═══════════════════════════════════════════════════════════
+
+PART 1: Comment out the entire body of use-auth.tsx
+
+Wrap the entire file content in a block comment with a header explaining why:
+
+// DISABLED: This auth hook references username/password from a previous version
+// of the codebase. Auth is hidden in v1 (anonymous release). The active useAuth
+// hook is in use-auth.ts (OAuth-based). This .tsx file is preserved for reference
+// but is not used by any active code.
+/*
+... existing file content ...
+*/
+
+PART 2: Verify
+
+- Run npm run check — confirm zero TypeScript errors
+- Tell me final structure (the file should now be effectively a comment, and the .ts version handles all useAuth imports)
+
+═══════════════════════════════════════════════════════════
+CONSTRAINTS
+═══════════════════════════════════════════════════════════
+
+- Modify ONLY use-auth.tsx
+- Do NOT modify use-auth.ts (it's working correctly)
+- Do NOT modify any pages that import useAuth (they import without .tsx extension and will continue to resolve to .ts)
+- Show me the diff before applying
+
+Begin with the investigation phase.
