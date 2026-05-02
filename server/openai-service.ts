@@ -1,24 +1,13 @@
 // AI service for khutbah transcription, translation, and AI features
-// Uses Groq (free tier) when GROQ_API_KEY is set, falls back to OpenAI
 import OpenAI from "openai";
-import Groq from "groq-sdk";
 import { getLanguageConfig } from "@shared/language-config";
 import { translationCacheService } from "./translation-cache";
 
-// Groq models (free tier)
-const GROQ_TRANSCRIPTION_MODEL = "whisper-large-v3-turbo";
-const GROQ_CHAT_MODEL = "llama-3.3-70b-versatile";
-
-// OpenAI fallback models
-const OPENAI_TRANSCRIPTION_MODEL = "whisper-1";
+// OpenAI models
+const OPENAI_TRANSCRIPTION_MODEL = "gpt-4o-transcribe";
+const OPENAI_TRANSCRIPTION_FALLBACK_MODEL = "whisper-1";
 const OPENAI_CHAT_MODEL_FAST = "gpt-4o-mini";
 const OPENAI_CHAT_MODEL_QUALITY = "gpt-4o";
-
-function getGroqClient(): Groq | null {
-  const key = process.env.GROQ_API_KEY;
-  if (!key) return null;
-  return new Groq({ apiKey: key });
-}
 
 function getOpenAIClient(): OpenAI {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -56,51 +45,37 @@ export interface SermonSummary {
   detailedSummary: string;
 }
 
-// Transcribe audio — uses Groq whisper-large-v3-turbo (free) or OpenAI whisper-1
+// Transcribe audio using OpenAI gpt-4o-transcribe with whisper-1 as fallback
 export async function transcribeArabicAudio(audioBuffer: Buffer): Promise<TranscriptionResult> {
+  const blob = new Blob([audioBuffer], { type: "audio/wav" });
+  const audioFile = new File([blob], "audio.wav", { type: "audio/wav" });
+  const openai = getOpenAIClient();
+
   try {
-    const blob = new Blob([audioBuffer], { type: "audio/wav" });
-    const audioFile = new File([blob], "audio.wav", { type: "audio/wav" });
-
-    const groq = getGroqClient();
-
-    if (groq) {
-      const transcription = await groq.audio.transcriptions.create({
-        file: audioFile,
-        model: GROQ_TRANSCRIPTION_MODEL,
-      });
-      return { text: transcription.text };
-    }
-
-    // Fallback to OpenAI
-    const openai = getOpenAIClient();
     const transcription = await openai.audio.transcriptions.create({
       file: audioFile,
       model: OPENAI_TRANSCRIPTION_MODEL,
     });
     return { text: transcription.text };
-  } catch (error: any) {
-    throw new Error("Failed to transcribe audio: " + error.message);
+  } catch (primaryError: any) {
+    console.log(`Primary transcription (gpt-4o-transcribe) failed, falling back to whisper-1: ${primaryError.message}`);
+    try {
+      const transcription = await openai.audio.transcriptions.create({
+        file: audioFile,
+        model: OPENAI_TRANSCRIPTION_FALLBACK_MODEL,
+      });
+      return { text: transcription.text };
+    } catch {
+      throw new Error("Failed to transcribe audio: " + primaryError.message);
+    }
   }
 }
 
-// Chat completion helper — uses Groq Llama (free) or OpenAI
+// Chat completion helper using OpenAI
 async function chatComplete(
   messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
   opts: { json?: boolean; quality?: "fast" | "quality" } = {}
 ): Promise<string> {
-  const groq = getGroqClient();
-
-  if (groq) {
-    const response = await groq.chat.completions.create({
-      model: GROQ_CHAT_MODEL,
-      messages,
-      ...(opts.json ? { response_format: { type: "json_object" as const } } : {}),
-    });
-    return response.choices[0].message.content || "";
-  }
-
-  // Fallback to OpenAI
   const openai = getOpenAIClient();
   const model = opts.quality === "quality" ? OPENAI_CHAT_MODEL_QUALITY : OPENAI_CHAT_MODEL_FAST;
   const response = await openai.chat.completions.create({
@@ -111,7 +86,7 @@ async function chatComplete(
   return response.choices[0].message.content || "";
 }
 
-// Translate text from any language — uses cache first, then Groq Llama or OpenAI
+// Translate text from any language — uses cache first, then OpenAI
 export async function translateArabicToEnglish(sourceText: string): Promise<TranslationResult> {
   try {
     const languageConfig = getLanguageConfig();
@@ -137,8 +112,7 @@ export async function translateArabicToEnglish(sourceText: string): Promise<Tran
 
     // STEP 3: Call AI
     cacheMisses++;
-    const provider = getGroqClient() ? "Groq" : "OpenAI";
-    console.log(`[AI] Cache miss — calling ${provider} for: "${sourceText.substring(0, 30)}..."`);
+    console.log(`[AI] Cache miss — calling OpenAI for: "${sourceText.substring(0, 30)}..."`);
 
     const prompt = `You are translating a live khutbah (Islamic sermon) in real-time. Each audio chunk is a short fragment of a longer sermon.
 
