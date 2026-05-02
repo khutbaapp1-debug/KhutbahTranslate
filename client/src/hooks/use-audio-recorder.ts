@@ -18,7 +18,6 @@ export interface AudioRecorderState {
   transcriptionError: string | null; // API errors from transcription (e.g., 429 limit reached)
   translations: TranslationSegment[];
   nextTranslationIn: number; // Countdown timer: seconds until next translation
-  isTranslating: boolean; // True while waiting for API response
 }
 
 export interface AudioRecorderControls {
@@ -40,6 +39,7 @@ export interface AudioRecorderOptions {
 const SAMPLE_RATE = 16000; // 16kHz is optimal for speech recognition
 const FIRST_CHUNK_DURATION = 15; // seconds - shorter first chunk so user sees translation faster
 const CHUNK_DURATION = 12; // seconds - longer chunks provide better context and reduce costs by 50%
+const API_LATENCY_BUFFER = 8; // seconds - estimated API response time, added to countdown for honest "translation arriving in" display
 const CHUNK_COST_MINUTES = CHUNK_DURATION / 60; // ~0.167 minutes per chunk
 const SAFETY_BUFFER_CHUNKS = 3; // Stop recording with buffer for 3 chunks (0.5 min) to prevent mid-khutbah interruption
 const MINIMUM_MINUTES_REQUIRED = CHUNK_COST_MINUTES * SAFETY_BUFFER_CHUNKS; // ~0.5 minutes minimum
@@ -60,8 +60,7 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
   const [error, setError] = useState<string | null>(null);
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
   const [translations, setTranslations] = useState<TranslationSegment[]>([]);
-  const [nextTranslationIn, setNextTranslationIn] = useState(FIRST_CHUNK_DURATION);
-  const [isTranslating, setIsTranslating] = useState(false);
+  const [nextTranslationIn, setNextTranslationIn] = useState(FIRST_CHUNK_DURATION + API_LATENCY_BUFFER);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -90,12 +89,12 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
     }, 1000);
   }, []);
 
-  const startCountdownTimer = useCallback((initialSeconds: number = CHUNK_DURATION) => {
+  const startCountdownTimer = useCallback((initialSeconds: number = CHUNK_DURATION + API_LATENCY_BUFFER) => {
     setNextTranslationIn(initialSeconds);
     countdownTimerRef.current = window.setInterval(() => {
       setNextTranslationIn((prev) => {
         if (prev <= 1) {
-          return CHUNK_DURATION; // Subsequent chunks always 10s
+          return CHUNK_DURATION + API_LATENCY_BUFFER;
         }
         return prev - 1;
       });
@@ -174,7 +173,6 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
       pendingConsumptionRef.current += CHUNK_COST_MINUTES;
     }
 
-    setIsTranslating(true);
     try {
       const formData = new FormData();
       formData.append("audio", blob, "audio.wav");
@@ -233,8 +231,6 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
         pendingConsumptionRef.current = Math.max(0, pendingConsumptionRef.current - CHUNK_COST_MINUTES);
       }
       console.error("Failed to transcribe chunk:", err);
-    } finally {
-      setIsTranslating(false);
     }
   }, [minutesRemaining, onLimitReached, onChunkSent]);
 
@@ -318,7 +314,7 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
       setIsRecording(true);
       setRecordingTime(0);
       startTimer();
-      startCountdownTimer(FIRST_CHUNK_DURATION); // First countdown is 5s
+      startCountdownTimer(FIRST_CHUNK_DURATION + API_LATENCY_BUFFER);
     } catch (err: any) {
       console.error("Error starting recording:", err);
       stopMediaTracks();
@@ -399,7 +395,6 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
     transcriptionError,
     translations,
     nextTranslationIn,
-    isTranslating,
     startRecording,
     stopRecording,
     pauseRecording,
