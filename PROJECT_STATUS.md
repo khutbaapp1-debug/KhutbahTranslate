@@ -192,17 +192,17 @@ Tracking items required for Google Play and App Store submission.
 - [x] iOS bundle identifier fixed to match Android (`com.khutbahcompanion.app`)
 - [x] Server-side cleanup: 14 auth-protected route groups commented out, type check now clean (zero TypeScript errors)
 - [x] Privacy policy hosted at https://khutbah-translate.replit.app/privacy (anonymous app state, AdMob disclosure, all third-party services disclosed including Google Places API and OpenStreetMap for Mosque Finder)
+- [x] iOS permissions audit complete: removed unused NSLocationAlwaysUsageDescription, removed UIBackgroundModes audio, expanded SKAdNetworkItems to full 50-entry list per Google AdMob docs
+- [x] Android permissions verified: removed unused MODIFY_AUDIO_SETTINGS, added ACCESS_NETWORK_STATE for connectivity checks
 
 ### Pending
-
-- [ ] iOS Info.plist permissions audit (NSLocationAlwaysUsageDescription, UIBackgroundModes audio, SKAdNetworkItems)
-- [ ] Android AndroidManifest.xml permissions verification (ACCESS_FINE_LOCATION, RECORD_AUDIO, ACCESS_COARSE_LOCATION)
 - [ ] Improved iOS permission usage descriptions (in progress — partial fix applied for location and microphone)
 - [ ] Mosque finder data quality investigation
 - [ ] Other religious content reviews: Daily Hadith, Daily Duas, 99 Names, Khutbah translation disclaimers
 - [ ] App store metadata: descriptions, screenshots, content rating, data safety form
 - [ ] Build signed AAB in Android Studio (keystore exists and is backed up)
 - [ ] Upload AAB to Google Play Closed Testing
+- [ ] Test all pages in landscape orientation on a physical device (Quran reader benefits from landscape; other pages may have unverified layouts — required before App Store submission)
 - [ ] Send opt-in URL to 12-15 testers (starts mandatory 14-day Google Play timer)
 - [ ] Weekend iOS work on borrowed Mac: Xcode setup, TestFlight submission
 - [ ] App Store review submission
@@ -217,7 +217,7 @@ Tracking items required for Google Play and App Store submission.
 
 Most recent at top.
 
-- **May 1, 2026 (today):** Salah Guide complete rebuild — 108 content items reviewed and approved, 4 prayer flows populated with verified Arabic, FlowCard component built, page restructured to Wudu/How to Pray/Per-Prayer tabs. App icons regenerated for both platforms. iOS bundle ID fixed to match Android (com.khutbahcompanion.app). iOS permission descriptions improved (location and microphone). Server cleanup completed: 14 auth-protected route groups commented out, type check now clean (zero TypeScript errors). PROJECT_STATUS.md created and maintained. NSLocationAlwaysUsageDescription, UIBackgroundModes audio, and SKAdNetworkItems entries still pending audit. Privacy policy updated to disclose Google Places API (location sent for Mosque Finder) and OpenStreetMap (map tiles, IP visible).
+- **May 1, 2026 (today):** Salah Guide complete rebuild — 108 content items reviewed and approved, 4 prayer flows populated with verified Arabic, FlowCard component built, page restructured to Wudu/How to Pray/Per-Prayer tabs. App icons regenerated for both platforms. iOS bundle ID fixed to match Android (com.khutbahcompanion.app). iOS permission descriptions improved (location and microphone). Server cleanup completed: 14 auth-protected route groups commented out, type check now clean (zero TypeScript errors). PROJECT_STATUS.md created and maintained. NSLocationAlwaysUsageDescription, UIBackgroundModes audio, and SKAdNetworkItems entries still pending audit. Privacy policy updated to disclose Google Places API (location sent for Mosque Finder) and OpenStreetMap (map tiles, IP visible). Today (May 4): Permissions audit completed for both platforms — iOS Info.plist cleaned of unused location/background permissions and expanded SKAdNetworkItems to Google's full 50-entry list; Android manifest removed MODIFY_AUDIO_SETTINGS and added ACCESS_NETWORK_STATE.
 - **Apr 30, 2026:** Premium UI cleanup, translation-limit modal removal, rate limiter on /api/transcribe, AdMob ATT integration fix, BannerAd component built and applied to 6 pages, AdMob console configured, Salah Guide content review begun, mosque finder data quality fixed (working correctly).
 - **Apr 29, 2026:** App initial state assessment, monetization decision (free + ads, no auth), Closed Testing setup begun on Google Play Console.
 
