@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Mic, MicOff, Save, Clock, Pause, Play, X, AlertCircle, Sparkles, BookOpen } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
+import { AudioWaveform } from "@/components/audio-waveform";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
@@ -39,6 +40,7 @@ export default function KhutbahPage() {
     error,
     translations,
     nextTranslationIn,
+    analyserRef,
     startRecording,
     stopRecording,
     pauseRecording,
@@ -156,13 +158,9 @@ export default function KhutbahPage() {
                 </div>
               ))}
               {isRecording && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <div className="flex gap-1">
-                    <span className="w-1.5 h-4 bg-primary rounded-full animate-pulse" />
-                    <span className="w-1.5 h-5 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                    <span className="w-1.5 h-3 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
-                  </div>
-                  <span className="text-sm">Listening...</span>
+                <div className="flex flex-col items-center gap-1">
+                  <AudioWaveform analyserRef={analyserRef} isActive={isRecording && !isPaused} />
+                  <span className="text-sm text-muted-foreground">Listening...</span>
                 </div>
               )}
               {/* Invisible element at the bottom for auto-scroll */}

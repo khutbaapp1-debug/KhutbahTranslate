@@ -19,6 +19,7 @@ export interface AudioRecorderState {
   transcriptionError: string | null; // API errors from transcription (e.g., 429 limit reached)
   translations: TranslationSegment[];
   nextTranslationIn: number; // Countdown timer: seconds until next translation
+  analyserRef: { current: AnalyserNode | null };
 }
 
 export interface AudioRecorderControls {
@@ -73,6 +74,7 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
   const countdownTimerRef = useRef<number | null>(null);
   const sequenceNumberRef = useRef(0);
   const isPausedRef = useRef(false);
+  const analyserRef = useRef<AnalyserNode | null>(null);
   
   // Reconcile pending consumption when backend data refreshes
   useEffect(() => {
@@ -125,6 +127,8 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
       processorRef.current.disconnect();
       processorRef.current = null;
     }
+    analyserRef.current?.disconnect();
+    analyserRef.current = null;
     if (audioContextRef.current) {
       audioContextRef.current.close();
       audioContextRef.current = null;
@@ -304,6 +308,10 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
         pcmBufferRef.current.push(samples);
       };
 
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 64;
+      analyserRef.current = analyser;
+      source.connect(analyser);
       source.connect(processor);
       processor.connect(audioContext.destination);
 
@@ -397,6 +405,7 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
     transcriptionError,
     translations,
     nextTranslationIn,
+    analyserRef,
     startRecording,
     stopRecording,
     pauseRecording,
