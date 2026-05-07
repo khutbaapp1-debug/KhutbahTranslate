@@ -3,10 +3,16 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mic, MicOff, Save, Clock, Pause, Play, X, AlertCircle } from "lucide-react";
+import { Mic, MicOff, Save, Clock, Pause, Play, X, AlertCircle, Sparkles, BookOpen } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface TranscriptSegment {
   id: number;
@@ -15,8 +21,12 @@ interface TranscriptSegment {
   timestamp: number;
 }
 
+const DISCLAIMER_KEY = "khutbah-translation-disclaimer-acknowledged";
+
 export default function KhutbahPage() {
   const [processingError, setProcessingError] = useState<string | null>(null);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [currentCard, setCurrentCard] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -37,11 +47,23 @@ export default function KhutbahPage() {
   } = useAudioRecorder({});
 
   useEffect(() => {
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      setShowDisclaimer(true);
+    }
+  }, []);
+
+  useEffect(() => {
     // Auto-scroll to bottom when new translations arrive
     if (endOfMessagesRef.current) {
       endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [translations]);
+
+  const handleDisclaimerDismiss = () => {
+    localStorage.setItem(DISCLAIMER_KEY, "true");
+    setCurrentCard(0);
+    setShowDisclaimer(false);
+  };
 
   const handleStartRecording = async () => {
     clearRecording();
@@ -240,6 +262,44 @@ export default function KhutbahPage() {
       </main>
 
       <BottomNav />
+
+      <Dialog open={showDisclaimer} onOpenChange={() => {}}>
+        <DialogContent className="max-w-sm [&>button:last-child]:hidden">
+          <DialogHeader>
+            <DialogTitle>
+              {currentCard === 0 && "Audio Quality Matters"}
+              {currentCard === 1 && "AI Translation Is Imperfect"}
+              {currentCard === 2 && "Verify With Your Imam"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-2">
+            <div className="flex items-center justify-center">
+              {currentCard === 0 && <Mic className="w-14 h-14 text-primary" />}
+              {currentCard === 1 && <Sparkles className="w-14 h-14 text-primary" />}
+              {currentCard === 2 && <BookOpen className="w-14 h-14 text-primary" />}
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              {currentCard === 0 && "Echoes, distance from the speaker, and background noise all reduce accuracy. A clear recording translates much better than one from the back of a noisy hall."}
+              {currentCard === 1 && "Even with clear audio, mistakes happen — especially with classical Arabic, Quranic verses, and hadith quotations."}
+              {currentCard === 2 && "This is a helpful aid for following along — not an authoritative record. For matters of religious importance, ask your imam or a qualified scholar."}
+            </p>
+          </div>
+          <div className="flex justify-center gap-2 mt-2">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className={`w-2 h-2 rounded-full ${i === currentCard ? "bg-primary" : "bg-muted"}`}
+              />
+            ))}
+          </div>
+          <Button
+            onClick={currentCard < 2 ? () => setCurrentCard(currentCard + 1) : handleDisclaimerDismiss}
+            className="w-full mt-2"
+          >
+            {currentCard < 2 ? "Continue" : "I Understand"}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
