@@ -80,6 +80,7 @@ const DISCLAIMER_KEY = "salah-guide-disclaimer-acknowledged";
 
 export default function SalahGuidePage() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [activeTab, setActiveTab] = useState("wudu");
   const [selectedPrayerType, setSelectedPrayerType] = useState<PrayerType>("2rakat");
 
   useEffect(() => {
@@ -87,6 +88,10 @@ export default function SalahGuidePage() {
       setShowDisclaimer(true);
     }
   }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [activeTab]);
 
   const handleDismiss = () => {
     localStorage.setItem(DISCLAIMER_KEY, "true");
@@ -114,7 +119,7 @@ export default function SalahGuidePage() {
       </header>
 
       <main className="p-4 max-w-screen-md mx-auto space-y-4">
-        <Tabs defaultValue="wudu">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="wudu" data-testid="tab-wudu">Wudu</TabsTrigger>
             <TabsTrigger value="how-to-pray" data-testid="tab-how-to-pray">How to Pray</TabsTrigger>
