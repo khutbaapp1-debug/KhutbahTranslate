@@ -173,6 +173,79 @@ Bugs we've identified but haven't fixed:
 
 ---
 
+## Real-World Testing Feedback (May 4, 2026)
+
+User tested the app in a real Friday khutbah environment and identified specific improvements per feature. Items below are categorized by launch impact.
+
+### Possibly launch-blocking (verify before AAB build)
+
+**Translation — "lines being missed"**
+- User reports: translations were good but felt like some lines were missed during live use
+- Type: Bug investigation
+- Hypotheses to verify: (a) recording continues correctly during chunk processing — no audio dropped, (b) chunk boundary handling — sentences spanning the 12-second chunk break may lose context, (c) frontend display logic
+- Action: investigate audio recorder pipeline and chunk handling before launch
+
+**Qibla compass — calibration / accuracy**
+- User reports: difficult to find the right direction based on actual knowledge
+- Type: Investigation + possibly bug
+- Hypotheses: (a) phone magnetometer needs user calibration (figure-8 motion), no UI prompt for it, (b) magnetic vs true North compensation — phone reports magnetic, Qibla calc uses true North; check if app accounts for declination
+- Religious importance: praying toward wrong direction is a real concern
+- Action: investigate before launch
+
+### Should-do pre-launch
+
+**Quran Reader — Arabic font**
+- User reports: each word feels separated, doesn't flow as proper Arabic should
+- Type: UX/styling improvement
+- Cause: Western fonts handle Arabic with too much letter spacing; proper Arabic fonts use ligatures
+- Candidate fonts: Amiri (Naskh-style classical), Scheherazade New (scholarly), Noto Naskh Arabic (Google), KFGQPC Uthmanic Hafs (official Mushaf font)
+- User to provide reference screenshots
+- Action: swap font in Quran reader page
+
+**Salah Guide — reset on tab exit**
+- User reports: scroll position persists across tabs, have to scroll up to access tab navigation
+- Type: UX fix (small)
+- Action: reset scroll to top when navigating between Wudu / How to Pray / Per-Prayer tabs
+
+**Tasbih — multiple improvements**
+- Move completed dhikr to bottom of list (sort by completion state)
+- Auto-advance: completing one dhikr moves to the next in the session
+- Decrement button (-1) for over-counting recovery
+- Completion animation (simple dots/sparkles, not literal fireworks)
+- Type: UX improvement + new state tracking
+- Currently single-counter; needs guided session model
+
+### V1.1 territory (defer unless time allows)
+
+**Salah Guide — Wudu flash cards**
+- User reports: cramped on mobile, would benefit from swipeable card-per-step layout
+- Each card: image + clean text, swipe right for next step
+- Type: UI redesign
+- More room for imagery and clearer per-step focus
+
+**Mosque Finder — Google Maps tiles instead of OSM**
+- User reports: doesn't like the look of OpenStreetMap
+- Options: Google Maps Embed API (free, iframe) or Google Maps JavaScript API (free tier $200/month credit, ~28k loads)
+- Cost watch: as user base grows, monitor Maps API usage
+- Type: Aesthetic improvement, integration swap
+
+### Validated as good (UX-wise — content still needs religious review)
+
+- Prayer Times: feature working correctly
+- Daily Duas: feature working correctly (content NOT yet validated)
+- Daily Hadith: feature working correctly (content NOT yet validated)
+- Mosque Finder: feature working correctly (just OSM aesthetic complaint)
+
+### Religious content validation (still required pre-launch)
+
+- [ ] Daily Hadith — verify text, attribution, grading (sahih/hasan/daif), reference accuracy
+- [ ] Daily Duas — verify Arabic text, transliteration accuracy, English translation, source attribution
+- [ ] 99 Names of Allah — verify Arabic, English meaning, scholarly source for meanings
+- [ ] Khutbah translation disclaimers — already in place via 3-card modal (May 4)
+- [ ] Salah Guide — already validated May 1 (108 items reviewed)
+
+---
+
 ## Launch Checklist
 
 Tracking items required for Google Play and App Store submission.
@@ -219,7 +292,7 @@ Tracking items required for Google Play and App Store submission.
 
 Most recent at top.
 
-- **May 1, 2026 (today):** Salah Guide complete rebuild — 108 content items reviewed and approved, 4 prayer flows populated with verified Arabic, FlowCard component built, page restructured to Wudu/How to Pray/Per-Prayer tabs. App icons regenerated for both platforms. iOS bundle ID fixed to match Android (com.khutbahcompanion.app). iOS permission descriptions improved (location and microphone). Server cleanup completed: 14 auth-protected route groups commented out, type check now clean (zero TypeScript errors). PROJECT_STATUS.md created and maintained. NSLocationAlwaysUsageDescription, UIBackgroundModes audio, and SKAdNetworkItems entries still pending audit. Privacy policy updated to disclose Google Places API (location sent for Mosque Finder) and OpenStreetMap (map tiles, IP visible). Today (May 4): Permissions audit completed for both platforms — iOS Info.plist cleaned of unused location/background permissions and expanded SKAdNetworkItems to Google's full 50-entry list; Android manifest removed MODIFY_AUDIO_SETTINGS and added ACCESS_NETWORK_STATE. Also May 4: Built 3-card forced-walkthrough disclaimer modal for Live Translation (non-dismissible Dialog with Audio Quality / AI Imperfection / Verify with Imam cards, localStorage acknowledgment). Built real-time audio waveform visualization (parallel AnalyserNode tap, 20 vertical bars at 60fps, idle state during pause). Both deferred Saturday features now complete.
+- **May 1, 2026 (today):** Salah Guide complete rebuild — 108 content items reviewed and approved, 4 prayer flows populated with verified Arabic, FlowCard component built, page restructured to Wudu/How to Pray/Per-Prayer tabs. App icons regenerated for both platforms. iOS bundle ID fixed to match Android (com.khutbahcompanion.app). iOS permission descriptions improved (location and microphone). Server cleanup completed: 14 auth-protected route groups commented out, type check now clean (zero TypeScript errors). PROJECT_STATUS.md created and maintained. NSLocationAlwaysUsageDescription, UIBackgroundModes audio, and SKAdNetworkItems entries still pending audit. Privacy policy updated to disclose Google Places API (location sent for Mosque Finder) and OpenStreetMap (map tiles, IP visible). Today (May 4): Permissions audit completed for both platforms — iOS Info.plist cleaned of unused location/background permissions and expanded SKAdNetworkItems to Google's full 50-entry list; Android manifest removed MODIFY_AUDIO_SETTINGS and added ACCESS_NETWORK_STATE. Also May 4: Built 3-card forced-walkthrough disclaimer modal for Live Translation (non-dismissible Dialog with Audio Quality / AI Imperfection / Verify with Imam cards, localStorage acknowledgment). Built real-time audio waveform visualization (parallel AnalyserNode tap, 20 vertical bars at 60fps, idle state during pause). Both deferred Saturday features now complete. Late May 4: Drafted Google Play app store metadata (short description, full description, content rating questionnaire answers all saved to GOOGLE_PLAY_METADATA.md). Captured real-world testing feedback covering 9 features for pre-launch and v1.1 prioritization. Feature focus: translation may be dropping lines (investigate), Qibla compass calibration (investigate), Quran Arabic font, Salah Guide UX, Tasbih improvements. Religious content validation outstanding for Daily Hadith, Daily Duas, 99 Names.
 - **Apr 30, 2026:** Premium UI cleanup, translation-limit modal removal, rate limiter on /api/transcribe, AdMob ATT integration fix, BannerAd component built and applied to 6 pages, AdMob console configured, Salah Guide content review begun, mosque finder data quality fixed (working correctly).
 - **Apr 29, 2026:** App initial state assessment, monetization decision (free + ads, no auth), Closed Testing setup begun on Google Play Console.
 
