@@ -139,7 +139,7 @@ export default function SalahGuidePage() {
             <p className="text-sm text-muted-foreground px-1">
               Choose the type of prayer below to see a step-by-step guide.
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {([
                 { value: "2rakat",  label: "2 Rakat" },
                 { value: "4rakat",  label: "4 Rakat" },
