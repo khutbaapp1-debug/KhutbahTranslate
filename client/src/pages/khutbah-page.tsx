@@ -141,22 +141,37 @@ export default function KhutbahPage() {
         ) : (
           <ScrollArea className="flex-1 p-6">
             <div className="max-w-4xl mx-auto space-y-4">
-              {translations.map((segment) => (
-                <div
-                  key={segment.id}
-                  className={`pb-3 border-b border-border/40 last:border-0${segment.isScripture ? " border-l-2 border-primary/40 pl-3" : ""}`}
-                  data-testid={`segment-${segment.id}`}
-                >
-                  {segment.isScripture && (
-                    <p className="text-base leading-relaxed text-right mb-2 text-foreground/80" dir="rtl">
-                      ﴾ {segment.arabic} ﴿
+              {translations.map((segment) => {
+                if (segment.english === "…") {
+                  return (
+                    <div
+                      key={segment.id}
+                      className="pb-3 border-b border-border/40 last:border-0"
+                      data-testid={`segment-${segment.id}`}
+                    >
+                      <p className="text-sm italic text-muted-foreground">
+                        {segment.english}
+                      </p>
+                    </div>
+                  );
+                }
+                return (
+                  <div
+                    key={segment.id}
+                    className={`pb-3 border-b border-border/40 last:border-0${segment.isScripture ? " border-l-2 border-primary/40 pl-3" : ""}`}
+                    data-testid={`segment-${segment.id}`}
+                  >
+                    {segment.isScripture && (
+                      <p className="text-base leading-relaxed text-right mb-2 text-foreground/80" dir="rtl">
+                        ﴾ {segment.arabic} ﴿
+                      </p>
+                    )}
+                    <p className={`text-lg leading-relaxed${segment.isScripture ? " italic" : ""}`}>
+                      {segment.english}
                     </p>
-                  )}
-                  <p className={`text-lg leading-relaxed${segment.isScripture ? " italic" : ""}`}>
-                    {segment.english}
-                  </p>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
               {isRecording && (
                 <div className="flex flex-col items-center gap-1">
                   <AudioWaveform analyserRef={analyserRef} isActive={isRecording && !isPaused} />

@@ -224,12 +224,32 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
           isScripture: result.isScripture ?? false,
         };
 
-        setTranslations(prev => [...prev, segment]);
+        setTranslations(prev => {
+          const next = [...prev, segment];
+          next.sort((a, b) => a.timestamp - b.timestamp);
+          return next;
+        });
 
         // Notify parent that chunk was successfully sent (so usage can be refreshed)
         if (onChunkSent) {
           onChunkSent();
         }
+      } else {
+        // Empty translation — show ellipsis placeholder so user knows the chunk was
+        // processed but produced no intelligible text (silence, low volume, indistinct speech)
+        const placeholder: TranslationSegment = {
+          id: Date.now() + sequenceNumber,
+          arabic: "",
+          english: "…",
+          timestamp: sequenceNumber * CHUNK_DURATION,
+          isScripture: false,
+        };
+
+        setTranslations(prev => {
+          const next = [...prev, placeholder];
+          next.sort((a, b) => a.timestamp - b.timestamp);
+          return next;
+        });
       }
     } catch (err) {
       // Rollback pending consumption on exception (only for quota system users)
