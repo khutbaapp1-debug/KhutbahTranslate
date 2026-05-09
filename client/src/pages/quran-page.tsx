@@ -600,7 +600,7 @@ export default function QuranPage() {
                             </div>
                           )}
                           <p
-                            className="font-arabic text-foreground text-justify"
+                            className="font-arabic text-foreground text-justify arabic-ruled-lines"
                             dir="rtl"
                             style={{
                               fontSize: "2rem",
