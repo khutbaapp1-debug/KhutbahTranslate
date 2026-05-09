@@ -168,7 +168,6 @@ export default function DailyHadithPage() {
               <div className="space-y-4">
                 <div
                   className="text-right text-2xl leading-loose font-arabic"
-                  style={{ fontFamily: "Noto Naskh Arabic, serif" }}
                   lang="ar"
                   data-testid="text-hadith-arabic"
                 >

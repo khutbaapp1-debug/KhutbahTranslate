@@ -589,7 +589,7 @@ export default function QuranPage() {
                               className="font-arabic text-foreground text-center mb-6 pb-6 border-b border-[hsl(40_30%_85%)] dark:border-[hsl(40_15%_22%)]"
                               dir="rtl"
                               style={{
-                                fontSize: "1.875rem",
+                                fontSize: "2rem",
                                 lineHeight: "3.25rem",
                               }}
                               data-verse-anchor={bismillahIsVerseOne ? firstVerse.id : undefined}
@@ -603,7 +603,7 @@ export default function QuranPage() {
                             className="font-arabic text-foreground text-justify"
                             dir="rtl"
                             style={{
-                              fontSize: "1.875rem",
+                              fontSize: "2rem",
                               lineHeight: "3.25rem",
                               wordSpacing: "0.15em",
                             }}
