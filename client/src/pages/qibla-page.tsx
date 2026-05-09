@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,9 @@ export default function QiblaPage() {
   const [calibrated, setCalibrated] = useState(false);
   const [compassSupported, setCompassSupported] = useState(false);
   const { toast } = useToast();
+
+  const calibrationTimerRef = useRef<number | null>(null);
+  const calibrationStartedRef = useRef(false);
 
   useEffect(() => {
     if ('DeviceOrientationEvent' in window) {
@@ -56,26 +59,62 @@ export default function QiblaPage() {
   useEffect(() => {
     if (!compassSupported) return;
 
-    const handleOrientation = (event: DeviceOrientationEvent) => {
-      if (event.alpha !== null) {
-        setHeading(360 - event.alpha);
-        setCalibrated(true);
+    // Fix 1: use webkitCompassHeading on iOS (True North), fall back to alpha on Android
+    const handleOrientationEvent = (event: DeviceOrientationEvent) => {
+      const webkitHeading = (event as any).webkitCompassHeading;
+      if (typeof webkitHeading !== 'undefined' && webkitHeading !== null) {
+        setHeading(webkitHeading);
+      } else if (event.alpha !== null) {
+        setHeading(360 - event.alpha!);
+      } else {
+        return;
+      }
+
+      // Fix 3: keep figure-8 prompt visible for 5 seconds after first data before auto-dismissing
+      if (!calibrationStartedRef.current) {
+        calibrationStartedRef.current = true;
+        calibrationTimerRef.current = window.setTimeout(() => {
+          setCalibrated(true);
+          calibrationTimerRef.current = null;
+        }, 5000);
       }
     };
 
+    // Fix 2: prefer deviceorientationabsolute (Android) over deviceorientation (iOS fallback)
+    let usingAbsolute = false;
+
+    const handleAbsolute = (event: DeviceOrientationEvent) => {
+      usingAbsolute = true;
+      handleOrientationEvent(event);
+    };
+
+    const handleFallback = (event: DeviceOrientationEvent) => {
+      if (!usingAbsolute) handleOrientationEvent(event);
+    };
+
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      // iOS: permission required; webkitCompassHeading in handleOrientationEvent gives True North
       (DeviceOrientationEvent as any).requestPermission()
         .then((permissionState: string) => {
           if (permissionState === 'granted') {
-            window.addEventListener("deviceorientation", handleOrientation);
+            window.addEventListener("deviceorientation", handleFallback);
           }
         })
         .catch(console.error);
     } else {
-      window.addEventListener("deviceorientation", handleOrientation);
+      // Android/other: try absolute event first, fall back to deviceorientation if it never fires
+      window.addEventListener("deviceorientationabsolute" as any, handleAbsolute as any);
+      window.addEventListener("deviceorientation", handleFallback);
     }
 
-    return () => window.removeEventListener("deviceorientation", handleOrientation);
+    return () => {
+      window.removeEventListener("deviceorientationabsolute" as any, handleAbsolute as any);
+      window.removeEventListener("deviceorientation", handleFallback);
+      if (calibrationTimerRef.current !== null) {
+        clearTimeout(calibrationTimerRef.current);
+        calibrationTimerRef.current = null;
+      }
+    };
   }, [compassSupported]);
 
   const refreshLocation = () => {
