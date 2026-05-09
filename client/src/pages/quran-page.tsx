@@ -590,7 +590,7 @@ export default function QuranPage() {
                               dir="rtl"
                               style={{
                                 fontSize: "2rem",
-                                lineHeight: "3.25rem",
+                                lineHeight: "4rem",
                               }}
                               data-verse-anchor={bismillahIsVerseOne ? firstVerse.id : undefined}
                               data-testid={`verse-bismillah-${firstVerse.id}`}
@@ -604,7 +604,7 @@ export default function QuranPage() {
                             dir="rtl"
                             style={{
                               fontSize: "2rem",
-                              lineHeight: "3.25rem",
+                              lineHeight: "4rem",
                               wordSpacing: "0.15em",
                             }}
                             data-testid="text-page-view"
