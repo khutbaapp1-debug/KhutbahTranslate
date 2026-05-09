@@ -599,29 +599,31 @@ export default function QuranPage() {
                               {bismillahIsVerseOne && renderMarker(firstVerse)}
                             </div>
                           )}
-                          <p
-                            className="font-arabic text-foreground text-justify arabic-ruled-lines"
-                            dir="rtl"
-                            style={{
-                              fontSize: "2rem",
-                              lineHeight: "4rem",
-                              wordSpacing: "0.15em",
-                            }}
-                            data-testid="text-page-view"
-                          >
-                            {bodyVerses.map((verse) => {
-                              const isFirstWithRemainder =
-                                firstIsBismillah &&
-                                !bismillahIsVerseOne &&
-                                verse.id === firstVerse.id;
-                              return (
-                                <span key={verse.id} data-verse-anchor={verse.id}>
-                                  {isFirstWithRemainder ? firstVerseRemainder : verse.text}
-                                  {renderMarker(verse)}{" "}
-                                </span>
-                              );
-                            })}
-                          </p>
+                          <div className="arabic-ruled-lines">
+                            <p
+                              className="font-arabic text-foreground text-justify"
+                              dir="rtl"
+                              style={{
+                                fontSize: "2rem",
+                                lineHeight: "4rem",
+                                wordSpacing: "0.15em",
+                              }}
+                              data-testid="text-page-view"
+                            >
+                              {bodyVerses.map((verse) => {
+                                const isFirstWithRemainder =
+                                  firstIsBismillah &&
+                                  !bismillahIsVerseOne &&
+                                  verse.id === firstVerse.id;
+                                return (
+                                  <span key={verse.id} data-verse-anchor={verse.id}>
+                                    {isFirstWithRemainder ? firstVerseRemainder : verse.text}
+                                    {renderMarker(verse)}{" "}
+                                  </span>
+                                );
+                              })}
+                            </p>
+                          </div>
                         </>
                       );
                     })()}
