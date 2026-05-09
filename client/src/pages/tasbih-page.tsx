@@ -30,6 +30,10 @@ export default function TasbihPage() {
     setCount(0);
   };
 
+  const handleDecrement = () => {
+    setCount((prev) => Math.max(0, prev - 1));
+  };
+
   const progress = (count / selectedDhikr.target) * 100;
 
   return (
@@ -102,6 +106,15 @@ export default function TasbihPage() {
           <p className="text-sm text-muted-foreground">
             Target: {selectedDhikr.target}
           </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDecrement}
+            disabled={count === 0}
+            data-testid="button-decrement"
+          >
+            −1
+          </Button>
           {count >= selectedDhikr.target && (
             <Badge variant="default" className="text-sm">
               ماشاء الله! Target reached
