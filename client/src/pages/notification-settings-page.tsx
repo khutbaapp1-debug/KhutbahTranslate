@@ -1,14 +1,12 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { Bell, Clock, BookOpen, Calendar, Moon, Sun, Sparkles } from "lucide-react";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useState, useEffect } from "react";
+import { Bell, Clock, BookOpen, Calendar, Moon, Sun, Sparkles, ArrowLeft } from "lucide-react";
 
 interface NotificationSettings {
   id: string;
@@ -42,55 +40,60 @@ interface NotificationSettings {
   pushToken?: string;
 }
 
-export default function NotificationSettingsPage() {
-  const { toast } = useToast();
-  const [localSettings, setLocalSettings] = useState<NotificationSettings | null>(null);
+const STORAGE_KEY = "notification-settings";
 
-  const { data: settings, isLoading } = useQuery<NotificationSettings>({
-    queryKey: ["/api/notifications/settings"],
-  });
+const defaultSettings: NotificationSettings = {
+  id: "",
+  userId: "",
+  notificationsEnabled: false,
+  dailyHadithEnabled: false,
+  dailyHadithTime: "08:00",
+  prayerRemindersEnabled: false,
+  prayerReminderMinutes: 0,
+  fajrReminderEnabled: true,
+  dhuhrReminderEnabled: true,
+  asrReminderEnabled: true,
+  maghribReminderEnabled: true,
+  ishaReminderEnabled: true,
+  jummahReminderEnabled: true,
+  jummahReminderTime: "12:00",
+  quranReminderEnabled: false,
+  quranReminderTime: "21:00",
+  quranDailyGoalPages: 2,
+  tasbihReminderEnabled: false,
+  tasbihReminderTime: "10:00",
+  duaRemindersEnabled: false,
+  duaMorningTime: "07:00",
+  duaEveningTime: "18:00",
+};
+
+export default function NotificationSettingsPage() {
+  const [, setLocation] = useLocation();
+  const [localSettings, setLocalSettings] = useState<NotificationSettings>(defaultSettings);
 
   useEffect(() => {
-    if (settings) {
-      setLocalSettings(settings);
-    }
-  }, [settings]);
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setLocalSettings({ ...defaultSettings, ...JSON.parse(stored) });
+      }
+    } catch {}
+  }, []);
 
-  const updateMutation = useMutation({
-    mutationFn: async (updates: Partial<NotificationSettings>) => {
-      const res = await apiRequest("PATCH", "/api/notifications/settings", updates);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications/settings"] });
-      toast({
-        title: "Settings saved",
-        description: "Your notification preferences have been updated",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Failed to save settings",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  const saveToStorage = (updated: NotificationSettings) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
 
   const handleToggle = (field: keyof NotificationSettings, value: boolean) => {
-    if (!localSettings) return;
-    
     const updated = { ...localSettings, [field]: value };
     setLocalSettings(updated);
-    updateMutation.mutate({ [field]: value });
+    saveToStorage(updated);
   };
 
   const handleTimeChange = (
     field: "dailyHadithTime" | "jummahReminderTime" | "quranReminderTime" | "tasbihReminderTime" | "duaMorningTime" | "duaEveningTime",
     value: string
   ) => {
-    if (!localSettings) return;
-    
     const updated = { ...localSettings, [field]: value };
     setLocalSettings(updated);
   };
@@ -98,58 +101,54 @@ export default function NotificationSettingsPage() {
   const handleTimeBlur = (
     field: "dailyHadithTime" | "jummahReminderTime" | "quranReminderTime" | "tasbihReminderTime" | "duaMorningTime" | "duaEveningTime"
   ) => {
-    if (!localSettings) return;
-    updateMutation.mutate({ [field]: localSettings[field] });
+    saveToStorage(localSettings);
   };
 
   const handleNumberChange = (field: "quranDailyGoalPages", value: string) => {
-    if (!localSettings) return;
-    
     const number = parseInt(value) || 1;
     const updated = { ...localSettings, [field]: number };
     setLocalSettings(updated);
   };
 
   const handleNumberBlur = (field: "quranDailyGoalPages") => {
-    if (!localSettings) return;
-    updateMutation.mutate({ [field]: localSettings[field] });
+    saveToStorage(localSettings);
   };
 
   const handleReminderMinutesChange = (value: string) => {
-    if (!localSettings) return;
-    
     const minutes = parseInt(value) || 0;
     const updated = { ...localSettings, prayerReminderMinutes: minutes };
     setLocalSettings(updated);
   };
 
   const handleReminderMinutesBlur = () => {
-    if (!localSettings) return;
-    updateMutation.mutate({ prayerReminderMinutes: localSettings.prayerReminderMinutes });
+    saveToStorage(localSettings);
   };
-
-  if (isLoading || !localSettings) {
-    return (
-      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg text-muted-foreground">Loading settings...</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-2xl mx-auto p-4 space-y-6">
-        <div className="text-center space-y-2 pt-6">
-          <div className="flex items-center justify-center gap-2">
-            <Bell className="w-6 h-6 text-primary" />
-            <h1 className="text-3xl font-bold">Notifications</h1>
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg pt-safe border-b border-border">
+        <div className="flex items-center gap-3 p-4 max-w-screen-xl mx-auto">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLocation("/settings")}
+            data-testid="button-back"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-muted-foreground" />
+            <h1 className="text-xl font-semibold text-foreground" data-testid="text-page-title">
+              Notifications
+            </h1>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Customize your reminder preferences
-          </p>
         </div>
+      </header>
+
+      <div className="max-w-2xl mx-auto p-4 space-y-6">
+        <p className="text-sm text-muted-foreground text-center pt-2">
+          Customize your reminder preferences
+        </p>
 
         <Card>
           <CardHeader>
@@ -265,7 +264,7 @@ export default function NotificationSettingsPage() {
 
                     <div className="space-y-3">
                       <Label className="text-sm font-semibold">Choose which prayers to be reminded about:</Label>
-                      
+
                       <div className="flex items-center justify-between">
                         <Label htmlFor="fajr-reminder" className="flex-1">Fajr (Dawn)</Label>
                         <Switch
@@ -530,7 +529,7 @@ export default function NotificationSettingsPage() {
             <Card className="bg-muted/50">
               <CardContent className="pt-6">
                 <p className="text-sm text-muted-foreground text-center">
-                  <strong>Note:</strong> Notifications require browser/app permissions. 
+                  <strong>Note:</strong> Notifications require browser/app permissions.
                   Make sure to allow notifications when prompted.
                 </p>
               </CardContent>
