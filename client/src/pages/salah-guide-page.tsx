@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { FlowCard } from "@/components/flow-card";
 import { WheelPicker } from "@/components/wheel-picker";
-import { wuduSteps } from "@/data/wudu-steps";
+import { WuduFlashCard } from "@/components/wudu-flash-card";
 import { prayerFlows, type PrayerType } from "@/data/prayer-flows";
 
 type Prayer = {
@@ -128,13 +128,8 @@ export default function SalahGuidePage() {
             <TabsTrigger value="prayers" data-testid="tab-prayers">Prayers</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="wudu" className="space-y-4 mt-4">
-            <p className="text-sm text-muted-foreground px-1">
-              Wudu (ablution) is required before each prayer. Follow these steps in order.
-            </p>
-            {wuduSteps.map((step) => (
-              <FlowCard key={step.number} card={step} />
-            ))}
+          <TabsContent value="wudu" className="mt-4">
+            <WuduFlashCard />
           </TabsContent>
 
           <TabsContent value="how-to-pray" className="space-y-4 mt-4">
