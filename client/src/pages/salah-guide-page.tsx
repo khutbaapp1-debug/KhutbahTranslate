@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Info, BookOpen } from "lucide-react";
+import { Info, BookOpen, ChevronDown } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { BannerAd } from "@/components/banner-ad";
 import { Card, CardContent } from "@/components/ui/card";
@@ -82,6 +82,7 @@ export default function SalahGuidePage() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [activeTab, setActiveTab] = useState("wudu");
   const [selectedPrayerType, setSelectedPrayerType] = useState<PrayerType>("2rakat");
+  const [prayerGuideOpen, setPrayerGuideOpen] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem(DISCLAIMER_KEY)) {
@@ -142,30 +143,41 @@ export default function SalahGuidePage() {
 
             <Card className="bg-muted/30 border-border/50">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <BookOpen className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">Prayer Guide</span>
-                </div>
-                <table className="w-full text-sm">
-                  <tbody>
-                    {[
-                      { name: "Fajr",    rakat: 2, time: "Dawn" },
-                      { name: "Dhuhr",   rakat: 4, time: "Midday" },
-                      { name: "Asr",     rakat: 4, time: "Afternoon" },
-                      { name: "Maghrib", rakat: 3, time: "Sunset" },
-                      { name: "Isha",    rakat: 4, time: "Night" },
-                      { name: "Witr",    rakat: 3, time: "After Isha" },
-                      { name: "Jummah",  rakat: 2, time: "Friday (replaces Dhuhr)" },
-                      { name: "Sunnah",  rakat: 2, time: "Optional" },
-                    ].map(({ name, rakat, time }) => (
-                      <tr key={name} className="border-b border-border/40 last:border-0">
-                        <td className="py-1.5 font-semibold text-foreground w-1/3">{name}</td>
-                        <td className="py-1.5 font-medium text-primary w-1/4">{rakat} Rakat</td>
-                        <td className="py-1.5 text-muted-foreground">{time}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <button
+                  className="flex items-center justify-between w-full cursor-pointer hover:opacity-70 transition-opacity"
+                  onClick={() => setPrayerGuideOpen((o) => !o)}
+                  aria-expanded={prayerGuideOpen}
+                >
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-foreground">Prayer Guide</span>
+                  </div>
+                  <ChevronDown
+                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200${prayerGuideOpen ? " rotate-180" : ""}`}
+                  />
+                </button>
+                {prayerGuideOpen && (
+                  <table className="w-full text-sm mt-3">
+                    <tbody>
+                      {[
+                        { name: "Fajr",    rakat: 2, time: "Dawn" },
+                        { name: "Dhuhr",   rakat: 4, time: "Midday" },
+                        { name: "Asr",     rakat: 4, time: "Afternoon" },
+                        { name: "Maghrib", rakat: 3, time: "Sunset" },
+                        { name: "Isha",    rakat: 4, time: "Night" },
+                        { name: "Witr",    rakat: 3, time: "After Isha" },
+                        { name: "Jummah",  rakat: 2, time: "Friday (replaces Dhuhr)" },
+                        { name: "Sunnah",  rakat: 2, time: "Optional" },
+                      ].map(({ name, rakat, time }) => (
+                        <tr key={name} className="border-b border-border/40 last:border-0">
+                          <td className="py-1.5 font-semibold text-foreground w-1/3">{name}</td>
+                          <td className="py-1.5 font-medium text-primary w-1/4">{rakat} Rakat</td>
+                          <td className="py-1.5 text-muted-foreground">{time}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </CardContent>
             </Card>
 
