@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BottomNav } from "@/components/bottom-nav";
 import { BannerAd } from "@/components/banner-ad";
 import { Card } from "@/components/ui/card";
@@ -35,8 +35,35 @@ export default function TasbihPage() {
     localStorage.setItem(`tasbih-count-${selectedDhikr.id}`, String(count));
   }, [count, selectedDhikr.id]);
 
+  const [showCompletionBurst, setShowCompletionBurst] = useState(false);
+  const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => { if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current); };
+  }, []);
+
   const handleIncrement = () => {
-    setCount((prev) => prev + 1);
+    const newCount = count + 1;
+    setCount(newCount);
+    if (newCount === selectedDhikr.target) {
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+      autoAdvanceRef.current = setTimeout(() => {
+        const idx = dhikrPresets.findIndex((d) => d.id === selectedDhikr.id);
+        const next = dhikrPresets[(idx + 1) % dhikrPresets.length];
+        localStorage.setItem("tasbih-selected-dhikr", next.id);
+        setSelectedDhikr(next);
+        const saved = localStorage.getItem(`tasbih-count-${next.id}`);
+        setCount(saved !== null ? parseInt(saved, 10) : 0);
+      }, 1500);
+      const allComplete = dhikrPresets.every((d) => {
+        if (d.id === selectedDhikr.id) return newCount >= d.target;
+        return parseInt(localStorage.getItem(`tasbih-count-${d.id}`) || "0", 10) >= d.target;
+      });
+      if (allComplete) {
+        setShowCompletionBurst(true);
+        setTimeout(() => setShowCompletionBurst(false), 700);
+      }
+    }
   };
 
   const handleReset = () => {
@@ -46,6 +73,12 @@ export default function TasbihPage() {
   const handleDecrement = () => {
     setCount((prev) => Math.max(0, prev - 1));
   };
+
+  const sortedDhikrPresets = [...dhikrPresets].sort((a, b) => {
+    const ca = a.id === selectedDhikr.id ? count : parseInt(localStorage.getItem(`tasbih-count-${a.id}`) || "0", 10);
+    const cb = b.id === selectedDhikr.id ? count : parseInt(localStorage.getItem(`tasbih-count-${b.id}`) || "0", 10);
+    return (ca >= a.target ? 1 : 0) - (cb >= b.target ? 1 : 0);
+  });
 
   const progress = (count / selectedDhikr.target) * 100;
 
@@ -75,6 +108,12 @@ export default function TasbihPage() {
           <p className="text-lg text-muted-foreground">{selectedDhikr.translation}</p>
         </div>
 
+        <style>{`
+          @keyframes tasbih-burst {
+            0%   { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+          }
+        `}</style>
         <div className="flex justify-center">
           <button
             onClick={handleIncrement}
@@ -112,6 +151,21 @@ export default function TasbihPage() {
               <span className="text-7xl font-bold" data-testid="text-count">{count}</span>
               <span className="text-sm opacity-90 mt-2">Tap to count</span>
             </div>
+            {showCompletionBurst && [0, 45, 90, 135, 180, 225, 270, 315].map((angle) => {
+              const rad = (angle * Math.PI) / 180;
+              return (
+                <div
+                  key={angle}
+                  className="pointer-events-none absolute rounded-full bg-primary-foreground"
+                  style={{
+                    width: 10, height: 10, top: "50%", left: "50%",
+                    "--dx": `${Math.round(Math.cos(rad) * 70)}px`,
+                    "--dy": `${Math.round(Math.sin(rad) * 70)}px`,
+                    animation: "tasbih-burst 600ms ease-out forwards",
+                  } as React.CSSProperties}
+                />
+              );
+            })}
           </button>
         </div>
 
@@ -138,28 +192,38 @@ export default function TasbihPage() {
         <Card className="p-4">
           <h3 className="text-sm font-semibold mb-4 text-foreground">Select Dhikr</h3>
           <div className="grid grid-cols-2 gap-3">
-            {dhikrPresets.map((dhikr) => (
-              <button
-                key={dhikr.id}
-                onClick={() => {
-                  localStorage.setItem(`tasbih-count-${selectedDhikr.id}`, String(count));
-                  localStorage.setItem("tasbih-selected-dhikr", dhikr.id);
-                  setSelectedDhikr(dhikr);
-                  const saved = localStorage.getItem(`tasbih-count-${dhikr.id}`);
-                  setCount(saved !== null ? parseInt(saved, 10) : 0);
-                }}
-                className={`p-4 rounded-lg border text-left transition-all hover-elevate ${
-                  selectedDhikr.id === dhikr.id
-                    ? "border-primary bg-accent"
-                    : "border-border"
-                }`}
-                data-testid={`button-dhikr-${dhikr.id}`}
-              >
-                <p className="text-xl font-arabic mb-1" dir="rtl">{dhikr.text}</p>
-                <p className="text-xs text-muted-foreground">{dhikr.translation}</p>
-                <p className="text-xs text-muted-foreground mt-1">Target: {dhikr.target}</p>
-              </button>
-            ))}
+            {sortedDhikrPresets.map((dhikr) => {
+              const dhikrCount = dhikr.id === selectedDhikr.id ? count : parseInt(localStorage.getItem(`tasbih-count-${dhikr.id}`) || "0", 10);
+              const isComplete = dhikrCount >= dhikr.target;
+              return (
+                <button
+                  key={dhikr.id}
+                  onClick={() => {
+                    if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+                    localStorage.setItem(`tasbih-count-${selectedDhikr.id}`, String(count));
+                    localStorage.setItem("tasbih-selected-dhikr", dhikr.id);
+                    setSelectedDhikr(dhikr);
+                    const saved = localStorage.getItem(`tasbih-count-${dhikr.id}`);
+                    setCount(saved !== null ? parseInt(saved, 10) : 0);
+                  }}
+                  className={`relative p-4 rounded-lg border text-left transition-all hover-elevate ${
+                    selectedDhikr.id === dhikr.id
+                      ? "border-primary bg-accent"
+                      : isComplete
+                      ? "border-border opacity-40"
+                      : "border-border"
+                  }`}
+                  data-testid={`button-dhikr-${dhikr.id}`}
+                >
+                  {isComplete && (
+                    <span className="absolute top-2 right-2 text-xs text-primary font-bold">✓</span>
+                  )}
+                  <p className="text-xl font-arabic mb-1" dir="rtl">{dhikr.text}</p>
+                  <p className="text-xs text-muted-foreground">{dhikr.translation}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Target: {dhikr.target}</p>
+                </button>
+              );
+            })}
           </div>
         </Card>
       </main>
