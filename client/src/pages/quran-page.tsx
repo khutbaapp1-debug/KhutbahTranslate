@@ -52,6 +52,8 @@ interface Reciter {
   folder: string;
 }
 
+const FONT_SIZES = ["1.5rem", "2rem", "2.5rem", "3rem", "3.5rem"] as const;
+
 const RECITERS: Reciter[] = [
   { id: "alafasy", name: "Mishary Rashid Al-Afasy", folder: "Alafasy_128kbps" },
   { id: "shatri", name: "Abu Bakr Al Shatri", folder: "Abu_Bakr_Ash-Shaatree_128kbps" },
@@ -75,6 +77,10 @@ export default function QuranPage() {
   // Bookmarks: { [surahId]: verseId }
   const [bookmarks, setBookmarks] = useState<Record<number, number>>({});
   const [showHowTo, setShowHowTo] = useState(false);
+  const [quranFontSize, setQuranFontSize] = useState(
+    () => localStorage.getItem("quran-font-size") || "2rem"
+  );
+  const quranLineHeight = `${parseFloat(quranFontSize) * 2}rem`;
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressFiredRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -123,6 +129,10 @@ export default function QuranPage() {
   useEffect(() => {
     localStorage.setItem('quranBookmarks', JSON.stringify(bookmarks));
   }, [bookmarks]);
+
+  useEffect(() => {
+    localStorage.setItem("quran-font-size", quranFontSize);
+  }, [quranFontSize]);
 
   const toggleBookmark = (verseId: number) => {
     if (!selectedSurah) return;
@@ -383,6 +393,26 @@ export default function QuranPage() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setQuranFontSize(FONT_SIZES[Math.max(0, FONT_SIZES.indexOf(quranFontSize as typeof FONT_SIZES[number]) - 1)])}
+                  disabled={quranFontSize === FONT_SIZES[0]}
+                  aria-label="Decrease font size"
+                  data-testid="button-font-decrease"
+                >
+                  <span className="text-xs font-bold">A−</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setQuranFontSize(FONT_SIZES[Math.min(FONT_SIZES.length - 1, FONT_SIZES.indexOf(quranFontSize as typeof FONT_SIZES[number]) + 1)])}
+                  disabled={quranFontSize === FONT_SIZES[FONT_SIZES.length - 1]}
+                  aria-label="Increase font size"
+                  data-testid="button-font-increase"
+                >
+                  <span className="text-base font-bold">A+</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={goToPreviousSurah}
                   disabled={selectedSurah === 1}
                   data-testid="button-previous-surah"
@@ -589,8 +619,8 @@ export default function QuranPage() {
                               className="font-arabic text-foreground text-center mb-6 pb-6 border-b border-[hsl(40_30%_85%)] dark:border-[hsl(40_15%_22%)]"
                               dir="rtl"
                               style={{
-                                fontSize: "2rem",
-                                lineHeight: "4rem",
+                                fontSize: quranFontSize,
+                                lineHeight: quranLineHeight,
                               }}
                               data-verse-anchor={bismillahIsVerseOne ? firstVerse.id : undefined}
                               data-testid={`verse-bismillah-${firstVerse.id}`}
@@ -604,8 +634,8 @@ export default function QuranPage() {
                               className="font-arabic text-foreground text-justify"
                               dir="rtl"
                               style={{
-                                fontSize: "2rem",
-                                lineHeight: "4rem",
+                                fontSize: quranFontSize,
+                                lineHeight: quranLineHeight,
                               }}
                               data-testid="text-page-view"
                             >
