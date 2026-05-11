@@ -167,7 +167,7 @@ export function WuduFlashCard() {
               src={card.image}
               alt={card.title}
               className="w-full object-cover rounded-t-2xl"
-              style={{ height: 220 }}
+              style={{ height: "45vh", maxHeight: 360 }}
               draggable={false}
             />
           )}
