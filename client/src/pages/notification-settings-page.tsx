@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { scheduleAllNotifications } from "@/lib/notification-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -88,6 +89,7 @@ export default function NotificationSettingsPage() {
     const updated = { ...localSettings, [field]: value };
     setLocalSettings(updated);
     saveToStorage(updated);
+    scheduleAllNotifications().catch(console.error);
   };
 
   const handleTimeChange = (
@@ -102,6 +104,7 @@ export default function NotificationSettingsPage() {
     field: "dailyHadithTime" | "jummahReminderTime" | "quranReminderTime" | "tasbihReminderTime" | "duaMorningTime" | "duaEveningTime"
   ) => {
     saveToStorage(localSettings);
+    scheduleAllNotifications().catch(console.error);
   };
 
   const handleNumberChange = (field: "quranDailyGoalPages", value: string) => {
@@ -122,6 +125,7 @@ export default function NotificationSettingsPage() {
 
   const handleReminderMinutesBlur = () => {
     saveToStorage(localSettings);
+    scheduleAllNotifications().catch(console.error);
   };
 
   return (

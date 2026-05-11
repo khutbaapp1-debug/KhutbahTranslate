@@ -1,4 +1,5 @@
 import { Capacitor } from "@capacitor/core";
+import { scheduleAllNotifications } from "./notification-service";
 
 const BRAND_TEAL_HEX = "#0F766E";
 
@@ -49,6 +50,8 @@ export async function initNative(): Promise<void> {
     await Keyboard.setResizeMode({ mode: KeyboardResize.Native });
     await Keyboard.setAccessoryBarVisible({ isVisible: false });
   } catch {}
+
+  scheduleAllNotifications().catch(console.error);
 }
 
 /**
