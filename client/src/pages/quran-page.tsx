@@ -606,7 +606,6 @@ export default function QuranPage() {
                               style={{
                                 fontSize: "2rem",
                                 lineHeight: "4rem",
-                                wordSpacing: "0.15em",
                               }}
                               data-testid="text-page-view"
                             >

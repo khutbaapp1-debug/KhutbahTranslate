@@ -85,7 +85,7 @@ export default {
       fontFamily: {
         sans: ["var(--font-sans)"],
         arabic: ["var(--font-arabic)"],
-        quran: ['"Amiri Quran"', 'serif'],
+        quran: ['"KFGQPC Hafs"', 'serif'],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
       },
