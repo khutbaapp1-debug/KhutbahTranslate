@@ -157,7 +157,7 @@ export function WuduFlashCard() {
 
       {/* Card */}
       <div
-        className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm" style={{ height: "85vh", maxHeight: 700 }}
+        className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm" style={{ height: "76vh", maxHeight: 620 }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -167,7 +167,7 @@ export function WuduFlashCard() {
               src={card.image}
               alt={card.title}
               className="w-full object-cover rounded-t-2xl"
-              style={{ height: "70%", flexShrink: 0 }}
+              style={{ height: "65%", flexShrink: 0 }}
               draggable={false}
             />
           )}
