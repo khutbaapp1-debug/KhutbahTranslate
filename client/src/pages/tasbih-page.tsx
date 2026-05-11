@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BottomNav } from "@/components/bottom-nav";
 import { BannerAd } from "@/components/banner-ad";
 import { Card } from "@/components/ui/card";
@@ -19,8 +19,21 @@ const dhikrPresets = [
 ];
 
 export default function TasbihPage() {
-  const [count, setCount] = useState(0);
-  const [selectedDhikr, setSelectedDhikr] = useState(dhikrPresets[0]);
+  const [selectedDhikr, setSelectedDhikr] = useState(() => {
+    const savedId = localStorage.getItem("tasbih-selected-dhikr");
+    return dhikrPresets.find((d) => d.id === savedId) ?? dhikrPresets[0];
+  });
+
+  const [count, setCount] = useState(() => {
+    const savedId = localStorage.getItem("tasbih-selected-dhikr");
+    const dhikr = dhikrPresets.find((d) => d.id === savedId) ?? dhikrPresets[0];
+    const saved = localStorage.getItem(`tasbih-count-${dhikr.id}`);
+    return saved !== null ? parseInt(saved, 10) : 0;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(`tasbih-count-${selectedDhikr.id}`, String(count));
+  }, [count, selectedDhikr.id]);
 
   const handleIncrement = () => {
     setCount((prev) => prev + 1);
@@ -129,8 +142,11 @@ export default function TasbihPage() {
               <button
                 key={dhikr.id}
                 onClick={() => {
+                  localStorage.setItem(`tasbih-count-${selectedDhikr.id}`, String(count));
+                  localStorage.setItem("tasbih-selected-dhikr", dhikr.id);
                   setSelectedDhikr(dhikr);
-                  setCount(0);
+                  const saved = localStorage.getItem(`tasbih-count-${dhikr.id}`);
+                  setCount(saved !== null ? parseInt(saved, 10) : 0);
                 }}
                 className={`p-4 rounded-lg border text-left transition-all hover-elevate ${
                   selectedDhikr.id === dhikr.id
