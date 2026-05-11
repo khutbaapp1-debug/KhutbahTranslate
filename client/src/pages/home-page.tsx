@@ -1,10 +1,14 @@
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, ScrollText, BookOpen, Settings } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { BannerAd } from "@/components/banner-ad";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTheme } from "@/lib/theme-provider";
 import { Sun, Moon as MoonIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import mosqueImage from "@assets/generated_images/Mosque_at_dawn_prayer_time_1c06498c.png";
 import kaabaImage from "@assets/generated_images/Kaaba_aerial_view_Makkah_b34ddcc4.png";
@@ -19,9 +23,51 @@ import khutbahDatabaseImage from "@assets/generated_images/khutbah_database_mosq
 import journalImage from "@assets/generated_images/reflection_journal_writing_setup.png";
 import analyticsImage from "@assets/generated_images/analytics_spiritual_dashboard.png";
 
+interface PrayerTimesWidgetData {
+  fajr: string; dhuhr: string; asr: string; maghrib: string; isha: string;
+  nextPrayer: { nextPrayer: string };
+}
+
 export default function HomePage() {
   const [, setLocation] = useLocation();
   const { theme, toggleTheme } = useTheme();
+
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [calculationMethod] = useState(() => localStorage.getItem("prayerCalculationMethod") || "ISNA");
+  const [asrMethod] = useState(() => localStorage.getItem("asrCalculationMethod") || "standard");
+
+  const { data: prayerData, isLoading: prayerLoading } = useQuery<PrayerTimesWidgetData>({
+    queryKey: coords
+      ? [`/api/prayer-times?latitude=${coords.latitude}&longitude=${coords.longitude}&method=${calculationMethod}&asrMethod=${asrMethod}`]
+      : ["/api/prayer-times"],
+    enabled: coords !== null,
+  });
+
+  useEffect(() => {
+    if (!navigator.geolocation) { setLocationDenied(true); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      () => setLocationDenied(true),
+      { timeout: 8000 }
+    );
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nextPrayerName = prayerData?.nextPrayer?.nextPrayer ?? "";
+  const nextPrayerTimeStr = prayerData && nextPrayerName
+    ? (nextPrayerName === "Fajr" ? prayerData.fajr
+      : nextPrayerName === "Dhuhr" ? prayerData.dhuhr
+      : nextPrayerName === "Asr" ? prayerData.asr
+      : nextPrayerName === "Maghrib" ? prayerData.maghrib
+      : prayerData.isha)
+    : "";
+  const isAfterIsha = nextPrayerName === "Fajr" && widgetIsTimePassed(prayerData?.isha ?? "", currentTime);
 
   const features = [
     {
@@ -222,6 +268,40 @@ export default function HomePage() {
           </p>
         </div>
 
+        {!locationDenied && coords && (
+          <div className="px-6 mb-4">
+            {prayerLoading || !prayerData ? (
+              <Skeleton className="h-16 w-full rounded-xl" />
+            ) : (
+              <Card
+                className="cursor-pointer hover-elevate active-elevate-2 transition-all"
+                onClick={() => setLocation("/prayer")}
+                data-testid="widget-next-prayer"
+              >
+                <div className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <Clock className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground leading-none mb-0.5">Next Prayer</p>
+                      <p className="font-semibold text-foreground leading-none">
+                        {currentTime.getDay() === 5 && nextPrayerName === "Dhuhr" ? "Jummah" : nextPrayerName}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground leading-none mb-0.5">Time remaining</p>
+                    <p className="font-mono font-semibold text-primary leading-none">
+                      {nextPrayerTimeStr ? widgetFormatCountdown(nextPrayerTimeStr, currentTime, isAfterIsha) : "—"}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
+
         {renderAppGridLayout()}
       </main>
 
@@ -229,4 +309,35 @@ export default function HomePage() {
       <BottomNav />
     </div>
   );
+}
+
+function widgetIsTimePassed(timeStr: string, currentTime: Date): boolean {
+  const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return false;
+  let hours = parseInt(match[1]);
+  const minutes = parseInt(match[2]);
+  const period = match[3].toUpperCase();
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+  return currentTime.getHours() * 60 + currentTime.getMinutes() > hours * 60 + minutes;
+}
+
+function widgetFormatCountdown(timeStr: string, currentTime: Date, isTomorrow = false): string {
+  const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return "";
+  let hours = parseInt(match[1]);
+  const minutes = parseInt(match[2]);
+  const period = match[3].toUpperCase();
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+  const target = new Date(currentTime);
+  target.setHours(hours, minutes, 0, 0);
+  if (isTomorrow) target.setDate(target.getDate() + 1);
+  const totalSeconds = Math.max(0, Math.floor((target.getTime() - currentTime.getTime()) / 1000));
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
 }
