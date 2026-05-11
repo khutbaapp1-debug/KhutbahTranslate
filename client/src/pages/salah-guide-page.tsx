@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FlowCard } from "@/components/flow-card";
+import { WheelPicker } from "@/components/wheel-picker";
 import { wuduSteps } from "@/data/wudu-steps";
 import { prayerFlows, type PrayerType } from "@/data/prayer-flows";
 
@@ -181,23 +182,16 @@ export default function SalahGuidePage() {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-2 gap-2">
-              {([
+            <WheelPicker
+              items={[
                 { value: "2rakat",  label: "2 Rakat" },
                 { value: "4rakat",  label: "4 Rakat" },
                 { value: "maghrib", label: "Maghrib (3 Rakat)" },
                 { value: "witr",    label: "Witr (3 Rakat)" },
-              ] as { value: PrayerType; label: string }[]).map(({ value, label }) => (
-                <Button
-                  key={value}
-                  variant={selectedPrayerType === value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedPrayerType(value)}
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
+              ]}
+              selectedValue={selectedPrayerType}
+              onChange={(v) => setSelectedPrayerType(v as PrayerType)}
+            />
             {prayerFlows[selectedPrayerType].map((card) => (
               <FlowCard key={card.number} card={card} />
             ))}

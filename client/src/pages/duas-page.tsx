@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { BottomNav } from "@/components/bottom-nav";
 import { BannerAd } from "@/components/banner-ad";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WheelPicker } from "@/components/wheel-picker";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -92,88 +92,79 @@ export default function DuasPage() {
       </header>
 
       <main className="p-6 max-w-screen-lg mx-auto">
-        <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap mb-6">
-            {duaCategories.map((category) => (
-              <TabsTrigger
-                key={category.id}
-                value={category.id}
-                className="whitespace-nowrap"
-                data-testid={`tab-${category.id}`}
-              >
-                {category.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+        <WheelPicker
+          items={duaCategories.map((c) => ({ label: c.label, value: c.id }))}
+          selectedValue={activeCategory}
+          onChange={setActiveCategory}
+          className="mb-6 -mx-6"
+        />
 
-          {loadingDuas ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredDuas && filteredDuas.length > 0 ? (
-                filteredDuas.map((dua) => (
-                  <Card key={dua.id} className="overflow-hidden" data-testid={`card-dua-${dua.id}`}>
-                    <CardContent className="p-6 space-y-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex gap-2 flex-wrap">
-                          <Badge variant="secondary" className="shrink-0">
-                            {dua.occasion || dua.category}
+        {loadingDuas ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredDuas && filteredDuas.length > 0 ? (
+              filteredDuas.map((dua) => (
+                <Card key={dua.id} className="overflow-hidden" data-testid={`card-dua-${dua.id}`}>
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex gap-2 flex-wrap">
+                        <Badge variant="secondary" className="shrink-0">
+                          {dua.occasion || dua.category}
+                        </Badge>
+                        {dua.reference && (
+                          <Badge variant="outline" className="shrink-0 text-xs">
+                            {dua.reference}
                           </Badge>
-                          {dua.reference && (
-                            <Badge variant="outline" className="shrink-0 text-xs">
-                              {dua.reference}
-                            </Badge>
-                          )}
-                        </div>
-                        {user && (
-                          <button
-                            onClick={() => toggleFavorite(dua.id)}
-                            className="shrink-0 p-2 rounded-full hover-elevate"
-                            data-testid={`button-favorite-${dua.id}`}
-                            disabled={favoriteMutation.isPending}
-                          >
-                            <Heart
-                              className={`w-5 h-5 ${
-                                isFavorited(dua.id)
-                                  ? "fill-primary text-primary"
-                                  : "text-muted-foreground"
-                              }`}
-                            />
-                          </button>
                         )}
                       </div>
-
-                      <div className="space-y-4">
-                        <p
-                          className="text-3xl font-arabic leading-loose text-right"
-                          dir="rtl"
-                          data-testid={`text-arabic-${dua.id}`}
+                      {user && (
+                        <button
+                          onClick={() => toggleFavorite(dua.id)}
+                          className="shrink-0 p-2 rounded-full hover-elevate"
+                          data-testid={`button-favorite-${dua.id}`}
+                          disabled={favoriteMutation.isPending}
                         >
-                          {dua.arabicText}
-                        </p>
+                          <Heart
+                            className={`w-5 h-5 ${
+                              isFavorited(dua.id)
+                                ? "fill-primary text-primary"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        </button>
+                      )}
+                    </div>
 
-                        <p className="text-sm italic text-muted-foreground">
-                          {dua.transliteration}
-                        </p>
+                    <div className="space-y-4">
+                      <p
+                        className="text-3xl font-arabic leading-loose text-right"
+                        dir="rtl"
+                        data-testid={`text-arabic-${dua.id}`}
+                      >
+                        {dua.arabicText}
+                      </p>
 
-                        <p className="text-base leading-relaxed" data-testid={`text-translation-${dua.id}`}>
-                          {dua.translation}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <p className="text-center py-12 text-muted-foreground">
-                  No duas found in this category
-                </p>
-              )}
-            </div>
-          )}
-        </Tabs>
-        
+                      <p className="text-sm italic text-muted-foreground">
+                        {dua.transliteration}
+                      </p>
+
+                      <p className="text-base leading-relaxed" data-testid={`text-translation-${dua.id}`}>
+                        {dua.translation}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <p className="text-center py-12 text-muted-foreground">
+                No duas found in this category
+              </p>
+            )}
+          </div>
+        )}
       </main>
 
       <BannerAd />
