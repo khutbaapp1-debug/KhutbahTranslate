@@ -246,6 +246,62 @@ User tested the app in a real Friday khutbah environment and identified specific
 
 ---
 
+## Persona Usability Audit (May 2026)
+
+Seven user personas were tested against the app to surface friction points. Items below are prioritised by impact.
+
+### The 7 Personas
+
+1. **Aisha** — Convert (24), 6 months in, learning prayer. Uses: Salah Guide, Wudu, Duas
+2. **Yusuf** — Busy professional (35), father of 2. Uses: Prayer Times, Qibla, Tasbih
+3. **Hajja Khadija** — Elder (68), weak vision, basic phone skills. Uses: Quran, Duas, Tasbih
+4. **Bilal** — Hafiz teen (16), fluent Arabic, tech-native. Uses: Quran, Khutbah translation
+5. **Dr. Fatima** — Visually impaired (42), screen reader user. Uses: Prayer Times, Duas, Hadith
+6. **Imran** — Traveller (29), mixed signal, different cities. Uses: Mosque Finder, Qibla, Prayer Times
+7. **Layla** — Reverting senior (58), new Muslim at 55, no Arabic. Uses: Salah Guide, 99 Names, Duas
+
+---
+
+### P0 — Ship with v1 (high impact, broad reach)
+
+- [ ] App-wide font size selector (Small / Default / Large / X-Large) in Settings — applied via CSS root variable to all body text and Arabic. Personas: Khadija, Layla, Fatima, Yusuf. Effort: Medium.
+- [ ] Audio playback for recitations — wudu duas, prayer flow recitations, 99 Names, Tasbih dhikr. Small play button on each card. Use OpenAI TTS one-time generation for static MP3s (no recording needed, ~$1-3 one-time cost). Quran audio already partially available via api.alquran.cloud. Personas: Aisha, Layla, Bilal, Khadija. Effort: Medium (revised down from High given TTS approach).
+- [ ] "Which prayer is which?" intro card on Salah Guide — tappable explainer mapping prayer names to rakat counts (Fajr=2, Dhuhr=4, Asr=4, Maghrib=3, Isha=4, Witr=3). Personas: Aisha, Layla. Effort: Low (~30 min).
+- [ ] Persistent Tasbih state per dhikr type — count survives app restarts and tab switches. Use localStorage keyed by dhikr name. Personas: Yusuf, Khadija. Effort: Low (~1 hour).
+
+### P1 — High value, ship next (v1 or early v1.1)
+
+- [ ] Glossary tooltips for Islamic terms (Qiyam, Jalsah, Sujood, Tasleem, etc.) — tap underlined term for short definition overlay. Personas: Aisha, Layla. Effort: Medium.
+- [ ] High-contrast theme option (third option beyond light/dark) for low-vision users. Personas: Khadija, Fatima. Effort: Low.
+- [ ] "Next prayer in X minutes" widget at top of Home page — live countdown without entering Prayer Times. Personas: Yusuf, Imran. Effort: Low (~1 hour).
+- [ ] Reduce motion preference — disables spinning compass animation, page transitions. Personas: Fatima, Khadija. Effort: Low.
+- [ ] Reciter playback speed control (0.5x / 0.75x / 1x / 1.25x) in Quran reader. Personas: Bilal, Layla. Effort: Low.
+- [ ] Offline caching of prayer times for next 7 days + last-known Qibla direction. Personas: Imran. Effort: Medium.
+- [ ] Timezone-change banner on Prayer Times after detected location change. Personas: Imran. Effort: Low.
+
+### P2 — Nice to have (v1.1)
+
+- [ ] Beginner mode — hides advanced features (Action Points, Khutbah Guidelines) until enabled. Personas: Layla, Aisha. Effort: Low.
+- [ ] Adjustable Arabic vs English text size ratio in Live Translation. Personas: Bilal. Effort: Low.
+- [ ] Save mosque as favourite with quick-access list. Personas: Imran. Effort: Low.
+- [ ] Mushaf style selector (Uthmani / Indo-Pak script). Personas: Bilal. Effort: Medium.
+- [ ] Simple phonetic transliteration toggle (no diacritics, no apostrophes — e.g. "Az-zeem" instead of "'Adheem"). Personas: Layla, Khadija. Effort: Medium.
+- [ ] Improved ARIA on transliteration text + skip-to-content link. Personas: Fatima. Effort: Low.
+- [ ] Bookmark/long-press discoverability hint (one-time tooltip). Personas: Khadija. Effort: Low.
+
+### P3 — Future (v2+)
+
+- [ ] Voice-controlled Tasbih counter ("Subhan'Allah" detection)
+- [ ] Companion smartwatch app for prayer notifications
+- [ ] Hijri calendar widget on Home
+- [ ] Haptic feedback + screen reader announcement for Tasbih counter
+
+### Accessibility notes (legal relevance)
+
+UK Equality Act and US ADA require reasonable digital accessibility accommodations. Quick wins (ARIA labels, color contrast, text alternatives for color-only indicators) are low effort and reduce legal exposure. Full WCAG compliance is v1.1+ territory.
+
+---
+
 ## Launch Checklist
 
 Tracking items required for Google Play and App Store submission.
