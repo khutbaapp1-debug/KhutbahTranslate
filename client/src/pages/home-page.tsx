@@ -163,66 +163,6 @@ export default function HomePage() {
   const khutbahFeature = features[0]; // Live Translation is first
   const otherFeatures = features.slice(1); // All other features
 
-  const renderAppGridLayout = () => (
-    <div className="px-6 space-y-5">
-      {/* Featured: Live Translation - Full Width Banner */}
-      <button
-        onClick={() => setLocation(khutbahFeature.path)}
-        className="w-full hover-elevate active-elevate-2 transition-all"
-        data-testid={`tile-${khutbahFeature.title.toLowerCase().replace(/\s+/g, '-')}`}
-        aria-label={`Open ${khutbahFeature.title}`}
-      >
-        <div
-          className="w-full aspect-[3/1] rounded-2xl bg-cover bg-center relative flex items-center justify-center overflow-hidden"
-          style={{ backgroundImage: `url(${khutbahFeature.backgroundImage})` }}
-          aria-hidden="true"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/40 to-primary/60" aria-hidden="true" />
-          <div className="relative z-10 flex items-center gap-3">
-            <Mic className="w-14 h-14 text-white" />
-            <div className="text-left">
-              <div className="text-xl font-semibold text-white">
-                {khutbahFeature.title}
-              </div>
-              <div className="text-sm text-white/90">
-                {khutbahFeature.description}
-              </div>
-            </div>
-          </div>
-        </div>
-      </button>
-
-      {/* Other Features - 3 Column Grid */}
-      <div className="grid grid-cols-3 gap-5">
-        {otherFeatures.map((feature: any) => {
-          const Icon = feature.icon;
-
-          return (
-            <button
-              key={feature.title}
-              onClick={() => setLocation(feature.path)}
-              className="flex flex-col items-center gap-2 hover-elevate active-elevate-2 transition-all"
-              data-testid={`tile-${feature.title.toLowerCase().replace(/\s+/g, '-')}`}
-              aria-label={`Open ${feature.title}`}
-            >
-              <div
-                className="w-full aspect-square rounded-2xl bg-cover bg-center relative flex items-center justify-center overflow-hidden"
-                style={{ backgroundImage: `url(${feature.backgroundImage})` }}
-                aria-hidden="true"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/40 to-primary/60" aria-hidden="true" />
-                <Icon className="w-12 h-12 text-white relative z-10" />
-              </div>
-              <span className="text-xs font-medium text-center text-foreground leading-tight line-clamp-2 w-full">
-                {feature.title}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-background pb-nav">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg pt-safe border-b border-border">
@@ -268,10 +208,38 @@ export default function HomePage() {
           </p>
         </div>
 
-        {renderAppGridLayout()}
+        {/* Featured: Live Translation - Full Width Banner */}
+        <div className="px-6">
+          <button
+            onClick={() => setLocation(khutbahFeature.path)}
+            className="w-full hover-elevate active-elevate-2 transition-all"
+            data-testid={`tile-${khutbahFeature.title.toLowerCase().replace(/\s+/g, '-')}`}
+            aria-label={`Open ${khutbahFeature.title}`}
+          >
+            <div
+              className="w-full aspect-[3/1] rounded-2xl bg-cover bg-center relative flex items-center justify-center overflow-hidden"
+              style={{ backgroundImage: `url(${khutbahFeature.backgroundImage})` }}
+              aria-hidden="true"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/40 to-primary/60" aria-hidden="true" />
+              <div className="relative z-10 flex items-center gap-3">
+                <Mic className="w-14 h-14 text-white" />
+                <div className="text-left">
+                  <div className="text-xl font-semibold text-white">
+                    {khutbahFeature.title}
+                  </div>
+                  <div className="text-sm text-white/90">
+                    {khutbahFeature.description}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </button>
+        </div>
 
+        {/* Next Prayer Widget */}
         {!locationDenied && coords && (
-          <div className="px-6 mt-6">
+          <div className="px-6 mt-5">
             {prayerLoading || !prayerData ? (
               <Skeleton className="h-16 w-full rounded-xl" />
             ) : (
@@ -303,6 +271,36 @@ export default function HomePage() {
             )}
           </div>
         )}
+
+        {/* Other Features - 3 Column Grid */}
+        <div className="px-6 mt-5">
+          <div className="grid grid-cols-3 gap-5">
+            {otherFeatures.map((feature: any) => {
+              const Icon = feature.icon;
+              return (
+                <button
+                  key={feature.title}
+                  onClick={() => setLocation(feature.path)}
+                  className="flex flex-col items-center gap-2 hover-elevate active-elevate-2 transition-all"
+                  data-testid={`tile-${feature.title.toLowerCase().replace(/\s+/g, '-')}`}
+                  aria-label={`Open ${feature.title}`}
+                >
+                  <div
+                    className="w-full aspect-square rounded-2xl bg-cover bg-center relative flex items-center justify-center overflow-hidden"
+                    style={{ backgroundImage: `url(${feature.backgroundImage})` }}
+                    aria-hidden="true"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/40 to-primary/60" aria-hidden="true" />
+                    <Icon className="w-12 h-12 text-white relative z-10" />
+                  </div>
+                  <span className="text-xs font-medium text-center text-foreground leading-tight line-clamp-2 w-full">
+                    {feature.title}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </main>
 
       <BannerAd />
