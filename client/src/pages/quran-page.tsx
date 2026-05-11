@@ -629,8 +629,7 @@ export default function QuranPage() {
                               {bismillahIsVerseOne && renderMarker(firstVerse)}
                             </div>
                           )}
-                          <div className="arabic-ruled-lines">
-                            <p
+                          <p
                               className="font-arabic text-foreground text-justify"
                               dir="rtl"
                               style={{
@@ -652,7 +651,6 @@ export default function QuranPage() {
                                 );
                               })}
                             </p>
-                          </div>
                         </>
                       );
                     })()}
