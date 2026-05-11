@@ -268,8 +268,10 @@ export default function HomePage() {
           </p>
         </div>
 
+        {renderAppGridLayout()}
+
         {!locationDenied && coords && (
-          <div className="px-6 mb-4">
+          <div className="px-6 mt-6">
             {prayerLoading || !prayerData ? (
               <Skeleton className="h-16 w-full rounded-xl" />
             ) : (
@@ -301,8 +303,6 @@ export default function HomePage() {
             )}
           </div>
         )}
-
-        {renderAppGridLayout()}
       </main>
 
       <BannerAd />
