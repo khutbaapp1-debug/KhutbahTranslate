@@ -253,6 +253,15 @@ export default function PrayerTimesPage() {
       ? startedPrayers[startedPrayers.length - 1]
       : undefined;
 
+  const nextPrayerName = prayerData?.nextPrayer?.nextPrayer;
+  const nextPrayerTimeStr = prayerData && nextPrayerName
+    ? (nextPrayerName === "Fajr" ? prayerData.fajr :
+       nextPrayerName === "Dhuhr" ? prayerData.dhuhr :
+       nextPrayerName === "Asr" ? prayerData.asr :
+       nextPrayerName === "Maghrib" ? prayerData.maghrib :
+       prayerData.isha)
+    : "";
+
   return (
     <div className="min-h-screen bg-background pb-nav">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg pt-safe border-b border-border">
@@ -379,7 +388,7 @@ export default function PrayerTimesPage() {
                           <span className="font-medium text-lg block">{prayer.name}</span>
                           {prayer.isNext && prayerData.nextPrayer && (
                             <span className="text-xs text-muted-foreground">
-                              {prayerData.nextPrayer.timeRemaining} remaining
+                              {formatCountdown(nextPrayerTimeStr, currentTime, isAfterIsha && nextPrayerName === "Fajr")} remaining
                             </span>
                           )}
                         </div>
@@ -420,16 +429,36 @@ export default function PrayerTimesPage() {
 function isTimePassed(timeStr: string, currentTime: Date): boolean {
   const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/);
   if (!match) return false;
-  
+
   let hours = parseInt(match[1]);
   const minutes = parseInt(match[2]);
   const period = match[3];
-  
+
   if (period === "PM" && hours !== 12) hours += 12;
   if (period === "AM" && hours === 12) hours = 0;
-  
+
   const prayerMinutes = hours * 60 + minutes;
   const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-  
+
   return currentMinutes > prayerMinutes;
+}
+
+function formatCountdown(prayerTimeStr: string, currentTime: Date, isTomorrow: boolean = false): string {
+  const match = prayerTimeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return "";
+  let hours = parseInt(match[1]);
+  const minutes = parseInt(match[2]);
+  const period = match[3].toUpperCase();
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+  const target = new Date(currentTime);
+  target.setHours(hours, minutes, 0, 0);
+  if (isTomorrow) target.setDate(target.getDate() + 1);
+  const totalSeconds = Math.max(0, Math.floor((target.getTime() - currentTime.getTime()) / 1000));
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
 }
