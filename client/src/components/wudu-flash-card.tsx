@@ -157,7 +157,7 @@ export function WuduFlashCard() {
 
       {/* Card */}
       <div
-        className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm" style={{ height: "76vh", maxHeight: 620 }}
+        className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm" style={{ height: "calc(100dvh - 228px)", minHeight: 400 }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -172,7 +172,7 @@ export function WuduFlashCard() {
             />
           )}
 
-          <div className={`p-5 space-y-3 flex-1 ${!card.image ? "pt-7" : ""}`}>
+          <div className={`p-5 space-y-3 flex-1 overflow-y-auto ${!card.image ? "pt-7" : ""}`}>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Step {card.id} of {CARDS.length}
             </p>
