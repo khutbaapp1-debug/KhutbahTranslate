@@ -29,6 +29,7 @@ import SalahGuidePage from "@/pages/salah-guide-page";
 import AnalyticsPage from "@/pages/analytics-page";
 import ProfilePage from "@/pages/profile-page";
 import NotificationSettingsPage from "@/pages/notification-settings-page";
+import SettingsPage from "@/pages/settings-page";
 import LandingPage from "@/pages/landing-page";
 import PrivacyPage from "@/pages/privacy-page";
 import TermsPage from "@/pages/terms-page";
@@ -67,6 +68,7 @@ function Router() {
       
       <Route path="/profile" component={ProfilePage} />
       <Route path="/notifications" component={NotificationSettingsPage} />
+      <Route path="/settings" component={SettingsPage} />
       
       <Route component={NotFound} />
     </Switch>

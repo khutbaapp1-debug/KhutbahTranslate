@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, ScrollText, BookOpen } from "lucide-react";
+import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, ScrollText, BookOpen, Settings } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { BannerAd } from "@/components/banner-ad";
 import { Button } from "@/components/ui/button";
@@ -188,6 +188,14 @@ export default function HomePage() {
             <p className="text-xs text-muted-foreground">Your Islamic Companion</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocation("/settings")}
+              data-testid="button-settings"
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
