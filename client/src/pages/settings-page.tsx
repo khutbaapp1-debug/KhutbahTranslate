@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Settings, Bell } from "lucide-react";
+import { useTheme } from "@/lib/theme-provider";
 
 const FONT_SIZE_OPTIONS = [
   { label: "Small",   value: "14px" },
@@ -37,6 +38,7 @@ const PRAYER_METHODS = [
 
 export default function SettingsPage() {
   const [, setLocation] = useLocation();
+  const { theme, setTheme } = useTheme();
   const [fontSize, setFontSize] = useState("16px");
   const [reduceMotion, setReduceMotion] = useState(false);
   const [prayerMethod, setPrayerMethod] = useState("ISNA");
@@ -126,6 +128,25 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>Theme</Label>
+              <div className="flex gap-2">
+                {(["light", "dark", "high-contrast"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTheme(t)}
+                    className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                      theme === t
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background text-foreground border-border hover:bg-muted"
+                    }`}
+                  >
+                    {t === "light" ? "Light" : t === "dark" ? "Dark" : "High Contrast"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <Label htmlFor="reduce-motion">Reduce Motion</Label>

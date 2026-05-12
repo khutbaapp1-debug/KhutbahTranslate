@@ -168,6 +168,45 @@
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
+.high-contrast {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 7%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 7%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 60 100% 50%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 80%;
+  --accent: 0 0% 20%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 100% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 100%;
+  --input: 0 0% 15%;
+  --ring: 60 100% 50%;
+  --primary-border: 0 0% 100%;
+  --secondary-border: 0 0% 80%;
+  --muted-border: 0 0% 60%;
+  --button-outline: 0 0% 100%;
+  --badge-outline: 0 0% 100%;
+  --sidebar: 0 0% 5%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 60 100% 50%;
+  --sidebar-primary-foreground: 0 0% 0%;
+  --sidebar-accent: 0 0% 15%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 0 0% 100%;
+  --sidebar-ring: 60 100% 50%;
+  --popover-border: 0 0% 100%;
+  --elevate-1: 0 0% 15%;
+  --elevate-2: 0 0% 20%;
+  --opaque-button-border-intensity: 1;
+}
+
 @layer base {
   * {
     @apply border-border;
