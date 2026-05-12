@@ -17,16 +17,8 @@ import DuasPage from "@/pages/duas-page";
 import DailyHadithPage from "@/pages/daily-hadith-page";
 import NamesOfAllahPage from "@/pages/names-of-allah-page";
 import KhutbahPage from "@/pages/khutbah-page";
-import SermonHistoryPage from "@/pages/sermon-history-page";
 import MosqueFinderPage from "@/pages/mosque-finder-page";
-import RamadanPage from "@/pages/ramadan-page";
-import HijriCalendarPage from "@/pages/hijri-calendar-page";
-import KhutbahDatabasePage from "@/pages/khutbah-database-page";
-import ActionPointsPage from "@/pages/action-points-page";
-import KhutbahGuidelinesPage from "@/pages/khutbah-guidelines-page";
-import PrayerTrackerPage from "@/pages/prayer-tracker-page";
 import SalahGuidePage from "@/pages/salah-guide-page";
-import AnalyticsPage from "@/pages/analytics-page";
 import ProfilePage from "@/pages/profile-page";
 import NotificationSettingsPage from "@/pages/notification-settings-page";
 import SettingsPage from "@/pages/settings-page";
@@ -53,18 +45,10 @@ function Router() {
       <Route path="/names-of-allah" component={NamesOfAllahPage} />
       
       <Route path="/khutbah" component={KhutbahPage} />
-      <Route path="/sermons" component={SermonHistoryPage} />
-      <Route path="/khutbah-database" component={KhutbahDatabasePage} />
-      
+
       <Route path="/mosques" component={MosqueFinderPage} />
-      <Route path="/ramadan" component={RamadanPage} />
-      <Route path="/calendar" component={HijriCalendarPage} />
-      
-      <Route path="/action-points" component={ActionPointsPage} />
-      <Route path="/guidelines" component={KhutbahGuidelinesPage} />
-      <Route path="/prayer-tracker" component={PrayerTrackerPage} />
+
       <Route path="/salah-guide" component={SalahGuidePage} />
-      <Route path="/analytics" component={AnalyticsPage} />
       
       <Route path="/profile" component={ProfilePage} />
       <Route path="/notifications" component={NotificationSettingsPage} />

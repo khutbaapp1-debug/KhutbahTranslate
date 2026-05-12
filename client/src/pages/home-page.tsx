@@ -14,14 +14,10 @@ import mosqueImage from "@assets/generated_images/Mosque_at_dawn_prayer_time_1c0
 import kaabaImage from "@assets/generated_images/Kaaba_aerial_view_Makkah_b34ddcc4.png";
 import quranImage from "@assets/generated_images/Open_Quran_with_calligraphy_c7ef6e94.png";
 import tasbihImage from "@assets/generated_images/Prayer_beads_tasbih_closeup_5696650d.png";
-import ramadanImage from "@assets/generated_images/Ramadan_crescent_moon_lanterns_7acbaea8.png";
 import khutbahImage from "@assets/generated_images/mosque_microphone_audio_setup.png";
 import duasImage from "@assets/generated_images/hands_in_dua_position.png";
 import mosqueFinderImage from "@assets/generated_images/mosque_aerial_city_view.png";
 import namesOfAllahImage from "@assets/generated_images/islamic_calligraphy_allah_names.png";
-import khutbahDatabaseImage from "@assets/generated_images/khutbah_database_mosque_interior.png";
-import journalImage from "@assets/generated_images/reflection_journal_writing_setup.png";
-import analyticsImage from "@assets/generated_images/analytics_spiritual_dashboard.png";
 
 interface PrayerTimesWidgetData {
   fajr: string; dhuhr: string; asr: string; maghrib: string; isha: string;
