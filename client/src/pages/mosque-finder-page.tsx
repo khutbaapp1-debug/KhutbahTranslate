@@ -185,7 +185,7 @@ export default function MosqueFinderPage() {
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a>'
-                url={`https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=${import.meta.env.VITE_MAPTILER_KEY}`}
+                url="https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=sV3TRsuF5H77zRZ3E9jq"
               />
               
               {/* User location marker */}
