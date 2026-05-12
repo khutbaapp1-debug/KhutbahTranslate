@@ -509,7 +509,7 @@ export default function QuranPage() {
               </div>
             ) : viewMode === "page" ? (
               <>
-                <Card className="bg-[hsl(40_30%_96%)] dark:bg-[hsl(40_15%_12%)] border-[hsl(40_30%_85%)] dark:border-[hsl(40_15%_22%)]">
+                <Card className="quran-reading-card bg-[hsl(40_30%_96%)] dark:bg-[hsl(40_15%_12%)] border-[hsl(40_30%_85%)] dark:border-[hsl(40_15%_22%)]">
                   <CardContent className="p-6 sm:p-10">
                     {(() => {
                       const bismillahText = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
@@ -616,7 +616,7 @@ export default function QuranPage() {
                         <>
                           {firstIsBismillah && (
                             <div
-                              className="font-arabic text-foreground text-center mb-6 pb-6 border-b border-[hsl(40_30%_85%)] dark:border-[hsl(40_15%_22%)]"
+                              className="quran-reading-card font-arabic text-foreground text-center mb-6 pb-6 border-b border-[hsl(40_30%_85%)] dark:border-[hsl(40_15%_22%)]"
                               dir="rtl"
                               style={{
                                 fontSize: quranFontSize,

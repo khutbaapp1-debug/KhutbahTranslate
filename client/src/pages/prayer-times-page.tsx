@@ -365,7 +365,7 @@ export default function PrayerTimesPage() {
                       key={prayer.name}
                       className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
                         isCurrent
-                          ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                          ? "prayer-current-row border-green-500 bg-green-50 dark:bg-green-950/30"
                           : prayer.isNext
                           ? "border-primary bg-accent"
                           : prayer.isPassed
@@ -377,7 +377,7 @@ export default function PrayerTimesPage() {
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                           isCurrent
-                            ? "bg-green-500 text-white"
+                            ? "prayer-current-icon bg-green-500 text-white"
                             : prayer.isNext 
                             ? "bg-primary text-primary-foreground" 
                             : "bg-muted"
@@ -398,7 +398,7 @@ export default function PrayerTimesPage() {
                           {prayer.time}
                         </span>
                         {isCurrent && (
-                          <Badge className="bg-green-500 hover:bg-green-600 text-white text-xs">
+                          <Badge className="now-badge bg-green-500 hover:bg-green-600 text-white text-xs">
                             Now
                           </Badge>
                         )}

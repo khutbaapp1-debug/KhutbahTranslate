@@ -191,8 +191,8 @@
   --primary-border: 0 0% 100%;
   --secondary-border: 0 0% 80%;
   --muted-border: 0 0% 60%;
-  --button-outline: 0 0% 100%;
-  --badge-outline: 0 0% 100%;
+  --button-outline: rgba(255, 255, 255, 1);
+  --badge-outline: rgba(255, 255, 255, 1);
   --sidebar: 0 0% 5%;
   --sidebar-foreground: 0 0% 100%;
   --sidebar-primary: 60 100% 50%;
@@ -202,9 +202,25 @@
   --sidebar-border: 0 0% 100%;
   --sidebar-ring: 60 100% 50%;
   --popover-border: 0 0% 100%;
-  --elevate-1: 0 0% 15%;
-  --elevate-2: 0 0% 20%;
+  --elevate-1: rgba(255, 255, 255, 0.08);
+  --elevate-2: rgba(255, 255, 255, 0.12);
   --opaque-button-border-intensity: 1;
+}
+
+.high-contrast .quran-reading-card {
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+.high-contrast .prayer-current-row {
+  background-color: transparent !important;
+  border-color: hsl(var(--primary)) !important;
+}
+
+.high-contrast .now-badge,
+.high-contrast .prayer-current-icon {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
 }
 
 @layer base {
