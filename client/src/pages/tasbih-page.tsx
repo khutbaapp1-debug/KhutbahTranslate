@@ -62,11 +62,19 @@ export default function TasbihPage() {
       if (allComplete) {
         setShowCompletionBurst(true);
         setTimeout(() => setShowCompletionBurst(false), 700);
+        setTimeout(() => {
+          dhikrPresets.forEach((d) => localStorage.removeItem(`tasbih-count-${d.id}`));
+          localStorage.setItem("tasbih-selected-dhikr", dhikrPresets[0].id);
+          if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+          setSelectedDhikr(dhikrPresets[0]);
+          setCount(0);
+        }, 2000);
       }
     }
   };
 
   const handleReset = () => {
+    localStorage.removeItem(`tasbih-count-${selectedDhikr.id}`);
     setCount(0);
   };
 
