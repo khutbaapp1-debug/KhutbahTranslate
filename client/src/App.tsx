@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { AdsLoader } from "@/components/ads-loader";
+import { BannerAd } from "@/components/banner-ad";
 import { useEffect } from "react";
 import { initNative } from "@/lib/native-init";
 
@@ -70,6 +71,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <AdsLoader />
+          <BannerAd />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

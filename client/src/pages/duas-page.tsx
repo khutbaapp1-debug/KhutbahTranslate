@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { BottomNav } from "@/components/bottom-nav";
-import { BannerAd } from "@/components/banner-ad";
 import { Card, CardContent } from "@/components/ui/card";
 import { WheelPicker } from "@/components/wheel-picker";
 import { Badge } from "@/components/ui/badge";
@@ -167,7 +166,6 @@ export default function DuasPage() {
         )}
       </main>
 
-      <BannerAd />
       <BottomNav />
     </div>
   );

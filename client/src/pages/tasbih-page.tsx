@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { BottomNav } from "@/components/bottom-nav";
-import { BannerAd } from "@/components/banner-ad";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -236,7 +235,6 @@ export default function TasbihPage() {
         </Card>
       </main>
 
-      <BannerAd />
       <BottomNav />
     </div>
   );

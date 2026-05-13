@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Info, BookOpen, ChevronDown } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
-import { BannerAd } from "@/components/banner-ad";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -251,7 +250,6 @@ export default function SalahGuidePage() {
         </Tabs>
       </main>
 
-      <BannerAd />
       <BottomNav />
 
       <Dialog open={showDisclaimer} onOpenChange={setShowDisclaimer}>

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, ScrollText, BookOpen, Settings } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
-import { BannerAd } from "@/components/banner-ad";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -299,7 +298,6 @@ export default function HomePage() {
         </div>
       </main>
 
-      <BannerAd />
       <BottomNav />
     </div>
   );

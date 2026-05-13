@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { isNativeApp, showBannerAd, removeBannerAd } from "@/lib/mobile-ads";
+import { isNativeApp, showBannerAd } from "@/lib/mobile-ads";
+
+let bannerInitialized = false;
 
 function readSafeAreaBottom(): number {
   const el = document.createElement("div");
@@ -25,6 +27,8 @@ export function BannerAd() {
     async function setup() {
       const margin = 64 + readSafeAreaBottom();
       try {
+        if (bannerInitialized) return;
+        bannerInitialized = true;
         const { AdMob, BannerAdPluginEvents } = await import(
           "@capacitor-community/admob"
         );
@@ -49,7 +53,6 @@ export function BannerAd() {
     return () => {
       cancelled = true;
       listenerHandle?.remove();
-      removeBannerAd().catch(() => {});
     };
   }, [native]);
 
