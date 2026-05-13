@@ -33,11 +33,12 @@ export async function initNative(): Promise<void> {
   // Android hardware back button: go back through history, exit on home page
   try {
     const { App } = await import("@capacitor/app");
-    App.addListener("backButton", ({ canGoBack }) => {
-      if (canGoBack) {
-        window.history.back();
-      } else {
+    App.addListener("backButton", () => {
+      const currentPath = window.location.pathname;
+      if (currentPath === "/" || currentPath === "") {
         App.exitApp();
+      } else {
+        window.history.back();
       }
     });
   } catch (err) {
