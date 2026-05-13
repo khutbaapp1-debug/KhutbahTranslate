@@ -42,7 +42,7 @@ export function WheelPicker({ items, selectedValue, onChange, className }: Wheel
         if (d < minDist) { minDist = d; closest = i; }
       });
       onChange(items[closest].value);
-    }, 80);
+    }, 150);
   }
 
   return (
@@ -69,6 +69,7 @@ export function WheelPicker({ items, selectedValue, onChange, className }: Wheel
               style={{
                 flex: "0 0 auto",
                 scrollSnapAlign: "center",
+                scrollSnapStop: "always",
                 opacity,
                 transform: `scale(${scale})`,
                 transition: "opacity 200ms ease, transform 200ms ease",
