@@ -348,7 +348,13 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
     } catch (err: any) {
       console.error("Error starting recording:", err);
       stopMediaTracks();
-      setError(err.message || "Failed to start recording. Please allow microphone access.");
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError('Microphone access was denied. Please go to your device Settings → App Permissions → Khutbah Companion and enable the microphone.');
+      } else if (err.name === 'NotFoundError') {
+        setError('No microphone found on this device.');
+      } else {
+        setError('Failed to start recording. Please check your microphone and try again.');
+      }
     }
   }, [startTimer, startCountdownTimer, stopMediaTracks, processChunk]);
 

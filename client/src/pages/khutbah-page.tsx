@@ -49,6 +49,18 @@ export default function KhutbahPage() {
   } = useAudioRecorder({});
 
   useEffect(() => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then((stream) => {
+          stream.getTracks().forEach(track => track.stop());
+        })
+        .catch((err) => {
+          console.warn('Microphone permission not granted:', err.name);
+        });
+    }
+  }, []);
+
+  useEffect(() => {
     if (!localStorage.getItem(DISCLAIMER_KEY)) {
       setShowDisclaimer(true);
     }
