@@ -21,6 +21,7 @@ function injectScript() {
   s.id = SCRIPT_ID;
   s.async = true;
   s.crossOrigin = "anonymous";
+  s.dataset.adPersonalizationDisabled = "true";
   s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
   document.head.appendChild(s);
 }
