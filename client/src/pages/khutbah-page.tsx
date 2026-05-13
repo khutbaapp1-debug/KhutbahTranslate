@@ -135,7 +135,7 @@ export default function KhutbahPage() {
         </div>
       </header>
 
-      <main className="flex flex-col h-[calc(100vh-200px)]">
+      <main className="flex flex-col h-[calc(100vh-280px)]">
         {translations.length === 0 && !isRecording ? (
           <div className="flex-1 flex items-center justify-center p-6">
             <Card className="max-w-md w-full">
@@ -196,7 +196,7 @@ export default function KhutbahPage() {
           </ScrollArea>
         )}
 
-        <div className="sticky bottom-0 bg-background/95 backdrop-blur-lg border-t border-border p-6">
+        <div className="sticky bottom-0 bg-background/95 backdrop-blur-lg border-t border-border p-4">
           <div className="max-w-3xl mx-auto">
             {(error || processingError) && (
               <Alert variant="destructive" className="mb-4">
@@ -205,7 +205,7 @@ export default function KhutbahPage() {
               </Alert>
             )}
             
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-3">
               {/* Timer and Countdown */}
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center gap-2 text-sm">
