@@ -15,7 +15,7 @@ import { Capacitor } from "@capacitor/core";
  *   https://developers.google.com/admob/ios/test-ads
  */
 
-const USE_TEST_ADS = false;
+const USE_TEST_ADS = true;
 
 const TEST_BANNER_ANDROID = "ca-app-pub-3940256099942544/6300978111";
 const TEST_BANNER_IOS = "ca-app-pub-3940256099942544/2934735716";
