@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { encodeWAV } from "@/utils/wav-encoder";
+import { isNativeApp } from '@/lib/mobile-ads';
 
 export interface TranslationSegment {
   id: number;
@@ -349,7 +350,11 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
       console.error("Error starting recording:", err);
       stopMediaTracks();
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setError('Microphone access was denied. Please go to your device Settings → App Permissions → Khutbah Companion and enable the microphone.');
+        setError(
+          isNativeApp()
+            ? 'Microphone access is blocked. Go to Settings → Apps → Khutbah Companion → Permissions → Microphone → Allow while using app.'
+            : 'Microphone access was denied. Please allow microphone access in your browser settings.'
+        );
       } else if (err.name === 'NotFoundError') {
         setError('No microphone found on this device.');
       } else {

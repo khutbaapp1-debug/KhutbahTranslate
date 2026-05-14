@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { Capacitor } from '@capacitor/core';
+import { isNativeApp } from '@/lib/mobile-ads';
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,14 +51,24 @@ export default function KhutbahPage() {
   } = useAudioRecorder({});
 
   useEffect(() => {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then((stream) => {
-          stream.getTracks().forEach(track => track.stop());
+    if (isNativeApp()) {
+      navigator.permissions.query({ name: 'microphone' as PermissionName })
+        .then((result) => {
+          if (result.state === 'prompt') {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+              .then((stream) => stream.getTracks().forEach(track => track.stop()))
+              .catch(() => {});
+          } else if (result.state === 'denied') {
+            setProcessingError(
+              'Microphone access is blocked. Please go to Settings → Apps → Khutbah Companion → Permissions and enable the microphone.'
+            );
+          }
         })
-        .catch((err) => {
-          console.warn('Microphone permission not granted:', err.name);
-        });
+        .catch(() => {});
+    } else if (navigator.mediaDevices?.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then((stream) => stream.getTracks().forEach(track => track.stop()))
+        .catch((err) => console.warn('Microphone permission not granted:', err.name));
     }
   }, []);
 
