@@ -147,7 +147,7 @@ export default function KhutbahPage() {
         </div>
       </header>
 
-      <main className="flex flex-col h-[calc(100vh-280px)]">
+      <main className="flex flex-col h-[calc(100vh-216px)]">
         {translations.length === 0 && !isRecording ? (
           <div className="flex-1 flex items-center justify-center p-6">
             <Card className="max-w-md w-full">
@@ -208,7 +208,7 @@ export default function KhutbahPage() {
           </ScrollArea>
         )}
 
-        <div className="sticky bottom-0 bg-background/95 backdrop-blur-lg border-t border-border p-4">
+        <div className="sticky bottom-16 bg-background/95 backdrop-blur-lg border-t border-border p-4">
           <div className="max-w-3xl mx-auto">
             {(error || processingError) && (
               <Alert variant="destructive" className="mb-4">

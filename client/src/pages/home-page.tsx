@@ -27,7 +27,10 @@ export default function HomePage() {
   const [, setLocation] = useLocation();
   const { theme, toggleTheme } = useTheme();
 
-  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(() => {
+    const cached = localStorage.getItem('cached-coords');
+    return cached ? JSON.parse(cached) : null;
+  });
   const [locationDenied, setLocationDenied] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [calculationMethod] = useState(() => localStorage.getItem("prayerCalculationMethod") || "ISNA");
@@ -43,7 +46,11 @@ export default function HomePage() {
   useEffect(() => {
     if (!navigator.geolocation) { setLocationDenied(true); return; }
     navigator.geolocation.getCurrentPosition(
-      (pos) => setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      (pos) => {
+        const c = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+        localStorage.setItem('cached-coords', JSON.stringify(c));
+        setCoords(c);
+      },
       () => setLocationDenied(true),
       { timeout: 8000 }
     );

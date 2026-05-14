@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { isNativeApp, showBannerAd } from "@/lib/mobile-ads";
+import { setBannerHeight as publishBannerHeight } from "@/lib/banner-height";
 
 let bannerInitialized = false;
 
@@ -25,7 +26,7 @@ export function BannerAd() {
     let listenerHandle: { remove: () => unknown } | null = null;
 
     async function setup() {
-      const margin = 64 + readSafeAreaBottom();
+      const margin = readSafeAreaBottom();
       try {
         if (bannerInitialized) return;
         bannerInitialized = true;
@@ -35,7 +36,7 @@ export function BannerAd() {
         if (cancelled) return;
         const handle = await AdMob.addListener(
           BannerAdPluginEvents.SizeChanged,
-          (size) => setBannerHeight(size.height),
+          (size) => { setBannerHeight(size.height); publishBannerHeight(size.height); },
         );
         if (cancelled) {
           handle.remove();
@@ -58,5 +59,5 @@ export function BannerAd() {
 
   if (!native) return null;
 
-  return <div style={{ height: bannerHeight }} aria-hidden="true" />;
+  return <div style={{ height: bannerHeight + 64 }} aria-hidden="true" />;
 }

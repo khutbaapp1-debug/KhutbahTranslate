@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { isNativeApp } from "@/lib/mobile-ads";
+import { scheduleAllNotifications } from "@/lib/notification-service";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -171,6 +173,11 @@ export default function PrayerTimesPage() {
 
     return () => clearInterval(timer);
   }, [toast]);
+
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    scheduleAllNotifications().catch(console.error);
+  }, []);
 
   if (error) {
     return (

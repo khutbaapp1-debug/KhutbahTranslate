@@ -1,5 +1,8 @@
+import { useState, useEffect } from "react";
 import { Home, Book, Clock, Circle, Heart } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { isNativeApp } from "@/lib/mobile-ads";
+import { onBannerHeight } from "@/lib/banner-height";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
@@ -11,9 +14,15 @@ const navItems = [
 
 export function BottomNav() {
   const [location] = useLocation();
+  const [adHeight, setAdHeight] = useState(50);
+
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    return onBannerHeight(setAdHeight);
+  }, []);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border pb-safe">
+    <nav className="fixed left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border pb-safe" style={{ bottom: `${adHeight}px`, '--bottom-nav-height': '64px' } as React.CSSProperties}>
       <div className="flex items-center justify-around h-16 max-w-screen-xl mx-auto px-4">
         {navItems.map((item) => {
           const Icon = item.icon;
