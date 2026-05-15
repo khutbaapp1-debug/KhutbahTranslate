@@ -26,7 +26,6 @@ export function BannerAd() {
     let listenerHandle: { remove: () => unknown } | null = null;
 
     async function setup() {
-      const margin = readSafeAreaBottom();
       try {
         if (bannerInitialized) return;
         bannerInitialized = true;
@@ -36,14 +35,18 @@ export function BannerAd() {
         if (cancelled) return;
         const handle = await AdMob.addListener(
           BannerAdPluginEvents.SizeChanged,
-          (size) => { setBannerHeight(size.height); publishBannerHeight(size.height); },
+          (size) => {
+            setBannerHeight(size.height);
+            publishBannerHeight(size.height);
+            document.documentElement.style.setProperty('--banner-height', `${size.height}px`);
+          },
         );
         if (cancelled) {
           handle.remove();
           return;
         }
         listenerHandle = handle;
-        await showBannerAd(margin);
+        await showBannerAd(readSafeAreaBottom());
       } catch {
         // ad failed — spacer stays 0, page layout unaffected
       }
@@ -59,5 +62,5 @@ export function BannerAd() {
 
   if (!native) return null;
 
-  return <div style={{ height: bannerHeight + 64 }} aria-hidden="true" />;
+  return <div style={{ height: bannerHeight > 0 ? bannerHeight : 0 }} aria-hidden="true" />;
 }

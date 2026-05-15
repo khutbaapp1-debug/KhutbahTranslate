@@ -81,7 +81,7 @@ const transcribeUpload = multer({
 // Rate limiters applied only to /api/transcribe
 const transcribeRateLimitPerMinute = rateLimit({
   windowMs: 60 * 1000,
-  max: 60,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later." },
@@ -89,17 +89,19 @@ const transcribeRateLimitPerMinute = rateLimit({
 
 const transcribeRateLimitPerDay = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
-  max: 2000,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Daily request limit exceeded, please try again tomorrow." },
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup Replit Auth routes: /api/login, /api/logout, /api/callback
-  await setupAuth(app);
-  // Register /api/auth/user endpoint
-  registerAuthRoutes(app);
+  if (process.env.ENABLE_AUTH === 'true') {
+    // Setup Replit Auth routes: /api/login, /api/logout, /api/callback
+    await setupAuth(app);
+    // Register /api/auth/user endpoint
+    registerAuthRoutes(app);
+  }
 
   // DISABLED: requires auth — hidden in v1 (anonymous release)
   /* ============ SERMON ROUTES ============
@@ -110,7 +112,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sermons = await storage.getUserSermons(req.dbUser.id);
       res.json(sermons);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -121,7 +124,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sermons = await storage.getPublicSermons(limit);
       res.json(sermons);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -138,7 +142,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(sermon);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -152,7 +157,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transcripts = await storage.getSermonTranscripts(req.params.id);
       res.json(transcripts);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -194,7 +200,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteSermon(req.params.id);
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -234,7 +241,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const usage = await getUserUsageInfo(req.dbUser.id);
       res.json(usage);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -296,7 +304,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         duration: transcription.duration,
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -318,7 +327,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const actionPoints = await generateActionPoints(fullContent, sermon.title);
       res.json({ actionPoints });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -336,7 +346,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const summary = await generateSermonSummary(fullContent);
       res.json(summary);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -354,7 +365,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : await storage.getUserNotes(req.dbUser.id);
       res.json(notes);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -378,7 +390,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateNote(req.params.id, req.body.content);
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -388,7 +401,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteNote(req.params.id);
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -403,7 +417,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analytics = await storage.getUserAnalytics(req.dbUser.id);
       res.json(analytics || {});
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -413,7 +428,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserAnalytics(req.dbUser.id, req.body);
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -428,7 +444,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const prefs = await storage.getUserPreferences(req.dbUser.id);
       res.json(prefs || {});
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -438,7 +455,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserPreferences(req.dbUser.id, req.body);
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -457,7 +475,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(sql`${khutbahGuidelines.createdAt} DESC`);
       res.json(guidelines);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -474,7 +493,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ));
       res.json(guidelines[0] || null);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -575,7 +595,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -594,7 +615,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(sql`${missedPrayers.dateMissed} DESC`);
       res.json(prayers);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -622,7 +644,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         makeupPerDay: 1,
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -712,7 +735,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -754,7 +778,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         asrMethod: asrMethod === 2 ? 'hanafi' : 'standard',
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -855,7 +880,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Returning ${mosques.length} mosques after processing`);
       res.json(mosques);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -885,7 +911,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       surahsListCache.data = surahs;
       res.json(surahs);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -935,7 +962,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       surahDetailsCache.set(surahId, surah);
       res.json(surah);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -957,7 +985,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allDuas = await db.select().from(duas);
       res.json(allDuas);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -987,7 +1016,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(favorites);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -1017,7 +1047,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(favorite);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -1036,7 +1067,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(204).send();
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -1077,7 +1109,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ ...dailyHadith, isFavorited });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -1113,7 +1146,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(allHadiths.map(h => ({ ...h, isFavorited: false })));
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -1146,7 +1180,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(favorites);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -1184,7 +1219,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ isFavorited: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -1214,7 +1250,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(prefs);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -1305,7 +1342,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -1458,7 +1496,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         remainingSlots: 15 - complimentaryUsers.length
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -1481,7 +1520,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         estimatedCostSavings: `$${(cacheStats.totalHits * 0.0001).toFixed(4)}` // Rough estimate
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 
@@ -1500,7 +1540,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phrasesAdded: count
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
     }
   });
 

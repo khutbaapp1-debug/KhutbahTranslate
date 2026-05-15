@@ -21,6 +21,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.remove("light", "dark", "high-contrast");
     root.classList.add(theme);
     localStorage.setItem("theme", theme);
+    // Update status bar icon color to match theme
+    if (typeof window !== 'undefined') {
+      import('@capacitor/core').then(({ Capacitor }) => {
+        if (Capacitor.isNativePlatform()) {
+          import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
+            const isDark = theme === 'dark';
+            StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark }).catch(() => {});
+          }).catch(() => {});
+        }
+      }).catch(() => {});
+    }
   }, [theme]);
 
   const toggleTheme = () => {

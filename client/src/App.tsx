@@ -69,10 +69,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <Toaster />
-          <AdsLoader />
-          <BannerAd />
-          <Router />
+          <div style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+            <Toaster />
+            <AdsLoader />
+            <Router />
+            <BannerAd />
+          </div>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

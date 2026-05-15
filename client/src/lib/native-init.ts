@@ -9,14 +9,13 @@ const BRAND_TEAL_HEX = "#0F766E";
 export async function initNative(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
 
-  // Status bar: teal background, light (white) icons
+  // Status bar: draw behind content, set background color on Android
   try {
-    const { StatusBar, Style } = await import("@capacitor/status-bar");
-    await StatusBar.setStyle({ style: Style.Dark });
+    const { StatusBar } = await import("@capacitor/status-bar");
     if (Capacitor.getPlatform() === "android") {
       await StatusBar.setBackgroundColor({ color: BRAND_TEAL_HEX });
     }
-    await StatusBar.setOverlaysWebView({ overlay: false });
+    await StatusBar.setOverlaysWebView({ overlay: true });
   } catch (err) {
     console.warn("StatusBar init failed:", err);
   }

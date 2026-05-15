@@ -1,8 +1,22 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
+
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
+
+const apiLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', apiLimiter);
 
 declare module 'http' {
   interface IncomingMessage {
@@ -82,10 +96,12 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {
   const allowedOrigins = [
-    'https://localhost',
     'http://localhost',
+    'https://localhost',
     'capacitor://localhost',
     'ionic://localhost',
+    'https://khutbah-translate.replit.app',
+    ...(process.env.ALLOWED_ORIGINS?.split(',').filter(Boolean) ?? []),
   ];
   const origin = req.headers.origin;
   if (origin && allowedOrigins.includes(origin)) {
@@ -191,7 +207,6 @@ async function ensureSchemaAndSeed() {
     const message = err.message || "Internal Server Error";
 
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after

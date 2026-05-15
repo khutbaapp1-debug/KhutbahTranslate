@@ -66,7 +66,7 @@ export default function ActionPointsPage() {
 
   return (
     <div className="min-h-screen bg-background pb-nav">
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg pt-safe border-b border-border">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
