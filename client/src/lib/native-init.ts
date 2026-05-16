@@ -50,6 +50,19 @@ export async function initNative(): Promise<void> {
     await Keyboard.setAccessoryBarVisible({ isVisible: false });
   } catch {}
 
+  // Re-schedule notifications whenever the app returns to the foreground
+  try {
+    const { App } = await import("@capacitor/app");
+    App.addListener("appStateChange", async ({ isActive }) => {
+      if (isActive) {
+        const { scheduleAllNotifications } = await import("@/lib/notification-service");
+        scheduleAllNotifications().catch(console.error);
+      }
+    });
+  } catch (err) {
+    console.warn("App state listener failed:", err);
+  }
+
 }
 
 /**

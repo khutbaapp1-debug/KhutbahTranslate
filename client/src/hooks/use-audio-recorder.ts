@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { getApiBase } from '@/lib/api-base';
 import { encodeWAV } from "@/utils/wav-encoder";
 import { isNativeApp } from '@/lib/mobile-ads';
 
@@ -184,7 +185,7 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
       formData.append("audio", blob, "audio.wav");
       formData.append("sequenceNumber", sequenceNumber.toString());
 
-      const response = await fetch("/api/transcribe", {
+      const response = await fetch(`${getApiBase()}/api/transcribe`, {
         method: "POST",
         body: formData,
         credentials: "include",
