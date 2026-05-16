@@ -24,6 +24,8 @@
     "@capacitor/network": "^7.0.4",
     "@capacitor/splash-screen": "^7.0.5",
     "@capacitor/status-bar": "^7.0.6",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/noto-naskh-arabic": "^5.2.11",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^0.10.4",
