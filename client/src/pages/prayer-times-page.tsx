@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useRef } from "react";
 import { isNativeApp } from "@/lib/mobile-ads";
+import { computePrayerTimes, getCachedCoords, setCachedCoords, PrayerTimesResult } from "@/lib/prayer-times-client";
 import { scheduleAllNotifications } from "@/lib/notification-service";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,48 +25,28 @@ const CALCULATION_METHODS = {
   EGYPTIAN: 'Egyptian General Authority',
   KARACHI: 'University of Karachi',
   MAKKAH: 'Umm Al-Qura, Makkah',
-  JAFARI: 'Shia Ithna-Ashari',
+  JAFARI: 'Shia Ithna-Ashari (Tehran)',
   TEHRAN: 'Institute of Geophysics, Tehran',
 } as const;
 
-type CalculationMethod = keyof typeof CALCULATION_METHODS;
+type CalculationMethodKey = keyof typeof CALCULATION_METHODS;
 
 interface PrayerTime {
   name: string;
-  time: string;
+  time: Date;
   isNext: boolean;
   isPassed: boolean;
 }
 
-interface PrayerTimesData {
-  fajr: string;
-  sunrise: string;
-  dhuhr: string;
-  asr: string;
-  maghrib: string;
-  isha: string;
-  nextPrayer: {
-    nextPrayer: string;
-    timeRemaining: string;
-    hours: number;
-    minutes: number;
-    seconds: number;
-  };
-  location: {
-    latitude: number;
-    longitude: number;
-  };
-}
-
 export default function PrayerTimesPage() {
-  const [coords, setCoords] = useState<{latitude: number; longitude: number} | null>(null);
+  const coordsRef = useRef<{latitude: number; longitude: number} | null>(null);
   const [locationName, setLocationName] = useState<string>("Getting location...");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [locationError, setLocationError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [calculationMethod, setCalculationMethod] = useState<CalculationMethod>(() => {
+  const [calculationMethod, setCalculationMethod] = useState<CalculationMethodKey>(() => {
     const saved = localStorage.getItem('prayerCalculationMethod');
-    return (saved as CalculationMethod) || 'ISNA';
+    return (saved as CalculationMethodKey) || 'ISNA';
   });
   const [asrMethod, setAsrMethod] = useState<'standard' | 'hanafi'>(() => {
     const saved = localStorage.getItem('asrCalculationMethod');
@@ -74,21 +54,32 @@ export default function PrayerTimesPage() {
   });
   const { toast } = useToast();
 
-  const { data: prayerData, isLoading, error } = useQuery<PrayerTimesData>({
-    queryKey: coords 
-      ? [`/api/prayer-times?latitude=${coords.latitude}&longitude=${coords.longitude}&method=${calculationMethod}&asrMethod=${asrMethod}`]
-      : ["/api/prayer-times"],
-    enabled: coords !== null,
+  const [prayerData, setPrayerData] = useState<PrayerTimesResult | null>(() => {
+    const cached = getCachedCoords();
+    if (!cached) return null;
+    try {
+      return computePrayerTimes(
+        cached.latitude, cached.longitude, new Date(),
+        localStorage.getItem('prayerCalculationMethod') || 'ISNA',
+        localStorage.getItem('asrCalculationMethod') || 'standard'
+      );
+    } catch { return null; }
   });
 
-  const handleMethodChange = (method: CalculationMethod) => {
+  const handleMethodChange = (method: CalculationMethodKey) => {
     setCalculationMethod(method);
     localStorage.setItem('prayerCalculationMethod', method);
+    if (coordsRef.current) {
+      setPrayerData(computePrayerTimes(coordsRef.current.latitude, coordsRef.current.longitude, new Date(), method, asrMethod));
+    }
   };
 
   const handleAsrMethodChange = (method: 'standard' | 'hanafi') => {
     setAsrMethod(method);
     localStorage.setItem('asrCalculationMethod', method);
+    if (coordsRef.current) {
+      setPrayerData(computePrayerTimes(coordsRef.current.latitude, coordsRef.current.longitude, new Date(), calculationMethod, method));
+    }
   };
 
   const requestLocation = () => {
@@ -108,14 +99,14 @@ export default function PrayerTimesPage() {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setCoords({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
+        const { latitude, longitude } = position.coords;
+        coordsRef.current = { latitude, longitude };
+        setCachedCoords(latitude, longitude);
+        setPrayerData(computePrayerTimes(latitude, longitude, new Date(), calculationMethod, asrMethod));
         setLocationError(null);
-        
+
         fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
         )
           .then((res) => res.json())
           .then((data) => {
@@ -176,98 +167,65 @@ export default function PrayerTimesPage() {
 
   useEffect(() => {
     if (!isNativeApp()) return;
-    scheduleAllNotifications().catch(console.error);
+    if (coordsRef.current || getCachedCoords()) {
+      scheduleAllNotifications().catch(console.error);
+    }
   }, []);
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background pb-nav">
-        <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
-          <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
-            <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
-              Prayer Times
-            </h1>
-          </div>
-        </header>
-        <main className="p-6 max-w-screen-md mx-auto">
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-destructive">Error loading prayer times. Please try again.</p>
-            </CardContent>
-          </Card>
-        </main>
-        <BottomNav />
-      </div>
-    );
-  }
-
-  // Check if today is Friday (day 5 in JavaScript Date)
   const isFriday = currentTime.getDay() === 5;
-  
-  // Check if next prayer is tomorrow's Fajr (all prayers passed today)
-  const isAfterIsha = prayerData?.nextPrayer?.nextPrayer === "Fajr" && isTimePassed(prayerData.isha, currentTime);
+
+  const ordered = prayerData ? [
+    { name: 'Fajr',    time: prayerData.fajr },
+    { name: 'Dhuhr',   time: prayerData.dhuhr },
+    { name: 'Asr',     time: prayerData.asr },
+    { name: 'Maghrib', time: prayerData.maghrib },
+    { name: 'Isha',    time: prayerData.isha },
+  ] : [];
+  const nextEntry   = ordered.find(p => p.time > currentTime);
+  const isAfterIsha = !nextEntry && prayerData != null;
 
   const prayerTimes: PrayerTime[] = prayerData ? [
-    { 
-      name: "Fajr", 
-      time: prayerData.fajr, 
-      isNext: prayerData.nextPrayer?.nextPrayer === "Fajr" && !isAfterIsha, 
-      isPassed: isAfterIsha || (isTimePassed(prayerData.fajr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Fajr")
+    {
+      name: "Fajr",
+      time: prayerData.fajr,
+      isNext: nextEntry?.name === "Fajr",
+      isPassed: isAfterIsha || (prayerData.fajr <= currentTime && nextEntry?.name !== "Fajr"),
     },
-    { 
-      name: isFriday ? "Jummah" : "Dhuhr", 
-      time: prayerData.dhuhr, 
-      isNext: prayerData.nextPrayer?.nextPrayer === "Dhuhr" && !isAfterIsha, 
-      isPassed: isAfterIsha || (isTimePassed(prayerData.dhuhr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Dhuhr")
+    {
+      name: isFriday ? "Jummah" : "Dhuhr",
+      time: prayerData.dhuhr,
+      isNext: nextEntry?.name === "Dhuhr",
+      isPassed: isAfterIsha || (prayerData.dhuhr <= currentTime && nextEntry?.name !== "Dhuhr"),
     },
-    { 
-      name: "Asr", 
-      time: prayerData.asr, 
-      isNext: prayerData.nextPrayer?.nextPrayer === "Asr" && !isAfterIsha, 
-      isPassed: isAfterIsha || (isTimePassed(prayerData.asr, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Asr")
+    {
+      name: "Asr",
+      time: prayerData.asr,
+      isNext: nextEntry?.name === "Asr",
+      isPassed: isAfterIsha || (prayerData.asr <= currentTime && nextEntry?.name !== "Asr"),
     },
-    { 
-      name: "Maghrib", 
-      time: prayerData.maghrib, 
-      isNext: prayerData.nextPrayer?.nextPrayer === "Maghrib" && !isAfterIsha, 
-      isPassed: isAfterIsha || (isTimePassed(prayerData.maghrib, currentTime) && prayerData.nextPrayer?.nextPrayer !== "Maghrib")
+    {
+      name: "Maghrib",
+      time: prayerData.maghrib,
+      isNext: nextEntry?.name === "Maghrib",
+      isPassed: isAfterIsha || (prayerData.maghrib <= currentTime && nextEntry?.name !== "Maghrib"),
     },
-    { 
-      name: "Isha", 
-      time: prayerData.isha, 
-      isNext: prayerData.nextPrayer?.nextPrayer === "Isha", 
-      isPassed: false // Never mark Isha as passed - keeps it highlighted as "Now" until midnight
+    {
+      name: "Isha",
+      time: prayerData.isha,
+      isNext: nextEntry?.name === "Isha",
+      isPassed: false,
     },
   ] : [];
 
-  const nextPrayer = prayerTimes.find((p) => p.isNext);
-  // "Now" = the most recently started prayer (the active prayer window).
-  // After Isha until midnight, Isha stays as "Now" (handled via isAfterIsha below).
-  const startedPrayers = prayerData
-    ? prayerTimes.filter((p) => {
-        const timeStr =
-          p.name === "Fajr" ? prayerData.fajr :
-          p.name === "Dhuhr" || p.name === "Jummah" ? prayerData.dhuhr :
-          p.name === "Asr" ? prayerData.asr :
-          p.name === "Maghrib" ? prayerData.maghrib :
-          prayerData.isha;
-        return isTimePassed(timeStr, currentTime);
-      })
-    : [];
+  const nextPrayer = prayerTimes.find(p => p.isNext);
+  const startedPrayers = prayerTimes.filter(p => p.time <= currentTime);
   const currentPrayer = isAfterIsha
-    ? prayerTimes.find((p) => p.name === "Isha")
+    ? prayerTimes.find(p => p.name === "Isha")
     : startedPrayers.length > 0
       ? startedPrayers[startedPrayers.length - 1]
       : undefined;
 
-  const nextPrayerName = prayerData?.nextPrayer?.nextPrayer;
-  const nextPrayerTimeStr = prayerData && nextPrayerName
-    ? (nextPrayerName === "Fajr" ? prayerData.fajr :
-       nextPrayerName === "Dhuhr" ? prayerData.dhuhr :
-       nextPrayerName === "Asr" ? prayerData.asr :
-       nextPrayerName === "Maghrib" ? prayerData.maghrib :
-       prayerData.isha)
-    : "";
+  const nextPrayerTime = nextEntry?.time ?? prayerData?.fajr;
 
   return (
     <div className="min-h-screen bg-background pb-nav">
@@ -345,7 +303,7 @@ export default function PrayerTimesPage() {
           </Card>
         )}
         
-        {!locationError && (isLoading || !prayerData) ? (
+        {!locationError && !prayerData ? (
           <Card>
             <CardContent className="p-6">
               <Skeleton className="h-8 w-3/4 mb-4" />
@@ -393,16 +351,16 @@ export default function PrayerTimesPage() {
                         </div>
                         <div>
                           <span className="font-medium text-lg block">{prayer.name}</span>
-                          {prayer.isNext && prayerData.nextPrayer && (
+                          {prayer.isNext && (
                             <span className="text-xs text-muted-foreground">
-                              {formatCountdown(nextPrayerTimeStr, currentTime, isAfterIsha && nextPrayerName === "Fajr")} remaining
+                              {nextPrayerTime && formatCountdown(nextPrayerTime, currentTime, isAfterIsha)} remaining
                             </span>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-lg font-semibold" data-testid={`time-${prayer.name.toLowerCase()}`}>
-                          {prayer.time}
+                          {prayer.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {isCurrent && (
                           <Badge className="now-badge bg-green-500 hover:bg-green-600 text-white text-xs">
@@ -433,34 +391,8 @@ export default function PrayerTimesPage() {
   );
 }
 
-function isTimePassed(timeStr: string, currentTime: Date): boolean {
-  const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/);
-  if (!match) return false;
-
-  let hours = parseInt(match[1]);
-  const minutes = parseInt(match[2]);
-  const period = match[3];
-
-  if (period === "PM" && hours !== 12) hours += 12;
-  if (period === "AM" && hours === 12) hours = 0;
-
-  const prayerMinutes = hours * 60 + minutes;
-  const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-
-  return currentMinutes > prayerMinutes;
-}
-
-function formatCountdown(prayerTimeStr: string, currentTime: Date, isTomorrow: boolean = false): string {
-  const match = prayerTimeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
-  if (!match) return "";
-  let hours = parseInt(match[1]);
-  const minutes = parseInt(match[2]);
-  const period = match[3].toUpperCase();
-  if (period === "PM" && hours !== 12) hours += 12;
-  if (period === "AM" && hours === 12) hours = 0;
-  const target = new Date(currentTime);
-  target.setHours(hours, minutes, 0, 0);
-  if (isTomorrow) target.setDate(target.getDate() + 1);
+function formatCountdown(prayerTime: Date, currentTime: Date, isTomorrow = false): string {
+  const target = isTomorrow ? new Date(prayerTime.getTime() + 86400000) : prayerTime;
   const totalSeconds = Math.max(0, Math.floor((target.getTime() - currentTime.getTime()) / 1000));
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
