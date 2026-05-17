@@ -847,6 +847,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let mosques: any[];
       const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+      console.log('[mosques] apiKey present:', !!apiKey, apiKey ? `(starts: ${apiKey.slice(0, 5)})` : '(missing)');
 
       if (apiKey) {
         try {
