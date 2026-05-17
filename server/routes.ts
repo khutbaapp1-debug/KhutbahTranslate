@@ -1095,7 +1095,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If user is authenticated, check if it's favorited
       let isFavorited = false;
-      if (req.isAuthenticated() && req.user) {
+      if (typeof req.isAuthenticated === "function" && req.isAuthenticated() && req.user) {
         const userId = (req.user as any).id;
         const favorite = await db
           .select()
@@ -1128,7 +1128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allHadiths = await query;
 
       // If user is authenticated, include favorite status
-      if (req.isAuthenticated() && req.user) {
+      if (typeof req.isAuthenticated === "function" && req.isAuthenticated() && req.user) {
         const userId = (req.user as any).id;
         const favorites = await db
           .select()
