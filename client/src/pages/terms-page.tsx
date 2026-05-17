@@ -1,7 +1,6 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { BottomNav } from "@/components/bottom-nav";
 
 export default function TermsPage() {
   const [, setLocation] = useLocation();
@@ -86,7 +85,6 @@ export default function TermsPage() {
         </section>
       </main>
 
-      <BottomNav />
     </div>
   );
 }

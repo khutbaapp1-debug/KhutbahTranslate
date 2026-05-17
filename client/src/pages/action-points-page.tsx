@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { BottomNav } from "@/components/bottom-nav";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Target } from "lucide-react";
+import { Target, Home } from "lucide-react";
 
 const actionPoints = [
   {
@@ -45,6 +46,7 @@ const actionPoints = [
 ];
 
 export default function ActionPointsPage() {
+  const [, setLocation] = useLocation();
   const [completed, setCompleted] = useState<string[]>(
     actionPoints.filter((ap) => ap.completed).map((ap) => ap.id)
   );
@@ -65,10 +67,13 @@ export default function ActionPointsPage() {
   const progress = (completedCount / totalCount) * 100;
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto">
           <div className="flex items-center justify-between">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+              <Home className="w-5 h-5" />
+            </Button>
             <div>
               <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2" data-testid="text-page-title">
                 <Target className="w-6 h-6" />
@@ -137,7 +142,6 @@ export default function ActionPointsPage() {
         </div>
       </main>
 
-      <BottomNav />
     </div>
   );
 }

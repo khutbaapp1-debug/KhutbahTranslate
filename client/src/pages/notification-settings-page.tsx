@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Bell, Clock, BookOpen, Calendar, Moon, Sun, Sparkles, ArrowLeft } from "lucide-react";
+import { Bell, Clock, BookOpen, Calendar, Moon, Sun, Sparkles, Home } from "lucide-react";
 
 interface NotificationSettings {
   id: string;
@@ -135,10 +135,10 @@ export default function NotificationSettingsPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setLocation("/settings")}
+            onClick={() => setLocation("/")}
             data-testid="button-back"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <Home className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-muted-foreground" />

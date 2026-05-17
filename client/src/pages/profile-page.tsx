@@ -1,4 +1,3 @@
-import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { LogOut, Settings, Book, Activity, Bell, Shield, FileText, Trash2, User as UserIcon } from "lucide-react";
+import { LogOut, Settings, Book, Activity, Bell, Shield, FileText, Trash2, User as UserIcon, Home } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
@@ -51,9 +50,12 @@ export default function ProfilePage() {
   // users can navigate back home).
   if (!user) {
     return (
-      <div className="min-h-screen bg-background pb-nav">
+      <div className="min-h-screen bg-background ">
         <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
           <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+              <Home className="w-5 h-5" />
+            </Button>
             <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
               Profile
             </h1>
@@ -93,7 +95,6 @@ export default function ProfilePage() {
           </Card>
         </main>
 
-        <BottomNav />
       </div>
     );
   }
@@ -109,9 +110,12 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
+          <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+            <Home className="w-5 h-5" />
+          </Button>
           <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
             Profile
           </h1>
@@ -244,7 +248,6 @@ export default function ProfilePage() {
         </Card>
       </main>
 
-      <BottomNav />
     </div>
   );
 }

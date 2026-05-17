@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -12,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Settings, Bell } from "lucide-react";
+import { Settings, Bell, Home } from "lucide-react";
 import { useTheme } from "@/lib/theme-provider";
 
 const FONT_SIZE_OPTIONS = [
@@ -86,7 +85,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="flex items-center gap-3 p-4 max-w-screen-xl mx-auto">
           <Button
@@ -95,7 +94,7 @@ export default function SettingsPage() {
             onClick={() => setLocation("/")}
             data-testid="button-back"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <Home className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5 text-muted-foreground" />
@@ -264,7 +263,6 @@ export default function SettingsPage() {
         </Card>
       </main>
 
-      <BottomNav />
     </div>
   );
 }

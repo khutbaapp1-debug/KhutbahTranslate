@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Capacitor } from '@capacitor/core';
 import { isNativeApp } from '@/lib/mobile-ads';
-import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mic, MicOff, Save, Clock, Pause, Play, X, AlertCircle, Sparkles, BookOpen } from "lucide-react";
+import { Mic, MicOff, Save, Clock, Pause, Play, X, AlertCircle, Sparkles, BookOpen, Home } from "lucide-react";
+import { useLocation } from "wouter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import { AudioWaveform } from "@/components/audio-waveform";
@@ -27,6 +27,7 @@ interface TranscriptSegment {
 const DISCLAIMER_KEY = "khutbah-translation-disclaimer-acknowledged";
 
 export default function KhutbahPage() {
+  const [, setLocation] = useLocation();
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [currentCard, setCurrentCard] = useState(0);
@@ -121,10 +122,13 @@ export default function KhutbahPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto space-y-3">
           <div className="flex items-center justify-between">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+              <Home className="w-5 h-5" />
+            </Button>
             <div>
               <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
                 Live Translation
@@ -301,7 +305,6 @@ export default function KhutbahPage() {
         </div>
       </main>
 
-      <BottomNav />
 
       <Dialog open={showDisclaimer} onOpenChange={() => {}}>
         <DialogContent className="max-w-sm [&>button:last-child]:hidden">

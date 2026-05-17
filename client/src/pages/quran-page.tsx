@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked, Play, Pause, Loader2, Volume2, BookOpen, List, X, Bookmark, BookmarkCheck, HelpCircle, Hand, MousePointerClick } from "lucide-react";
+import { ArrowLeft, Search, ChevronLeft, ChevronRight, BookMarked, Play, Pause, Loader2, Volume2, BookOpen, List, X, Bookmark, BookmarkCheck, HelpCircle, Hand, MousePointerClick, Home } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -66,6 +66,7 @@ const RECITERS: Reciter[] = [
 ];
 
 export default function QuranPage() {
+  const [, setLocation] = useLocation();
   const [selectedSurah, setSelectedSurah] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showResumeMessage, setShowResumeMessage] = useState(false);
@@ -369,7 +370,7 @@ export default function QuranPage() {
 
   if (selectedSurah && surahDetails) {
     return (
-      <div className="min-h-screen bg-background pb-nav">
+      <div className="min-h-screen bg-background ">
         <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
           <div className="max-w-screen-xl mx-auto">
             <div className="flex items-center gap-3 p-4">
@@ -806,16 +807,18 @@ export default function QuranPage() {
           </main>
         </ScrollArea>
 
-        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto space-y-4">
           <div className="flex items-center justify-between gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+              <Home className="w-5 h-5" />
+            </Button>
             <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
               The Holy Qur'an
             </h1>
@@ -991,7 +994,6 @@ export default function QuranPage() {
         </DialogContent>
       </Dialog>
 
-      <BottomNav />
     </div>
   );
 }

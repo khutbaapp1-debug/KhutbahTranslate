@@ -1,7 +1,6 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { BottomNav } from "@/components/bottom-nav";
 
 export default function PrivacyPage() {
   const [, setLocation] = useLocation();
@@ -131,7 +130,6 @@ export default function PrivacyPage() {
         </section>
       </main>
 
-      <BottomNav />
     </div>
   );
 }

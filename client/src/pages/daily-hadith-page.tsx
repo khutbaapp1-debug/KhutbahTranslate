@@ -1,11 +1,11 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Share2, BookOpen, User } from "lucide-react";
+import { Heart, Share2, BookOpen, User, Home } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 
 interface Hadith {
@@ -23,6 +23,7 @@ interface Hadith {
 }
 
 export default function DailyHadithPage() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [shareLoading, setShareLoading] = useState(false);
 
@@ -105,6 +106,13 @@ export default function DailyHadithPage() {
   return (
     <>
       <div className="min-h-screen bg-background pb-24">
+        <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
+          <div className="flex items-center gap-3 p-4 max-w-screen-xl mx-auto">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+              <Home className="w-5 h-5" />
+            </Button>
+          </div>
+        </header>
         <div className="max-w-4xl mx-auto p-4 space-y-6">
           <div className="text-center space-y-2 pt-6">
             <div className="flex items-center justify-center gap-2">
@@ -220,7 +228,6 @@ export default function DailyHadithPage() {
           </Card>
         </div>
       </div>
-      <BottomNav />
     </>
   );
 }

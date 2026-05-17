@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { WheelPicker } from "@/components/wheel-picker";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart, Loader2, Home } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import type { Dua } from "@shared/schema";
@@ -37,6 +38,7 @@ interface FavoriteDua {
 }
 
 export default function DuasPage() {
+  const [, setLocation] = useLocation();
   const [activeCategory, setActiveCategory] = useState("all");
   const { user } = useAuth();
 
@@ -78,15 +80,22 @@ export default function DuasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto">
-          <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
-            Daily Duas
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Supplications for every occasion
-          </p>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+              <Home className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
+                Daily Duas
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Supplications for every occasion
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -166,7 +175,6 @@ export default function DuasPage() {
         )}
       </main>
 
-      <BottomNav />
     </div>
   );
 }

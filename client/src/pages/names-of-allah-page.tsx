@@ -1,8 +1,9 @@
-import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Home } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { namesOfAllah } from "@/data/names-of-allah";
 
 // Normalize Arabic text by removing diacritics and normalizing letter variations
@@ -27,6 +28,7 @@ function normalizeArabic(text: string): string {
 }
 
 export default function NamesOfAllahPage() {
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -52,14 +54,19 @@ export default function NamesOfAllahPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto space-y-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
-              99 Names of Allah
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">Asma ul Husna</p>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+              <Home className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
+                99 Names of Allah
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">Asma ul Husna</p>
+            </div>
           </div>
 
           <div className="relative">
@@ -118,7 +125,6 @@ export default function NamesOfAllahPage() {
         )}
       </main>
 
-      <BottomNav />
     </div>
   );
 }

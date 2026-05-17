@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Clock, Circle, Compass, Book, Heart, Mic, MapPin, ScrollText, BookOpen, Settings } from "lucide-react";
-import { BottomNav } from "@/components/bottom-nav";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-provider";
@@ -162,7 +161,7 @@ export default function HomePage() {
   const otherFeatures = features.slice(1); // All other features
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto gap-4">
           <div className="flex-1 min-w-0">
@@ -297,7 +296,6 @@ export default function HomePage() {
         </div>
       </main>
 
-      <BottomNav />
     </div>
   );
 }

@@ -78,7 +78,18 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
   const sequenceNumberRef = useRef(0);
   const isPausedRef = useRef(false);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const wakeLockRef = useRef<any>(null);
   
+  useEffect(() => {
+    const handler = async () => {
+      if (document.visibilityState === 'visible' && isRecording && !wakeLockRef.current) {
+        try { wakeLockRef.current = await (navigator as any).wakeLock.request('screen'); } catch {}
+      }
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, [isRecording]);
+
   // Reconcile pending consumption when backend data refreshes
   useEffect(() => {
     if (minutesRemaining !== prevMinutesRemainingRef.current && minutesRemaining !== undefined) {
@@ -310,6 +321,12 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
       
       mediaStreamRef.current = stream;
 
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch (e) { console.warn('[wake-lock] failed:', e); }
+
       // Create Web Audio API context
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
         sampleRate: SAMPLE_RATE,
@@ -365,7 +382,11 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
     }
   }, [startTimer, startCountdownTimer, stopMediaTracks, processChunk]);
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = useCallback(async () => {
+    if (wakeLockRef.current) {
+      await wakeLockRef.current.release().catch(() => {});
+      wakeLockRef.current = null;
+    }
     if (chunkTimerRef.current) {
       clearInterval(chunkTimerRef.current);
       chunkTimerRef.current = null;

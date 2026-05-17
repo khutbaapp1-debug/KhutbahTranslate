@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Navigation, Clock, Loader2, AlertCircle } from "lucide-react";
+import { Search, MapPin, Navigation, Clock, Loader2, AlertCircle, Home } from "lucide-react";
+import { useLocation } from "wouter";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { Icon, LatLngExpression } from "leaflet";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +43,7 @@ const userIcon = new Icon({
 });
 
 export default function MosqueFinderPage() {
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -133,12 +134,17 @@ export default function MosqueFinderPage() {
     : [40.7128, -74.0060]; // Default to NYC
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto space-y-4">
-          <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
-            Mosque Finder
-          </h1>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+              <Home className="w-5 h-5" />
+            </Button>
+            <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
+              Mosque Finder
+            </h1>
+          </div>
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -302,7 +308,6 @@ export default function MosqueFinderPage() {
         )}
       </main>
 
-      <BottomNav />
     </div>
   );
 }

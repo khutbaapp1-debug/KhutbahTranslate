@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Navigation, MapPin, RotateCw } from "lucide-react";
+import { Navigation, MapPin, RotateCw, Home } from "lucide-react";
+import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { calculateQiblaDirection, getCardinalDirection } from "@/lib/qibla";
 import { useToast } from "@/hooks/use-toast";
 
 export default function QiblaPage() {
+  const [, navigate] = useLocation();
   const [heading, setHeading] = useState(0);
   const [qiblaDirection, setQiblaDirection] = useState(0);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -145,9 +146,12 @@ export default function QiblaPage() {
   const needleRotation = compassSupported ? qiblaDirection - heading : qiblaDirection;
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")} data-testid="button-home">
+            <Home className="w-5 h-5" />
+          </Button>
           <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
             Qibla Compass
           </h1>
@@ -343,7 +347,6 @@ export default function QiblaPage() {
         )}
       </main>
 
-      <BottomNav />
     </div>
   );
 }

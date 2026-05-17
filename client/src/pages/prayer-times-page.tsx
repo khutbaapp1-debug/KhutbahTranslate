@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { isNativeApp } from "@/lib/mobile-ads";
 import { computePrayerTimes, getCachedCoords, setCachedCoords, PrayerTimesResult } from "@/lib/prayer-times-client";
 import { scheduleAllNotifications } from "@/lib/notification-service";
-import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { MapPin, Clock, Settings } from "lucide-react";
+import { MapPin, Clock, Settings, Home } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
@@ -39,6 +39,7 @@ interface PrayerTime {
 }
 
 export default function PrayerTimesPage() {
+  const [, setLocation] = useLocation();
   const coordsRef = useRef<{latitude: number; longitude: number} | null>(null);
   const [locationName, setLocationName] = useState<string>("Getting location...");
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -228,9 +229,12 @@ export default function PrayerTimesPage() {
   const nextPrayerTime = nextEntry?.time ?? prayerData?.fajr;
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
+          <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+            <Home className="w-5 h-5" />
+          </Button>
           <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
             Prayer Times
           </h1>
@@ -250,7 +254,7 @@ export default function PrayerTimesPage() {
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Fajr/Isha Calculation Method</label>
-                  <Select value={calculationMethod} onValueChange={(v) => handleMethodChange(v as CalculationMethod)}>
+                  <Select value={calculationMethod} onValueChange={(v) => handleMethodChange(v as CalculationMethodKey)}>
                     <SelectTrigger className="w-full" data-testid="select-calculation-method">
                       <SelectValue placeholder="Select calculation method" />
                     </SelectTrigger>
@@ -386,7 +390,6 @@ export default function PrayerTimesPage() {
         ) : null}
       </main>
 
-      <BottomNav />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { BottomNav } from "@/components/bottom-nav";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Sunrise, Sunset, Moon, Star } from "lucide-react";
+import { Sunrise, Sunset, Moon, Star, Home } from "lucide-react";
 import ramadanImage from "@assets/generated_images/Ramadan_crescent_moon_lanterns_7acbaea8.png";
 
 interface ChecklistItem {
@@ -19,6 +20,7 @@ const DEFAULT_CHECKLIST: ChecklistItem[] = [
 ];
 
 export default function RamadanPage() {
+  const [, setLocation] = useLocation();
   const [timeToIftar, setTimeToIftar] = useState({ hours: 5, minutes: 32, seconds: 15 });
   const [timeToSuhoor, setTimeToSuhoor] = useState({ hours: 18, minutes: 25, seconds: 0 });
   const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
@@ -68,6 +70,15 @@ export default function RamadanPage() {
         style={{ backgroundImage: `url(${ramadanImage})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/40" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 left-4 text-white hover:bg-white/20 z-10"
+          onClick={() => setLocation("/")}
+          data-testid="button-home"
+        >
+          <Home className="w-5 h-5" />
+        </Button>
         <div className="relative h-full flex flex-col justify-center items-center text-white p-6">
           <Moon className="w-12 h-12 mb-3" />
           <h1 className="text-3xl font-semibold mb-2" data-testid="text-page-title">
@@ -203,7 +214,6 @@ export default function RamadanPage() {
         </Card>
       </main>
 
-      <BottomNav />
     </div>
   );
 }

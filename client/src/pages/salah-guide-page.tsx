@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Info, BookOpen, ChevronDown } from "lucide-react";
-import { BottomNav } from "@/components/bottom-nav";
+import { Info, BookOpen, ChevronDown, Home } from "lucide-react";
+import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +79,7 @@ const prayers: Prayer[] = [
 const DISCLAIMER_KEY = "salah-guide-disclaimer-acknowledged";
 
 export default function SalahGuidePage() {
+  const [, setLocation] = useLocation();
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [activeTab, setActiveTab] = useState("wudu");
   const [selectedPrayerType, setSelectedPrayerType] = useState<PrayerType>("2rakat");
@@ -100,9 +101,12 @@ export default function SalahGuidePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
+          <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+            <Home className="w-5 h-5" />
+          </Button>
           <div>
             <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2" data-testid="text-page-title">
               Salah Guide
@@ -250,7 +254,6 @@ export default function SalahGuidePage() {
         </Tabs>
       </main>
 
-      <BottomNav />
 
       <Dialog open={showDisclaimer} onOpenChange={setShowDisclaimer}>
         <DialogContent className="max-w-sm">

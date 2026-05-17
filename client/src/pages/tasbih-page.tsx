@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { BottomNav } from "@/components/bottom-nav";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Home } from "lucide-react";
+import { useLocation } from "wouter";
+import { Capacitor } from '@capacitor/core';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 const dhikrPresets = [
   { id: "subhanallah", text: "سُبْحَانَ ٱللَّٰهِ", translation: "SubhanAllah", target: 33 },
@@ -18,6 +20,7 @@ const dhikrPresets = [
 ];
 
 export default function TasbihPage() {
+  const [, setLocation] = useLocation();
   const [selectedDhikr, setSelectedDhikr] = useState(() => {
     const savedId = localStorage.getItem("tasbih-selected-dhikr");
     return dhikrPresets.find((d) => d.id === savedId) ?? dhikrPresets[0];
@@ -44,6 +47,9 @@ export default function TasbihPage() {
   const handleIncrement = () => {
     const newCount = count + 1;
     setCount(newCount);
+    if (Capacitor.isNativePlatform()) {
+      Haptics.impact({ style: newCount === selectedDhikr.target ? ImpactStyle.Heavy : ImpactStyle.Light }).catch(() => {});
+    }
     if (newCount === selectedDhikr.target) {
       if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
       autoAdvanceRef.current = setTimeout(() => {
@@ -90,9 +96,12 @@ export default function TasbihPage() {
   const progress = (count / selectedDhikr.target) * 100;
 
   return (
-    <div className="min-h-screen bg-background pb-nav">
+    <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
+          <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+            <Home className="w-5 h-5" />
+          </Button>
           <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
             Digital Tasbih
           </h1>
@@ -235,7 +244,6 @@ export default function TasbihPage() {
         </Card>
       </main>
 
-      <BottomNav />
     </div>
   );
 }
