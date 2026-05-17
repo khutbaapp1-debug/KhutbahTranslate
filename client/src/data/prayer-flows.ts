@@ -4,7 +4,14 @@ export type PrayerFlowRecitation = {
   meaning: string;
   name: string;
   label?: string;
+  audioUrl?: string;
 };
+
+// Mishary Rashid Al-Afasy recitations, sourced from public Islamic CDNs.
+// Surah-level audio from cdn.islamic.network; single-ayah from everyayah.com.
+const AUDIO_FATIHAH = "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/1.mp3";
+const AUDIO_IKHLAS = "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/112.mp3";
+const AUDIO_BISMILLAH = "https://everyayah.com/data/Alafasy_128kbps/001001.mp3";
 
 export type PrayerFlowCard = {
   number: number;
@@ -21,6 +28,7 @@ const BISMILLAH: PrayerFlowRecitation = {
   arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
   transliteration: "Bismillahir-Rahmanir-Raheem.",
   meaning: "In the name of Allah, the Most Gracious, the Most Merciful.",
+  audioUrl: AUDIO_BISMILLAH,
 };
 
 const SURAH_FATIHAH: PrayerFlowRecitation = {
@@ -31,6 +39,7 @@ const SURAH_FATIHAH: PrayerFlowRecitation = {
     "Bismillahir-Rahmanir-Raheem. Alhamdu lillahi Rabbil-'alameen. Ar-Rahmanir-Raheem. Maliki yawmid-deen. Iyyaka na'budu wa iyyaka nasta'een. Ihdinas-sirata-l-mustaqeem. Sirata-l-ladheena an'amta 'alayhim. Ghayril-maghdoobi 'alayhim wa lad-dalleen. Ameen.",
   meaning:
     "In the name of Allah, the Most Gracious, the Most Merciful. Praise be to Allah, Lord of all the worlds. The Most Gracious, the Most Merciful. Master of the Day of Judgement. You alone we worship, and You alone we ask for help. Guide us to the straight path — the path of those upon whom You have bestowed favor, not of those who have evoked anger, nor of those who are astray. Ameen.",
+  audioUrl: AUDIO_FATIHAH,
 };
 
 const SURAH_IKHLAS: PrayerFlowRecitation = {
@@ -41,6 +50,7 @@ const SURAH_IKHLAS: PrayerFlowRecitation = {
     "Bismillahir-Rahmanir-Raheem. Qul huwa Allahu ahad. Allahu-s-samad. Lam yalid wa lam yulad. Wa lam yakun lahu kufuwan ahad.",
   meaning:
     "In the name of Allah, the Most Gracious, the Most Merciful. Say: He is Allah, the One. Allah, the Eternal Refuge. He neither begets nor is born. Nor is there to Him any equivalent.",
+  audioUrl: AUDIO_IKHLAS,
 };
 
 const TASBIH_RUKU: PrayerFlowRecitation = {
