@@ -2,7 +2,9 @@ package com.khutbahcompanion.app;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.webkit.PermissionRequest;
 
 import androidx.core.app.ActivityCompat;
@@ -31,6 +33,13 @@ public class MainActivity extends BridgeActivity {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.RECORD_AUDIO},
                     RECORD_AUDIO_REQUEST_CODE);
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            View decorView = getWindow().getDecorView();
+            int flags = decorView.getSystemUiVisibility();
+            flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            decorView.setSystemUiVisibility(flags);
         }
     }
 }

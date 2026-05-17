@@ -4,17 +4,6 @@ import { setBannerHeight as publishBannerHeight } from "@/lib/banner-height";
 
 let bannerInitialized = false;
 
-function readSafeAreaBottom(): number {
-  const el = document.createElement("div");
-  el.style.paddingBottom = "env(safe-area-inset-bottom)";
-  el.style.position = "fixed";
-  el.style.visibility = "hidden";
-  document.body.appendChild(el);
-  const px = parseInt(getComputedStyle(el).paddingBottom) || 0;
-  document.body.removeChild(el);
-  return px;
-}
-
 export function BannerAd() {
   const native = isNativeApp();
   const [bannerHeight, setBannerHeight] = useState(0);
@@ -46,7 +35,7 @@ export function BannerAd() {
           return;
         }
         listenerHandle = handle;
-        await showBannerAd(readSafeAreaBottom());
+        await showBannerAd(0);
       } catch {
         // ad failed — spacer stays 0, page layout unaffected
       }

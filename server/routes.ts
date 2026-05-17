@@ -788,7 +788,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 1-hour in-memory cache: key = "lat,lon,radius" rounded to 2dp (~1km grid)
   const mosqueCache = new Map<string, { data: any[]; expiresAt: number }>();
 
-  // Get nearby mosques using Google Places API (New)
+  const fetchMosquesFromOverpass = async (lat: number, lon: number, radius: number): Promise<any[]> => {
+    const query = `[out:json][timeout:25];(node[amenity=mosque](around:${radius},${lat},${lon});way[amenity=mosque](around:${radius},${lat},${lon}););out center;`;
+    const resp = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `data=${encodeURIComponent(query)}`,
+    });
+    if (!resp.ok) throw new Error(`Overpass error ${resp.status}`);
+    const json = await resp.json();
+    const elements: any[] = json.elements ?? [];
+    const haversine = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+    return elements
+      .map((el: any) => {
+        const eLat = el.type === 'way' ? el.center?.lat : el.lat;
+        const eLon = el.type === 'way' ? el.center?.lon : el.lon;
+        if (eLat == null || eLon == null) return null;
+        const addrParts = [el.tags?.['addr:housenumber'], el.tags?.['addr:street']].filter(Boolean);
+        return {
+          id: `osm-${el.type}-${el.id}`,
+          name: el.tags?.name || el.tags?.['name:en'] || 'Mosque',
+          latitude: eLat,
+          longitude: eLon,
+          distance: haversine(lat, lon, eLat, eLon).toFixed(2),
+          address: el.tags?.['addr:full'] || addrParts.join(' ') || 'Address not available',
+          denomination: el.tags?.denomination,
+          website: el.tags?.website,
+          phone: el.tags?.phone,
+        };
+      })
+      .filter((m): m is NonNullable<typeof m> => m !== null)
+      .sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
+  };
+
+  // Get nearby mosques — Google Places (New) with Overpass (OSM) fallback
   app.get("/api/mosques/nearby", async (req, res) => {
     try {
       const latitude = parseFloat(req.query.latitude as string);
@@ -799,11 +838,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Valid latitude and longitude required" });
       }
 
-      const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-      if (!apiKey) {
-        throw new Error("GOOGLE_PLACES_API_KEY not configured");
-      }
-
       // Cache lookup — round coords to 2dp (~1km grid)
       const cacheKey = `${latitude.toFixed(2)},${longitude.toFixed(2)},${radius}`;
       const cached = mosqueCache.get(cacheKey);
@@ -811,73 +845,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(cached.data);
       }
 
-      const response = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": apiKey,
-          "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.formattedAddress,places.websiteUri,places.internationalPhoneNumber",
-        },
-        body: JSON.stringify({
-          includedTypes: ["mosque"],
-          maxResultCount: 20,
-          locationRestriction: {
-            circle: {
-              center: { latitude, longitude },
-              radius,
-            },
-          },
-        }),
-      });
+      let mosques: any[];
+      const apiKey = process.env.GOOGLE_PLACES_API_KEY;
 
-      if (!response.ok) {
-        const body = await response.text().catch(() => "");
-        console.error("Google Places API error:", response.status, body.slice(0, 200));
-        throw new Error(`Failed to fetch mosques from Google Places (status ${response.status})`);
+      if (apiKey) {
+        try {
+          const response = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Goog-Api-Key": apiKey,
+              "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.formattedAddress,places.websiteUri,places.internationalPhoneNumber",
+            },
+            body: JSON.stringify({
+              includedTypes: ["mosque"],
+              maxResultCount: 20,
+              locationRestriction: {
+                circle: {
+                  center: { latitude, longitude },
+                  radius,
+                },
+              },
+            }),
+          });
+
+          if (!response.ok) {
+            const body = await response.text().catch(() => "");
+            console.error("Google Places API error:", response.status, body.slice(0, 200));
+            throw new Error(`Google Places failed (status ${response.status})`);
+          }
+
+          const data = await response.json();
+          const places: any[] = data.places ?? [];
+          console.log(`Google Places returned ${places.length} results`);
+
+          const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a =
+              Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+          };
+
+          mosques = places
+            .map((place: any) => {
+              const lat = place.location.latitude;
+              const lon = place.location.longitude;
+              const distance = calculateDistance(latitude, longitude, lat, lon);
+              return {
+                id: place.id,
+                name: place.displayName?.text || "Unnamed Mosque",
+                latitude: lat,
+                longitude: lon,
+                distance: distance.toFixed(2),
+                address: place.formattedAddress || "Address not available",
+                denomination: undefined,
+                website: place.websiteUri,
+                phone: place.internationalPhoneNumber,
+              };
+            })
+            .sort((a: any, b: any) => parseFloat(a.distance) - parseFloat(b.distance));
+        } catch (placesErr: any) {
+          console.warn('[mosques] Google Places failed, falling back to Overpass:', placesErr.message);
+          mosques = await fetchMosquesFromOverpass(latitude, longitude, radius);
+        }
+      } else {
+        console.log('[mosques] No GOOGLE_PLACES_API_KEY — using Overpass (OSM) fallback');
+        mosques = await fetchMosquesFromOverpass(latitude, longitude, radius);
       }
 
-      const data = await response.json();
-      const places: any[] = data.places ?? [];
-
-      console.log(`Google Places returned ${places.length} results`);
-
-      // Calculate distance using Haversine formula
-      const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-        const R = 6371;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a =
-          Math.sin(dLat/2) * Math.sin(dLat/2) +
-          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-          Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-      };
-
-      const mosques = places
-        .map((place: any) => {
-          const lat = place.location.latitude;
-          const lon = place.location.longitude;
-          const distance = calculateDistance(latitude, longitude, lat, lon);
-
-          return {
-            id: place.id,
-            name: place.displayName?.text || "Unnamed Mosque",
-            latitude: lat,
-            longitude: lon,
-            distance: distance.toFixed(2),
-            address: place.formattedAddress || "Address not available",
-            denomination: undefined,
-            website: place.websiteUri,
-            phone: place.internationalPhoneNumber,
-          };
-        })
-        .sort((a: any, b: any) => parseFloat(a.distance) - parseFloat(b.distance));
-
-      // Store in cache for 1 hour
       mosqueCache.set(cacheKey, { data: mosques, expiresAt: Date.now() + 60 * 60 * 1000 });
-
-      console.log(`Returning ${mosques.length} mosques after processing`);
+      console.log(`Returning ${mosques.length} mosques`);
       res.json(mosques);
     } catch (error: any) {
       console.error('[route error]', error);

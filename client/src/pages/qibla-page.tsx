@@ -45,7 +45,8 @@ export default function QiblaPage() {
             variant: "destructive",
           });
           setIsLoading(false);
-        }
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
       );
     } else {
       toast({
@@ -55,7 +56,7 @@ export default function QiblaPage() {
       });
       setIsLoading(false);
     }
-  }, [toast]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!compassSupported) return;
@@ -138,7 +139,8 @@ export default function QiblaPage() {
             description: "Unable to get your location. Please check permissions.",
             variant: "destructive",
           });
-        }
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     }
   };
