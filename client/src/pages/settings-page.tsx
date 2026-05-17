@@ -87,7 +87,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
-        <div className="flex items-center gap-3 p-4 max-w-screen-xl mx-auto">
+        <div className="flex items-center p-4 max-w-screen-xl mx-auto">
           <Button
             variant="ghost"
             size="icon"
@@ -96,12 +96,10 @@ export default function SettingsPage() {
           >
             <Home className="w-5 h-5" />
           </Button>
-          <div className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-muted-foreground" />
-            <h1 className="text-xl font-semibold text-foreground" data-testid="text-page-title">
-              Settings
-            </h1>
-          </div>
+          <h1 className="flex-1 text-center text-xl font-semibold text-foreground" data-testid="text-page-title">
+            Settings
+          </h1>
+          <div className="w-10" />
         </div>
       </header>
 

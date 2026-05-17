@@ -38,13 +38,14 @@ export default function SermonHistoryPage() {
     <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto space-y-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
               <Home className="w-5 h-5" />
             </Button>
-            <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
+            <h1 className="flex-1 text-center text-2xl font-semibold text-foreground" data-testid="text-page-title">
               My Sermons
             </h1>
+            <div className="w-10" />
           </div>
 
           <div className="relative">

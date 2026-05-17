@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Capacitor } from '@capacitor/core';
-import { isNativeApp } from '@/lib/mobile-ads';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,25 +54,10 @@ export default function KhutbahPage() {
   useEffect(() => { prewarm(); }, [prewarm]);
 
   useEffect(() => {
-    if (isNativeApp()) {
-      navigator.permissions.query({ name: 'microphone' as PermissionName })
-        .then((result) => {
-          if (result.state === 'prompt') {
-            navigator.mediaDevices.getUserMedia({ audio: true })
-              .then((stream) => stream.getTracks().forEach(track => track.stop()))
-              .catch(() => {});
-          } else if (result.state === 'denied') {
-            setProcessingError(
-              'Microphone access is blocked. Please go to Settings → Apps → Khutbah Companion → Permissions and enable the microphone.'
-            );
-          }
-        })
-        .catch(() => {});
-    } else if (navigator.mediaDevices?.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then((stream) => stream.getTracks().forEach(track => track.stop()))
-        .catch((err) => console.warn('Microphone permission not granted:', err.name));
-    }
+    if (!Capacitor.isNativePlatform()) return;
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => stream.getTracks().forEach(t => t.stop()))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -125,23 +109,20 @@ export default function KhutbahPage() {
     <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
               <Home className="w-5 h-5" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
-                Live Translation
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Real-time Translation
-              </p>
-            </div>
-            {isRecording && (
+            <h1 className="flex-1 text-center text-2xl font-semibold text-foreground" data-testid="text-page-title">
+              Live Translation
+            </h1>
+            {isRecording ? (
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-destructive animate-pulse" />
                 <Badge variant="destructive">Recording</Badge>
               </div>
+            ) : (
+              <div className="w-10" />
             )}
           </div>
           

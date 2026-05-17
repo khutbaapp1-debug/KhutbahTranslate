@@ -83,18 +83,14 @@ export default function DuasPage() {
     <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
               <Home className="w-5 h-5" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground" data-testid="text-page-title">
-                Daily Duas
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Supplications for every occasion
-              </p>
-            </div>
+            <h1 className="flex-1 text-center text-2xl font-semibold text-foreground" data-testid="text-page-title">
+              Daily Duas
+            </h1>
+            <div className="w-10" />
           </div>
         </div>
       </header>

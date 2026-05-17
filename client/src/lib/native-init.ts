@@ -1,7 +1,5 @@
 import { Capacitor } from "@capacitor/core";
 
-const BRAND_TEAL_HEX = "#0F766E";
-
 /**
  * Initialize native-only behaviour (status bar, splash, back button, etc.).
  * Safe no-op on the web.
@@ -9,16 +7,16 @@ const BRAND_TEAL_HEX = "#0F766E";
 export async function initNative(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
 
-  // Status bar: draw behind content, set background color on Android
+  // Status bar: draw behind content, expose height as CSS variable
   try {
-    const { StatusBar } = await import("@capacitor/status-bar");
-    if (Capacitor.getPlatform() === "android") {
-      await StatusBar.setBackgroundColor({ color: BRAND_TEAL_HEX });
-    }
+    const { StatusBar, Style } = await import('@capacitor/status-bar');
     await StatusBar.setOverlaysWebView({ overlay: true });
-  } catch (err) {
-    console.warn("StatusBar init failed:", err);
-  }
+    await StatusBar.setStyle({ style: Style.Dark });
+    const info = await StatusBar.getInfo();
+    if (info.height) {
+      document.documentElement.style.setProperty('--status-bar-height', `${info.height}px`);
+    }
+  } catch {}
 
   // Splash screen: hide after the app is ready
   try {

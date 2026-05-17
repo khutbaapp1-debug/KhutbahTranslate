@@ -103,23 +103,21 @@ export default function SalahGuidePage() {
   return (
     <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
-        <div className="flex items-center justify-between p-4 max-w-screen-xl mx-auto">
+        <div className="flex items-center p-4 max-w-screen-xl mx-auto">
           <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
             <Home className="w-5 h-5" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2" data-testid="text-page-title">
-              Salah Guide
-              <button
-                onClick={() => setShowDisclaimer(true)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="About this guide"
-              >
-                <Info className="w-4 h-4" />
-              </button>
-            </h1>
-            <p className="text-xs text-muted-foreground">Step-by-step prayer instructions</p>
-          </div>
+          <h1 className="flex-1 text-center text-2xl font-semibold text-foreground" data-testid="text-page-title">
+            Salah Guide
+          </h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowDisclaimer(true)}
+            aria-label="About this guide"
+          >
+            <Info className="w-4 h-4" />
+          </Button>
         </div>
       </header>
 

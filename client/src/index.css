@@ -1,3 +1,7 @@
+:root {
+  --status-bar-height: env(safe-area-inset-top);
+}
+
 @import 'leaflet/dist/leaflet.css';
 
 @tailwind base;

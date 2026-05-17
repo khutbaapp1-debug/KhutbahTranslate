@@ -70,19 +70,15 @@ export default function ActionPointsPage() {
     <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
               <Home className="w-5 h-5" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2" data-testid="text-page-title">
-                <Target className="w-6 h-6" />
-                Weekly Action Points
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Implement khutbah teachings
-              </p>
-            </div>
+            <h1 className="flex-1 flex items-center justify-center gap-2 text-2xl font-semibold text-foreground" data-testid="text-page-title">
+              <Target className="w-6 h-6" />
+              Weekly Action Points
+            </h1>
+            <div className="w-10" />
           </div>
         </div>
       </header>

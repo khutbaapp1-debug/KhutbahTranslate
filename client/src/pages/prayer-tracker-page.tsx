@@ -182,14 +182,15 @@ export default function PrayerTrackerPage() {
     return (
       <div className="min-h-screen bg-background ">
         <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
-          <div className="flex items-center gap-3 p-4 max-w-screen-xl mx-auto">
+          <div className="flex items-center p-4 max-w-screen-xl mx-auto">
             <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
               <Home className="w-5 h-5" />
             </Button>
-            <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2" data-testid="text-page-title">
+            <h1 className="flex-1 flex items-center justify-center gap-2 text-2xl font-semibold text-foreground" data-testid="text-page-title">
               <Clock className="w-6 h-6 text-primary" />
               Prayer Tracker
             </h1>
+            <div className="w-10" />
           </div>
         </header>
 
@@ -222,23 +223,14 @@ export default function PrayerTrackerPage() {
   return (
     <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
-        <div className="p-4 max-w-screen-xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-back">
-                <Home className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2" data-testid="text-page-title">
-                  <Clock className="w-6 h-6 text-primary" />
-                  Prayer Tracker
-                </h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Qada (Makeup) Prayers
-                </p>
-              </div>
-            </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <div className="flex items-center p-4 max-w-screen-xl mx-auto">
+          <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-back">
+            <Home className="w-5 h-5" />
+          </Button>
+          <h1 className="flex-1 text-center text-2xl font-semibold text-foreground" data-testid="text-page-title">
+            Prayer Tracker
+          </h1>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" data-testid="button-add-prayer">
                   <Plus className="w-4 h-4 mr-1" />
@@ -347,7 +339,6 @@ export default function PrayerTrackerPage() {
                 </Form>
               </DialogContent>
             </Dialog>
-          </div>
         </div>
       </header>
 

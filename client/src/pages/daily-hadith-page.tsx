@@ -83,36 +83,31 @@ export default function DailyHadithPage() {
     favoriteMutation.mutate(hadith.id);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg text-muted-foreground">Loading today's hadith...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!hadith) {
-    return (
-      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg text-muted-foreground">No hadith available</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <>
-      <div className="min-h-screen bg-background pb-24">
-        <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
-          <div className="flex items-center gap-3 p-4 max-w-screen-xl mx-auto">
-            <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
-              <Home className="w-5 h-5" />
-            </Button>
+    <div className="min-h-screen bg-background pb-24">
+      <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
+        <div className="flex items-center p-4 max-w-screen-xl mx-auto">
+          <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
+            <Home className="w-5 h-5" />
+          </Button>
+          <h1 className="flex-1 text-center text-2xl font-semibold text-foreground">Daily Hadith</h1>
+          <div className="w-10" />
+        </div>
+      </header>
+
+      {isLoading ? (
+        <div className="p-4 flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <div className="text-lg text-muted-foreground">Loading today's hadith...</div>
           </div>
-        </header>
+        </div>
+      ) : !hadith ? (
+        <div className="p-4 flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <div className="text-lg text-muted-foreground">No hadith available</div>
+          </div>
+        </div>
+      ) : (
         <div className="max-w-4xl mx-auto p-4 space-y-6">
           <div className="text-center space-y-2 pt-6">
             <div className="flex items-center justify-center gap-2">
@@ -227,7 +222,7 @@ export default function DailyHadithPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 }

@@ -72,7 +72,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <div style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+          <div style={{ paddingTop: 'var(--status-bar-height, env(safe-area-inset-top))' }}>
             <Toaster />
             <AdsLoader />
             <Router />
