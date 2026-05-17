@@ -54,13 +54,6 @@ export default function KhutbahPage() {
   useEffect(() => { prewarm(); }, [prewarm]);
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => stream.getTracks().forEach(t => t.stop()))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     if (!localStorage.getItem(DISCLAIMER_KEY)) {
       setShowDisclaimer(true);
     }
@@ -73,10 +66,18 @@ export default function KhutbahPage() {
     }
   }, [translations]);
 
-  const handleDisclaimerDismiss = () => {
+  const handleDisclaimerDismiss = async () => {
     localStorage.setItem(DISCLAIMER_KEY, "true");
     setCurrentCard(0);
     setShowDisclaimer(false);
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop());
+      } catch (e) {
+        console.warn('[mic] permission request failed:', e);
+      }
+    }
   };
 
   const handleStartRecording = async () => {
