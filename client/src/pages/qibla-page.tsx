@@ -8,13 +8,41 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { calculateQiblaDirection, getCardinalDirection } from "@/lib/qibla";
 import { useToast } from "@/hooks/use-toast";
 
+const QIBLA_LOCATION_CACHE_KEY = "qibla-last-location";
+
+function readCachedLocation(): { lat: number; lng: number } | null {
+  try {
+    const raw = localStorage.getItem(QIBLA_LOCATION_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.lat === "number" && typeof parsed?.lng === "number") {
+      return { lat: parsed.lat, lng: parsed.lng };
+    }
+  } catch {}
+  return null;
+}
+
+function writeCachedLocation(lat: number, lng: number) {
+  try {
+    localStorage.setItem(QIBLA_LOCATION_CACHE_KEY, JSON.stringify({ lat, lng }));
+  } catch {}
+}
+
 export default function QiblaPage() {
   const [, navigate] = useLocation();
   const [heading, setHeading] = useState(0);
-  const [qiblaDirection, setQiblaDirection] = useState(0);
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [distance, setDistance] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  // Hydrate from cache immediately so the compass renders without waiting for GPS.
+  const cachedLocation = typeof window !== "undefined" ? readCachedLocation() : null;
+  const cachedQibla = cachedLocation
+    ? calculateQiblaDirection(cachedLocation.lat, cachedLocation.lng)
+    : null;
+  const [qiblaDirection, setQiblaDirection] = useState(cachedQibla?.direction ?? 0);
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
+    cachedLocation,
+  );
+  const [distance, setDistance] = useState(cachedQibla?.distance ?? 0);
+  // Only show the loading skeleton when there's no cached location to render.
+  const [isLoading, setIsLoading] = useState(!cachedLocation);
   const [calibrated, setCalibrated] = useState(false);
   const [compassSupported, setCompassSupported] = useState(false);
   const { toast } = useToast();
@@ -28,32 +56,41 @@ export default function QiblaPage() {
     }
 
     if (navigator.geolocation) {
+      // Fast, low-accuracy fix: typically resolves in <1s via network/wifi.
+      // Qibla direction is essentially unchanged for any error under ~10 km,
+      // so high-accuracy GPS (which takes 5-15s) is unnecessary.
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setLocation({ lat: latitude, lng: longitude });
-          
+          writeCachedLocation(latitude, longitude);
+
           const result = calculateQiblaDirection(latitude, longitude);
           setQiblaDirection(result.direction);
           setDistance(result.distance);
           setIsLoading(false);
         },
         (error) => {
-          toast({
-            title: "Location Error",
-            description: "Please enable location access to use the Qibla compass.",
-            variant: "destructive",
-          });
+          // Only nag the user if we have no cached location to fall back on.
+          if (!cachedLocation) {
+            toast({
+              title: "Location Error",
+              description: "Please enable location access to use the Qibla compass.",
+              variant: "destructive",
+            });
+          }
           setIsLoading(false);
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 3600000 },
       );
-    } else {
+    } else if (!cachedLocation) {
       toast({
         title: "Not Supported",
         description: "Geolocation is not supported by your browser.",
         variant: "destructive",
       });
+      setIsLoading(false);
+    } else {
       setIsLoading(false);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -126,7 +163,8 @@ export default function QiblaPage() {
         (position) => {
           const { latitude, longitude } = position.coords;
           setLocation({ lat: latitude, lng: longitude });
-          
+          writeCachedLocation(latitude, longitude);
+
           const result = calculateQiblaDirection(latitude, longitude);
           setQiblaDirection(result.direction);
           setDistance(result.distance);
@@ -140,7 +178,7 @@ export default function QiblaPage() {
             variant: "destructive",
           });
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 0 },
       );
     }
   };
