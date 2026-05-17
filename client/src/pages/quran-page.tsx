@@ -814,7 +814,7 @@ export default function QuranPage() {
   return (
     <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border pt-safe">
-        <div className="p-4 max-w-screen-xl mx-auto space-y-4">
+        <div className="py-2 px-4 max-w-screen-xl mx-auto space-y-4">
           <div className="flex items-center justify-between gap-2">
             <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
               <Home className="w-5 h-5" />

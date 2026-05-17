@@ -150,7 +150,7 @@ export default function QiblaPage() {
   return (
     <div className="min-h-screen bg-background ">
       <header className="sticky top-0 z-40 bg-background/95 border-b border-border pt-safe">
-        <div className="flex items-center p-4 max-w-screen-xl mx-auto">
+        <div className="flex items-center py-2 px-4 max-w-screen-xl mx-auto">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")} data-testid="button-home">
             <Home className="w-5 h-5" />
           </Button>
