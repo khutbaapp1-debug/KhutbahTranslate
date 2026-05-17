@@ -22,7 +22,7 @@ export function BottomNav() {
   }, []);
 
   return (
-    <nav className="fixed left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border pb-safe" style={{ bottom: `calc(${adHeight}px + env(safe-area-inset-bottom))`, '--bottom-nav-height': '64px' } as React.CSSProperties}>
+    <nav className="fixed left-0 right-0 z-50 bg-background/95 border-t border-border pb-safe" style={{ bottom: `calc(${adHeight}px + env(safe-area-inset-bottom))`, '--bottom-nav-height': '64px' } as React.CSSProperties}>
       <div className="flex items-center justify-around h-16 max-w-screen-xl mx-auto px-4">
         {navItems.map((item) => {
           const Icon = item.icon;

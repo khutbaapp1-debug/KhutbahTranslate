@@ -78,7 +78,7 @@ export default function KhutbahGuidelinesPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-background pb-nav">
-        <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
+        <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
           <div className="p-4 max-w-screen-xl mx-auto">
             <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2" data-testid="text-page-title">
               <Lightbulb className="w-6 h-6 text-primary" />
@@ -121,7 +121,7 @@ export default function KhutbahGuidelinesPage() {
 
   return (
     <div className="min-h-screen bg-background pb-nav">
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
+      <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

@@ -34,6 +34,7 @@ export default function KhutbahPage() {
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
   const {
+    prewarm,
     isRecording,
     isPaused,
     recordingTime,
@@ -49,6 +50,8 @@ export default function KhutbahPage() {
     resumeRecording,
     clearRecording,
   } = useAudioRecorder({});
+
+  useEffect(() => { prewarm(); }, [prewarm]);
 
   useEffect(() => {
     if (isNativeApp()) {
@@ -119,7 +122,7 @@ export default function KhutbahPage() {
 
   return (
     <div className="min-h-screen bg-background pb-nav">
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
+      <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
         <div className="p-4 max-w-screen-xl mx-auto space-y-3">
           <div className="flex items-center justify-between">
             <div>

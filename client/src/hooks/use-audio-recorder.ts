@@ -31,6 +31,7 @@ export interface AudioRecorderControls {
   resumeRecording: () => void;
   clearRecording: () => void;
   clearErrors: () => void; // Clear error states without losing translations/audio
+  prewarm: () => Promise<void>;
   onTranslation?: (segment: TranslationSegment) => void;
 }
 
@@ -427,6 +428,19 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
     setTranscriptionError(null);
   }, []);
 
+  const prewarm = useCallback(async () => {
+    if (audioContextRef.current) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true }
+      });
+      stream.getTracks().forEach(t => t.stop());
+      audioContextRef.current = new AudioContext({ sampleRate: 16000 });
+    } catch (err) {
+      console.warn('[audio prewarm] permission not yet granted');
+    }
+  }, []);
+
   return {
     isRecording,
     isPaused,
@@ -444,5 +458,6 @@ export function useAudioRecorder(options?: AudioRecorderOptions): AudioRecorderS
     resumeRecording,
     clearRecording,
     clearErrors,
+    prewarm,
   };
 }
