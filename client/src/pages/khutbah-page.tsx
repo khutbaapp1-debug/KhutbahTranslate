@@ -108,7 +108,7 @@ export default function KhutbahPage() {
 
   return (
     <div className="min-h-screen bg-background ">
-      <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
+      <header className="sticky top-0 z-40 bg-background/95 border-b border-border pt-safe">
         <div className="p-4 max-w-screen-xl mx-auto space-y-3">
           <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">

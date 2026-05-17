@@ -86,7 +86,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background ">
-      <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
+      <header className="sticky top-0 z-40 bg-background/95 border-b border-border pt-safe">
         <div className="flex items-center p-4 max-w-screen-xl mx-auto">
           <Button
             variant="ghost"

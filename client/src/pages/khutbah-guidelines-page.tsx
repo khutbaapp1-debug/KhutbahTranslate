@@ -77,7 +77,7 @@ export default function KhutbahGuidelinesPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-background ">
-        <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
+        <header className="sticky top-0 z-40 bg-background/95 border-b border-border pt-safe">
           <div className="flex items-center p-4 max-w-screen-xl mx-auto">
             <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-home">
               <Home className="w-5 h-5" />
@@ -123,7 +123,7 @@ export default function KhutbahGuidelinesPage() {
 
   return (
     <div className="min-h-screen bg-background ">
-      <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
+      <header className="sticky top-0 z-40 bg-background/95 border-b border-border pt-safe">
         <div className="flex items-center p-4 max-w-screen-xl mx-auto">
           <Button variant="ghost" size="icon" onClick={() => setLocation("/")} data-testid="button-back">
             <Home className="w-5 h-5" />
