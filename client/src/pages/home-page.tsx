@@ -192,18 +192,17 @@ export default function HomePage() {
             </Button>
           </div>
         </div>
-      </header>
-
-      <main className="pt-4 pb-12">
-        <div className="px-6 mb-6">
-          <h2 className="text-lg font-semibold text-foreground mb-2">
+        <div className="pb-2 px-4 max-w-screen-xl mx-auto">
+          <h2 className="text-base font-semibold text-foreground">
             Assalamu Alaikum
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Your complete Islamic companion in one place
           </p>
         </div>
+      </header>
 
+      <main className="pb-12">
         {/* Featured: Live Translation - Full Width Banner */}
         <div className="px-6">
           <button
