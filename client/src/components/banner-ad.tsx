@@ -7,7 +7,8 @@ let bannerInitialized = false;
 // Largest bottom margin we'll ever pass to AdMob. AdMob's BOTTOM_CENTER
 // already insets the banner above the nav bar on some devices, so an
 // uncapped safe-area value can make the banner float far up the screen.
-const MAX_BANNER_MARGIN = 24;
+// Temporarily 0 to confirm the banner sits flush against the nav bar.
+const MAX_BANNER_MARGIN = 0;
 
 // Measure the bottom safe-area inset (gesture / nav bar). Some Android
 // WebViews report 0 here even with a visible nav bar — the banner is then
