@@ -7,11 +7,9 @@ export type PrayerFlowRecitation = {
   audioUrl?: string;
 };
 
-// Mishary Rashid Al-Afasy recitations, sourced from public Islamic CDNs.
-// Surah-level audio from cdn.islamic.network; single-ayah from everyayah.com.
-const AUDIO_FATIHAH = "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/1.mp3";
-const AUDIO_IKHLAS = "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/112.mp3";
-const AUDIO_BISMILLAH = "https://everyayah.com/data/Alafasy_128kbps/001001.mp3";
+const AUDIO_BISMILLAH = "/audio/bismillah.mp3";
+const AUDIO_FATIHAH = "/audio/fatihah.mp3";
+const AUDIO_IKHLAS = "/audio/ikhlas.mp3";
 
 export type PrayerFlowCard = {
   number: number;
