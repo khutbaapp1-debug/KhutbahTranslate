@@ -1,7 +1,15 @@
 @import 'leaflet/dist/leaflet.css';
 
 :root {
-  --status-bar-height: 24px;
+  /*
+   * Default reserved space for the Android/iOS status bar. native-init.ts
+   * attempts to overwrite this with the actual measured height from
+   * Capacitor's StatusBar plugin, but its `getInfo()` does not report a
+   * height in current plugin versions, so this default is what most native
+   * users actually see. 32px covers Samsung punch-hole devices and other
+   * Androids with taller-than-24dp status bars.
+   */
+  --status-bar-height: 32px;
 }
 
 @tailwind base;
