@@ -50,7 +50,7 @@ export function BannerAd() {
             // "occupied" area on screen is therefore taller than just the ad.
             // Reserve ~56dp extra so page content (rows of tiles, etc.) clears
             // the entire region the banner & system nav take up.
-            const systemNavReserve = 56;
+            const systemNavReserve = 0;
             const totalReserved = size.height + systemNavReserve;
             setBannerHeight(totalReserved);
             publishBannerHeight(totalReserved);

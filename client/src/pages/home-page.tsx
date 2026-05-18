@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-provider";
 import { Sun, Moon as MoonIcon } from "lucide-react";
 import { computePrayerTimes, getCachedCoords, setCachedCoords, PrayerTimesResult } from "@/lib/prayer-times-client";
+import { Capacitor } from "@capacitor/core";
 
 import mosqueImage from "@assets/generated_images/Mosque_at_dawn_prayer_time_1c06498c.png";
 import kaabaImage from "@assets/generated_images/Kaaba_aerial_view_Makkah_b34ddcc4.png";
@@ -38,15 +39,37 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    if (!navigator.geolocation) { setLocationDenied(true); return; }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCachedCoords(pos.coords.latitude, pos.coords.longitude);
-        setPrayerData(computePrayerTimes(pos.coords.latitude, pos.coords.longitude, new Date(), calculationMethod, asrMethod));
-      },
-      () => { if (!getCachedCoords()) setLocationDenied(true); },
-      { timeout: 8000 }
-    );
+    let cancelled = false;
+
+    const applyCoords = (latitude: number, longitude: number) => {
+      if (cancelled) return;
+      setCachedCoords(latitude, longitude);
+      setPrayerData(computePrayerTimes(latitude, longitude, new Date(), calculationMethod, asrMethod));
+    };
+
+    async function loadLocation() {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const { Geolocation } = await import("@capacitor/geolocation");
+          await Geolocation.requestPermissions().catch(() => {});
+          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000 });
+          applyCoords(pos.coords.latitude, pos.coords.longitude);
+        } catch {
+          if (!getCachedCoords()) setLocationDenied(true);
+        }
+        return;
+      }
+
+      if (!navigator.geolocation) { setLocationDenied(true); return; }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => applyCoords(pos.coords.latitude, pos.coords.longitude),
+        () => { if (!getCachedCoords()) setLocationDenied(true); },
+        { timeout: 8000 }
+      );
+    }
+
+    loadLocation();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
