@@ -195,7 +195,14 @@ export default function HomePage() {
         </div>
       </header>
 
+<<<<<<< HEAD
       <main className="pt-16 pb-12">
+=======
+      <main
+        className="pt-8"
+        style={{ paddingBottom: "calc(1.5rem + var(--banner-height, 0px))" }}
+      >
+>>>>>>> f198652038b66316b8fbfbba898dd876fa4171dc
         <div className="px-6 mb-6">
           <h2 className="text-lg font-semibold text-foreground mb-2">
             Assalamu Alaikum

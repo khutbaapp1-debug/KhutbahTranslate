@@ -44,9 +44,16 @@ export function BannerAd() {
         const handle = await AdMob.addListener(
           BannerAdPluginEvents.SizeChanged,
           (size) => {
-            setBannerHeight(size.height);
-            publishBannerHeight(size.height);
-            document.documentElement.style.setProperty('--banner-height', `${size.height}px`);
+            // On Android 15+ the AdMob plugin auto-adds the system window inset
+            // (gesture/3-button nav bar, ~48dp) below the banner. The visible
+            // "occupied" area on screen is therefore taller than just the ad.
+            // Reserve ~56dp extra so page content (rows of tiles, etc.) clears
+            // the entire region the banner & system nav take up.
+            const systemNavReserve = 56;
+            const totalReserved = size.height + systemNavReserve;
+            setBannerHeight(totalReserved);
+            publishBannerHeight(totalReserved);
+            document.documentElement.style.setProperty('--banner-height', `${totalReserved}px`);
           },
         );
         if (cancelled) {
