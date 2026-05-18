@@ -10,7 +10,7 @@
    * devices with taller bars (e.g. Samsung punch-hole) may clip slightly
    * under the status bar since the webview draws behind it.
    */
-  --status-bar-height: 24px;
+  --status-bar-height: 20px;
 }
 
 @tailwind base;
