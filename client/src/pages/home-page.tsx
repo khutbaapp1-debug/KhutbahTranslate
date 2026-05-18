@@ -168,7 +168,6 @@ export default function HomePage() {
             <h1 className="text-xl font-semibold text-foreground truncate" data-testid="text-app-title">
               Khutbah Companion
             </h1>
-            <p className="text-xs text-muted-foreground">Your Islamic Companion</p>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -195,7 +194,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="pt-16 pb-12">
+      <main className="pt-4 pb-12">
         <div className="px-6 mb-6">
           <h2 className="text-lg font-semibold text-foreground mb-2">
             Assalamu Alaikum
