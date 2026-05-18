@@ -7,15 +7,11 @@ import { Capacitor } from "@capacitor/core";
 export async function initNative(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
 
-  // Status bar: draw behind content, expose height as CSS variable
+  // Status bar: overlay disabled — the OS reserves space for it
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
-    await StatusBar.setOverlaysWebView({ overlay: true });
+    await StatusBar.setOverlaysWebView({ overlay: false });
     await StatusBar.setStyle({ style: Style.Dark });
-    const info = await StatusBar.getInfo();
-    if (info.height) {
-      document.documentElement.style.setProperty('--status-bar-height', `${info.height}px`);
-    }
   } catch {}
 
   // Splash screen: hide after the app is ready
