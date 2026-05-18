@@ -6,10 +6,11 @@
    * attempts to overwrite this with the actual measured height from
    * Capacitor's StatusBar plugin, but its `getInfo()` does not report a
    * height in current plugin versions, so this default is what most native
-   * users actually see. 32px covers Samsung punch-hole devices and other
-   * Androids with taller-than-24dp status bars.
+   * users actually see. 24px matches the standard Android status bar;
+   * devices with taller bars (e.g. Samsung punch-hole) may clip slightly
+   * under the status bar since the webview draws behind it.
    */
-  --status-bar-height: 32px;
+  --status-bar-height: 24px;
 }
 
 @tailwind base;
