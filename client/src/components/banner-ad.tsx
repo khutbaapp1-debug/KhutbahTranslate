@@ -4,6 +4,25 @@ import { setBannerHeight as publishBannerHeight } from "@/lib/banner-height";
 
 let bannerInitialized = false;
 
+// Largest bottom margin we'll ever pass to AdMob. AdMob's BOTTOM_CENTER
+// already insets the banner above the nav bar on some devices, so an
+// uncapped safe-area value can make the banner float far up the screen.
+const MAX_BANNER_MARGIN = 24;
+
+// Measure the bottom safe-area inset (gesture / nav bar). Some Android
+// WebViews report 0 here even with a visible nav bar — the banner is then
+// left unchanged. The result is clamped to MAX_BANNER_MARGIN.
+function getNavBarHeight(): number {
+  const el = document.createElement('div');
+  el.style.height = 'env(safe-area-inset-bottom)';
+  el.style.position = 'fixed';
+  el.style.visibility = 'hidden';
+  document.body.appendChild(el);
+  const height = el.getBoundingClientRect().height || 0;
+  document.body.removeChild(el);
+  return Math.min(Math.max(height, 0), MAX_BANNER_MARGIN);
+}
+
 export function BannerAd() {
   const native = isNativeApp();
   const [bannerHeight, setBannerHeight] = useState(0);
@@ -35,10 +54,7 @@ export function BannerAd() {
           return;
         }
         listenerHandle = handle;
-        // AdMob's BOTTOM_CENTER already lays the banner above the system
-        // gesture / nav bar on Android & iOS — don't add safe-area on top of
-        // that or the banner ends up floating way above the screen edge.
-        await showBannerAd(0);
+        await showBannerAd(getNavBarHeight());
       } catch {
         // ad failed — spacer stays 0, page layout unaffected
       }
