@@ -9,6 +9,7 @@ import { useLocation } from "wouter";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { Icon, LatLngExpression } from "leaflet";
 import { useToast } from "@/hooks/use-toast";
+import { getApiBase } from "@/lib/api-base";
 
 interface Mosque {
   id: string;
@@ -98,7 +99,7 @@ export default function MosqueFinderPage() {
 
   // Fetch nearby mosques when user location is available
   const queryUrl = userLocation
-    ? `/api/mosques/nearby?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}`
+    ? `${getApiBase()}/api/mosques/nearby?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}`
     : null;
 
   const { data: mosques = [], isLoading, error } = useQuery<Mosque[]>({
