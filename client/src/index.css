@@ -242,8 +242,14 @@
 }
 
 @layer utilities {
+  /*
+   * Some Android WebView configurations return 0 for env(safe-area-inset-top)
+   * even when the app renders edge-to-edge under the status bar. Fall back to
+   * --status-bar-height (populated by native-init.ts from Capacitor's StatusBar
+   * plugin, with a 24px default) so sticky headers always clear system UI.
+   */
   .pt-safe {
-    padding-top: env(safe-area-inset-top);
+    padding-top: max(env(safe-area-inset-top), var(--status-bar-height, 24px));
   }
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
