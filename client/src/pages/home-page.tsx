@@ -195,7 +195,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="pt-8 pb-12">
+      <main className="pt-16 pb-12">
         <div className="px-6 mb-6">
           <h2 className="text-lg font-semibold text-foreground mb-2">
             Assalamu Alaikum
