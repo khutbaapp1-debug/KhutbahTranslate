@@ -7,10 +7,10 @@ import { Capacitor } from "@capacitor/core";
 export async function initNative(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
 
-  // Status bar: overlay disabled — the OS reserves space for it
+  // Status bar: draw behind content; page headers use .pt-safe to clear it
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
-    await StatusBar.setOverlaysWebView({ overlay: false });
+    await StatusBar.setOverlaysWebView({ overlay: true });
     await StatusBar.setStyle({ style: Style.Dark });
   } catch {}
 

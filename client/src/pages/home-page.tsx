@@ -185,7 +185,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background ">
-      <header className="sticky top-0 z-40 bg-background/95 border-b border-border">
+      <header className="sticky top-0 z-40 bg-background/95 border-b border-border pt-safe">
         <div className="flex items-center justify-between py-2 px-4 max-w-screen-xl mx-auto gap-4">
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-semibold text-foreground truncate" data-testid="text-app-title">
