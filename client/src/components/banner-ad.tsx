@@ -58,6 +58,9 @@ export function BannerAd() {
           return;
         }
         listenerHandle = handle;
+        // Wait briefly for native to inject __navBarHeight, then show banner
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        if (cancelled) return;
         await showBannerAd(getNavBarHeight());
       } catch {
         // ad failed — spacer stays 0, page layout unaffected
