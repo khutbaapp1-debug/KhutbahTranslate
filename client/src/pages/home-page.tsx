@@ -48,14 +48,24 @@ export default function HomePage() {
     };
 
     async function loadLocation() {
+      // Show cached coords immediately if available
+      const cached = getCachedCoords();
+      if (cached) {
+        applyCoords(cached.latitude, cached.longitude);
+      }
+
       if (Capacitor.isNativePlatform()) {
         try {
           const { Geolocation } = await import("@capacitor/geolocation");
           await Geolocation.requestPermissions().catch(() => {});
-          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000 });
+          const pos = await Geolocation.getCurrentPosition({
+            enableHighAccuracy: false,
+            timeout: 30000,
+            maximumAge: 300000, // accept a location up to 5 min old
+          });
           applyCoords(pos.coords.latitude, pos.coords.longitude);
         } catch {
-          if (!getCachedCoords()) setLocationDenied(true);
+          if (!cached) setLocationDenied(true);
         }
         return;
       }
@@ -63,8 +73,8 @@ export default function HomePage() {
       if (!navigator.geolocation) { setLocationDenied(true); return; }
       navigator.geolocation.getCurrentPosition(
         (pos) => applyCoords(pos.coords.latitude, pos.coords.longitude),
-        () => { if (!getCachedCoords()) setLocationDenied(true); },
-        { timeout: 8000 }
+        () => { if (!cached) setLocationDenied(true); },
+        { timeout: 8000, maximumAge: 300000 }
       );
     }
 
