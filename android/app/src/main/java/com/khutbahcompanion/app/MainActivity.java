@@ -52,5 +52,24 @@ public class MainActivity extends BridgeActivity {
             flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
             decorView.setSystemUiVisibility(flags);
         }
+
+        getWindow().getDecorView().setOnApplyWindowInsetsListener((view, insets) -> {
+            int navBarHeight = 0;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.view.WindowInsets wi = view.getRootWindowInsets();
+                if (wi != null) {
+                    navBarHeight = wi.getInsets(android.view.WindowInsets.Type.navigationBars()).bottom;
+                }
+            } else {
+                navBarHeight = insets.getSystemWindowInsetBottom();
+            }
+            final int finalNavHeight = navBarHeight;
+            getBridge().getWebView().post(() -> {
+                getBridge().getWebView().evaluateJavascript(
+                    "window.__navBarHeight = " + finalNavHeight + ";", null
+                );
+            });
+            return view.onApplyWindowInsets(insets);
+        });
     }
 }
