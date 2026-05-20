@@ -14,13 +14,28 @@ export async function initNative(): Promise<void> {
     await StatusBar.setStyle({ style: Style.Dark });
   } catch {}
 
-  // Splash screen: hide after the app is ready
+  // Permissions: request all three during splash, then hide it
   try {
-    const { SplashScreen } = await import("@capacitor/splash-screen");
-    await SplashScreen.hide();
-  } catch (err) {
-    console.warn("SplashScreen hide failed:", err);
-  }
+    const [{ SplashScreen }, { Geolocation }, { LocalNotifications }] = await Promise.all([
+      import("@capacitor/splash-screen"),
+      import("@capacitor/geolocation"),
+      import("@capacitor/local-notifications"),
+    ]);
+
+    const micPromise = navigator.mediaDevices
+      ? navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(stream => stream.getTracks().forEach(t => t.stop()))
+          .catch(() => {})
+      : Promise.resolve();
+
+    await Promise.allSettled([
+      Geolocation.requestPermissions(),
+      LocalNotifications.requestPermissions(),
+      micPromise,
+    ]);
+
+    await SplashScreen.hide({ fadeOutDuration: 500 });
+  } catch {}
 
   // Android hardware back button: go back through history, exit on home page
   try {
