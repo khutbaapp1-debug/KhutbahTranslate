@@ -1,0 +1,59 @@
+diff --git a/node_modules/@capacitor-community/admob/android/build.gradle b/node_modules/@capacitor-community/admob/android/build.gradle
+index 80b828d..b7f68fa 100644
+--- a/node_modules/@capacitor-community/admob/android/build.gradle
++++ b/node_modules/@capacitor-community/admob/android/build.gradle
+@@ -37,7 +37,7 @@ android {
+     buildTypes {
+         release {
+             minifyEnabled false
+-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
++            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+         }
+     }
+     lintOptions {
+diff --git a/node_modules/@capacitor-community/admob/android/src/main/java/com/getcapacitor/community/admob/banner/BannerExecutor.java b/node_modules/@capacitor-community/admob/android/src/main/java/com/getcapacitor/community/admob/banner/BannerExecutor.java
+index c629139..d92cc5b 100644
+--- a/node_modules/@capacitor-community/admob/android/src/main/java/com/getcapacitor/community/admob/banner/BannerExecutor.java
++++ b/node_modules/@capacitor-community/admob/android/src/main/java/com/getcapacitor/community/admob/banner/BannerExecutor.java
+@@ -113,7 +113,7 @@ public class BannerExecutor extends Executor {
+                     if ("TOP_CENTER".equals(adOptions.position)) {
+                         mAdViewLayoutParams.setMargins(0, topInset, 0, 0);
+                     } else {
+-                        mAdViewLayoutParams.setMargins(0, 0, 0, bottomInset);
++                        mAdViewLayoutParams.setMargins(0, 0, 0, 0);
+                     }
+ 
+                     mAdViewLayout.setLayoutParams(mAdViewLayoutParams);
+@@ -162,7 +162,7 @@ public class BannerExecutor extends Executor {
+                 .runOnUiThread(() -> {
+                     if (mAdViewLayout != null) {
+                         mAdViewLayout.setVisibility(View.GONE);
+-                        mAdView.pause();
++                        if (mAdView != null) { mAdView.pause(); };
+ 
+                         final BannerAdSizeInfo sizeInfo = new BannerAdSizeInfo(0, 0);
+ 
+@@ -227,7 +227,7 @@ public class BannerExecutor extends Executor {
+             .get()
+             .runOnUiThread(() -> {
+                 final AdRequest adRequest = RequestHelper.createRequest(adOptions);
+-                mAdView.loadAd(adRequest);
++                if (mAdView != null) { mAdView.loadAd(adRequest); }
+             });
+     }
+ 
+@@ -246,7 +246,7 @@ public class BannerExecutor extends Executor {
+                 // Add the AdView to the view hierarchy.
+                 mAdViewLayout.addView(mAdView);
+                 // Start loading the ad.
+-                mAdView.loadAd(adRequest);
++                if (mAdView != null) { mAdView.loadAd(adRequest); }
+                 mAdView.setAdListener(
+                     new AdListener() {
+                         @Override
+@@ -301,3 +301,5 @@ public class BannerExecutor extends Executor {
+             });
+     }
+ }
++
++
