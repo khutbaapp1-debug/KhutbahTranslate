@@ -72,7 +72,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <div style={{ paddingBottom: 'var(--banner-height, 0px)' }}>
+          <div>
             <Toaster />
             <AdsLoader />
             <Router />
