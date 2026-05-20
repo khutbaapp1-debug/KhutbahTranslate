@@ -24,10 +24,11 @@ export function BannerAd() {
         const handle = await AdMob.addListener(
           BannerAdPluginEvents.SizeChanged,
           (size) => {
-            // Add ~48dp for the system nav bar so page content clears the
-            // banner — the AdMob plugin lifts the banner above the nav bar
-            // on Android 15+, but the WebView still extends under it.
-            const totalHeight = size.height + 48;
+            // Add ~24dp for the system nav bar (gesture-nav devices) so page
+            // content clears the banner — the AdMob plugin lifts the banner
+            // above the nav bar on Android 15+, but the WebView still
+            // extends under it.
+            const totalHeight = size.height + 24;
             publishBannerHeight(totalHeight);
             document.documentElement.style.setProperty('--banner-height', `${totalHeight}px`);
           },
