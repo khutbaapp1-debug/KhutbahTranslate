@@ -28,12 +28,20 @@ public class MainActivity extends BridgeActivity {
             }
         });
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.RECORD_AUDIO},
-                    RECORD_AUDIO_REQUEST_CODE);
-        }
+        // Delay RECORD_AUDIO so it fires AFTER the JS sequential permission
+        // dialogs (geolocation, notifications) — Android allows only one
+        // permission request set at a time.
+        getBridge().getWebView().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.RECORD_AUDIO},
+                            RECORD_AUDIO_REQUEST_CODE);
+                }
+            }
+        }, 5000); // fires after JS permissions complete
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             View decorView = getWindow().getDecorView();

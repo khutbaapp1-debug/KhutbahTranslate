@@ -23,11 +23,6 @@ export async function initNative(): Promise<void> {
     // Request permissions one at a time — Android shows one dialog at a time
     await Geolocation.requestPermissions().catch(() => {});
     await LocalNotifications.requestPermissions().catch(() => {});
-    if (navigator.mediaDevices?.getUserMedia) {
-      await navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => stream.getTracks().forEach(t => t.stop()))
-        .catch(() => {});
-    }
 
     await SplashScreen.hide({ fadeOutDuration: 500 });
   } catch {}
