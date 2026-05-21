@@ -14,25 +14,20 @@ export async function initNative(): Promise<void> {
     await StatusBar.setStyle({ style: Style.Dark });
   } catch {}
 
-  // Permissions: request all three during splash, then hide it
+  // Permissions: request sequentially during splash, then hide it
   try {
-    const [{ SplashScreen }, { Geolocation }, { LocalNotifications }] = await Promise.all([
-      import("@capacitor/splash-screen"),
-      import("@capacitor/geolocation"),
-      import("@capacitor/local-notifications"),
-    ]);
+    const { SplashScreen } = await import("@capacitor/splash-screen");
+    const { Geolocation } = await import("@capacitor/geolocation");
+    const { LocalNotifications } = await import("@capacitor/local-notifications");
 
-    const micPromise = navigator.mediaDevices
-      ? navigator.mediaDevices.getUserMedia({ audio: true })
-          .then(stream => stream.getTracks().forEach(t => t.stop()))
-          .catch(() => {})
-      : Promise.resolve();
-
-    await Promise.allSettled([
-      Geolocation.requestPermissions(),
-      LocalNotifications.requestPermissions(),
-      micPromise,
-    ]);
+    // Request permissions one at a time — Android shows one dialog at a time
+    await Geolocation.requestPermissions().catch(() => {});
+    await LocalNotifications.requestPermissions().catch(() => {});
+    if (navigator.mediaDevices?.getUserMedia) {
+      await navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => stream.getTracks().forEach(t => t.stop()))
+        .catch(() => {});
+    }
 
     await SplashScreen.hide({ fadeOutDuration: 500 });
   } catch {}
