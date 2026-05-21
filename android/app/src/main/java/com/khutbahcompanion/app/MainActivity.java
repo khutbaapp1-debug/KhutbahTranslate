@@ -41,7 +41,7 @@ public class MainActivity extends BridgeActivity {
                             RECORD_AUDIO_REQUEST_CODE);
                 }
             }
-        }, 5000); // fires after JS permissions complete
+        }, 10000); // fires well after JS permissions complete
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             View decorView = getWindow().getDecorView();

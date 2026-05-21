@@ -22,6 +22,7 @@ export async function initNative(): Promise<void> {
 
     // Request permissions one at a time — Android shows one dialog at a time
     await Geolocation.requestPermissions().catch(() => {});
+    await new Promise(resolve => setTimeout(resolve, 500));
     await LocalNotifications.requestPermissions().catch(() => {});
 
     await SplashScreen.hide({ fadeOutDuration: 500 });
