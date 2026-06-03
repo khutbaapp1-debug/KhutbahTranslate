@@ -96,6 +96,14 @@ const transcribeRateLimitPerDay = rateLimit({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  const summariseLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests — try again in an hour.' },
+  });
+
   if (process.env.ENABLE_AUTH === 'true') {
     // Setup Replit Auth routes: /api/login, /api/logout, /api/callback
     await setupAuth(app);
@@ -261,6 +269,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   */ // END DISABLED: TRANSLATION USAGE TRACKING
+
+  // Summarise a completed khutbah translation session (premium, unauthenticated)
+  app.post("/api/summarise", summariseLimiter, async (req, res) => {
+    const { text } = req.body as { text?: string };
+    if (!text || typeof text !== 'string' || text.length < 10) {
+      return res.status(400).json({ error: 'text is required' });
+    }
+    try {
+      const [summary, actionPoints] = await Promise.all([
+        generateSermonSummary(text),
+        generateActionPoints(text, 'Khutbah Summary'),
+      ]);
+      res.json({ summary, actionPoints });
+    } catch {
+      res.status(500).json({ error: 'Failed to generate summary' });
+    }
+  });
 
   // Transcribe and translate audio chunk
   // Free tier: 1 hour per month base (60 minutes) + up to 2 hours from ads (120 minutes)
