@@ -95,6 +95,9 @@ const transcribeRateLimitPerDay = rateLimit({
   message: { error: "Daily request limit exceeded, please try again tomorrow." },
 });
 
+// 24-hour in-process cache for /api/hadiths/daily (anonymous — no per-user state)
+let hadithDailyCache: { date: string; hadith: typeof hadiths.$inferSelect & { isFavorited: boolean } } | null = null;
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const summariseLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
@@ -276,6 +279,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!text || typeof text !== 'string' || text.length < 10) {
       return res.status(400).json({ error: 'text is required' });
     }
+    if (text.length > 10000) {
+      return res.status(400).json({ error: 'text too long' });
+    }
     try {
       const [summary, actionPoints] = await Promise.all([
         generateSermonSummary(text),
@@ -308,17 +314,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       //   const chunkDurationMinutes = 10 / 60; // 10 seconds = 0.167 minutes
       //   await addTranslationMinutes(req.user.id, chunkDurationMinutes);
       // }
-
-      // If sermonId is provided, save the transcript
-      if (req.body.sermonId) {
-        await storage.createTranscript({
-          sermonId: req.body.sermonId,
-          arabicText: translation.originalText,
-          englishTranslation: translation.translatedText,
-          sequenceNumber: parseInt(req.body.sequenceNumber || "0"),
-          timestampSeconds: req.body.timestampSeconds || "0",
-        });
-      }
 
       res.json({
         arabic: translation.originalText, // Original text in any detected language
@@ -857,7 +852,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const latitude = parseFloat(req.query.latitude as string);
       const longitude = parseFloat(req.query.longitude as string);
-      const radius = parseInt(req.query.radius as string) || 10000; // default 10km
+      const radius = Math.min(parseInt(req.query.radius as string) || 10000, 10000); // default 10km, capped at 10km
 
       if (isNaN(latitude) || isNaN(longitude)) {
         return res.status(400).json({ error: "Valid latitude and longitude required" });
@@ -872,7 +867,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let mosques: any[];
       const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-      console.log('[mosques] apiKey present:', !!apiKey, apiKey ? `(starts: ${apiKey.slice(0, 5)})` : '(missing)');
 
       if (apiKey) {
         try {
@@ -966,6 +960,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(surahsListCache.data);
       }
       const response = await fetch("https://api.alquran.cloud/v1/meta");
+      if (!response.ok) throw new Error(`alquran.cloud returned ${response.status}`);
       const meta = await response.json();
       const refs = meta?.data?.surahs?.references ?? [];
       const surahs = refs.map((s: any) => ({
@@ -999,6 +994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await fetch(
         `https://api.alquran.cloud/v1/surah/${surahId}/editions/quran-uthmani,en.transliteration,en.sahih`
       );
+      if (!response.ok) throw new Error(`alquran.cloud returned ${response.status}`);
       const payload = await response.json();
       const editions: any[] = payload?.data ?? [];
 
@@ -1147,6 +1143,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get daily hadith (rotates daily based on date)
   app.get("/api/hadiths/daily", async (req, res) => {
     try {
+      const todayUtc = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+      if (hadithDailyCache && hadithDailyCache.date === todayUtc) {
+        return res.json(hadithDailyCache.hadith);
+      }
+
       // Get all hadiths
       const allHadiths = await db.select().from(hadiths);
 
@@ -1175,6 +1176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isFavorited = favorite.length > 0;
       }
 
+      hadithDailyCache = { date: todayUtc, hadith: { ...dailyHadith, isFavorited } };
       res.json({ ...dailyHadith, isFavorited });
     } catch (error: any) {
       console.error('[route error]', error);
