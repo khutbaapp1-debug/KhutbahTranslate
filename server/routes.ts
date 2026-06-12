@@ -1869,11 +1869,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     </div>
 
     <h1>Privacy Policy</h1>
-    <p class="meta">Operated by Akber Khan &nbsp;·&nbsp; Last updated 12 June 2026</p>
+    <p class="meta">Operated by Aaifa &nbsp;·&nbsp; Last updated 12 June 2026</p>
 
     <h2>Introduction</h2>
     <p>
-      Khutbah Companion ("we", "us", or "our") is a mobile application operated by Akber Khan.
+      Khutbah Companion ("we", "us", or "our") is a mobile application operated by Aaifa.
       This privacy policy explains what data we collect, how we use it, and your rights regarding
       that data. By using Khutbah Companion you agree to the practices described here.
     </p>
@@ -1959,7 +1959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     </p>
 
     <footer>
-      &copy; 2026 Khutbah Companion · Operated by Akber Khan
+      &copy; 2026 Khutbah Companion · Operated by Aaifa
     </footer>
   </div>
 </body>
