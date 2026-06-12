@@ -1940,7 +1940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     <h2>Data Deletion</h2>
     <p>
       You may request deletion of any personal data associated with your use of Khutbah Companion
-      by emailing us at <a href="mailto:akberk@gmail.com">akberk@gmail.com</a>. We will respond
+      by emailing us at <a href="mailto:khutba.app1@gmail.com">khutba.app1@gmail.com</a>. We will respond
       within 30 days and delete or anonymise your data as required by applicable law.
     </p>
 
@@ -1955,7 +1955,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     <p>
       If you have any questions or concerns about this privacy policy or your data, please
       contact us at:<br />
-      <a href="mailto:akberk@gmail.com">akberk@gmail.com</a>
+      <a href="mailto:khutba.app1@gmail.com">khutba.app1@gmail.com</a>
     </p>
 
     <footer>
