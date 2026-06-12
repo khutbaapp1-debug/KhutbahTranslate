@@ -1770,6 +1770,202 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   */ // END DISABLED: STRIPE ROUTES
 
+  // ── Privacy policy ────────────────────────────────────────────────────────
+  app.get('/privacy', (_req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Khutbah Companion</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      background: #f9fafb;
+      padding: 40px 16px 80px;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 48px 56px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    @media (max-width: 600px) {
+      .container { padding: 32px 24px; }
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 36px;
+    }
+    .brand-dot {
+      width: 28px;
+      height: 28px;
+      background: #0f766e;
+      border-radius: 7px;
+      flex-shrink: 0;
+    }
+    .brand-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #0f766e;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0f766e;
+      margin-bottom: 6px;
+    }
+    .meta {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 40px;
+    }
+    h2 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #111827;
+      margin: 36px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    p { margin-bottom: 12px; color: #374151; }
+    a { color: #0f766e; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { margin: 8px 0 12px 20px; }
+    li { margin-bottom: 6px; color: #374151; }
+    .highlight {
+      background: #f0fdf4;
+      border-left: 3px solid #0f766e;
+      padding: 12px 16px;
+      border-radius: 0 6px 6px 0;
+      margin: 12px 0;
+      font-size: 15px;
+      color: #065f46;
+    }
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 13px;
+      color: #9ca3af;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <span class="brand-name">Khutbah Companion</span>
+    </div>
+
+    <h1>Privacy Policy</h1>
+    <p class="meta">Operated by Akber Khan &nbsp;·&nbsp; Last updated 12 June 2026</p>
+
+    <h2>Introduction</h2>
+    <p>
+      Khutbah Companion ("we", "us", or "our") is a mobile application operated by Akber Khan.
+      This privacy policy explains what data we collect, how we use it, and your rights regarding
+      that data. By using Khutbah Companion you agree to the practices described here.
+    </p>
+
+    <h2>Location Data</h2>
+    <p>
+      We request access to your device's location solely to provide three features:
+    </p>
+    <ul>
+      <li>Calculating accurate <strong>prayer times</strong> for your area</li>
+      <li>Finding nearby <strong>mosques</strong></li>
+      <li>Determining the <strong>Qibla direction</strong> (direction of prayer)</li>
+    </ul>
+    <div class="highlight">
+      Location data is processed entirely on your device. We do not transmit, store, or share
+      your location with our servers or any third party.
+    </div>
+
+    <h2>Microphone and Audio</h2>
+    <p>
+      The Live Translation feature uses your device microphone to capture audio of a khutbah
+      (Friday sermon) for real-time translation. Audio is:
+    </p>
+    <ul>
+      <li>Transmitted securely to <strong>OpenAI</strong> for speech-to-text transcription and translation</li>
+      <li>Used only for the duration of the active translation session</li>
+      <li><strong>Not stored permanently</strong> on our servers or OpenAI's systems beyond the processing request</li>
+    </ul>
+    <p>Microphone access is only active while the Live Translation feature is in use.</p>
+
+    <h2>Advertising Identifier</h2>
+    <p>
+      Khutbah Companion displays ads served by <strong>Google AdMob</strong>. AdMob may collect
+      your device's advertising identifier (IDFA on iOS, GAID on Android) and other non-personal
+      usage data to serve relevant advertisements. You can limit ad tracking through your device's
+      privacy settings. Please review
+      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>
+      for full details.
+    </p>
+
+    <h2>In-App Purchases</h2>
+    <p>
+      Premium subscriptions are managed by <strong>RevenueCat</strong>. Payment processing is
+      handled entirely by the Apple App Store or Google Play Store. We do not receive, store,
+      or process your payment card details. RevenueCat stores a purchase receipt and subscription
+      status to verify your entitlement. See
+      <a href="https://www.revenuecat.com/privacy" target="_blank" rel="noopener">RevenueCat's Privacy Policy</a>
+      for details.
+    </p>
+
+    <h2>Data Sharing</h2>
+    <p>We share data only with the following service providers, and only to the extent necessary
+    to operate the features you use:</p>
+    <ul>
+      <li><strong>OpenAI</strong> — audio transcription and translation (Live Translation feature)</li>
+      <li><strong>Google AdMob</strong> — advertisement serving</li>
+      <li><strong>RevenueCat</strong> — subscription and purchase management</li>
+    </ul>
+    <div class="highlight">
+      We do not sell, rent, or trade your personal data to any third party for marketing or
+      any other purpose.
+    </div>
+
+    <h2>Data Deletion</h2>
+    <p>
+      You may request deletion of any personal data associated with your use of Khutbah Companion
+      by emailing us at <a href="mailto:akberk@gmail.com">akberk@gmail.com</a>. We will respond
+      within 30 days and delete or anonymise your data as required by applicable law.
+    </p>
+
+    <h2>Children's Privacy</h2>
+    <p>
+      Khutbah Companion is not directed at children under the age of 13. We do not knowingly
+      collect personal information from children under 13. If you believe a child has provided
+      us with personal data, please contact us and we will delete it promptly.
+    </p>
+
+    <h2>Contact Us</h2>
+    <p>
+      If you have any questions or concerns about this privacy policy or your data, please
+      contact us at:<br />
+      <a href="mailto:akberk@gmail.com">akberk@gmail.com</a>
+    </p>
+
+    <footer>
+      &copy; 2026 Khutbah Companion · Operated by Akber Khan
+    </footer>
+  </div>
+</body>
+</html>`);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
