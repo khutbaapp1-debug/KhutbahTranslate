@@ -14,12 +14,13 @@
  * even if add-hadiths-search-columns.sql hasn't been applied yet. Idempotent —
  * skips any (collection, hadith_number) already present.
  */
-import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
 import { sql } from "drizzle-orm";
 import { db } from "./db";
 import { hadiths } from "@shared/schema";
+// Imported (not read from disk) so esbuild inlines it into the production
+// bundle — a runtime readFileSync would resolve to dist/ where the file
+// doesn't exist, and the seed would silently never run.
+import hadithCollection from "./data/hadiths-collection.json";
 
 interface HadithRecord {
   collection: string;
@@ -36,15 +37,11 @@ interface HadithRecord {
   isDailyEligible: boolean;
 }
 
-const dataPath = join(dirname(fileURLToPath(import.meta.url)), "data", "hadiths-collection.json");
-
-function loadRecords(): HadithRecord[] {
-  return JSON.parse(readFileSync(dataPath, "utf8"));
-}
+const records = hadithCollection as unknown as HadithRecord[];
 
 // Expected row count = size of the curated collection. server/index.ts compares
 // the live table against this to decide whether to (re)seed.
-export const EXPECTED_HADITH_COUNT = loadRecords().length;
+export const EXPECTED_HADITH_COUNT = records.length;
 
 // Additive, idempotent DDL — mirrors server/migrations/add-hadiths-search-columns.sql.
 // Run before inserting so the seed never fails on a missing column (which, on the
@@ -68,7 +65,6 @@ async function ensureSchema(): Promise<void> {
 export async function seedHadiths(): Promise<void> {
   await ensureSchema();
 
-  const records = loadRecords();
   console.log(`Seeding ${records.length} hadiths from the verified collection...`);
 
   const rows = records.map((h) => ({
