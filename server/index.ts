@@ -165,6 +165,14 @@ async function ensureSchemaAndSeed() {
     await db.execute(sql`ALTER TABLE users ALTER COLUMN password DROP NOT NULL;`).catch(() => {});
     await db.execute(sql`ALTER TABLE users ALTER COLUMN username DROP NOT NULL;`).catch(() => {});
 
+    // Curated-hadith columns — must exist before the drizzle SELECT below (which
+    // now includes them) or the count query fails on a pre-migration database.
+    // Mirrors server/migrations/add-hadiths-search-columns.sql (also run in seedHadiths).
+    await db.execute(sql`ALTER TABLE hadiths ADD COLUMN IF NOT EXISTS transliteration TEXT;`).catch(() => {});
+    await db.execute(sql`ALTER TABLE hadiths ADD COLUMN IF NOT EXISTS subcategory TEXT;`).catch(() => {});
+    await db.execute(sql`ALTER TABLE hadiths ADD COLUMN IF NOT EXISTS is_daily_eligible BOOLEAN DEFAULT true;`).catch(() => {});
+    await db.execute(sql`ALTER TABLE hadiths ADD COLUMN IF NOT EXISTS source_verified BOOLEAN DEFAULT true;`).catch(() => {});
+
     const { duas, hadiths } = await import("@shared/schema");
     const { seedDuas, EXPECTED_DUA_COUNT } = await import("./seed-duas");
     const { seedHadiths, EXPECTED_HADITH_COUNT } = await import("./seed-hadiths");

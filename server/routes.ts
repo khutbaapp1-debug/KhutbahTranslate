@@ -1184,6 +1184,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Full-text search over the hadith translation, optional category filter, paginated.
+  // API `translation` maps to the english_translation column; `source` to reference.
+  app.get("/api/hadiths/search", async (req, res) => {
+    try {
+      const q = ((req.query.q as string) || "").trim();
+      const category = ((req.query.category as string) || "").trim();
+      const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string, 10) || 20));
+      const offset = (page - 1) * limit;
+
+      const conditions: any[] = [];
+      if (q) {
+        conditions.push(
+          sql`to_tsvector('english', ${hadiths.englishTranslation}) @@ plainto_tsquery('english', ${q})`,
+        );
+      }
+      if (category) {
+        conditions.push(eq(hadiths.category, category));
+      }
+      const where = conditions.length ? and(...conditions) : undefined;
+
+      let listQuery: any = db.select().from(hadiths);
+      let countQuery: any = db.select({ count: sql<number>`count(*)::int` }).from(hadiths);
+      if (where) {
+        listQuery = listQuery.where(where);
+        countQuery = countQuery.where(where);
+      }
+      const orderBy = q
+        ? sql`ts_rank(to_tsvector('english', ${hadiths.englishTranslation}), plainto_tsquery('english', ${q})) DESC`
+        : hadiths.hadithNumber;
+      const rows = await listQuery.orderBy(orderBy).limit(limit).offset(offset);
+      const countRows = await countQuery;
+      const total = countRows[0]?.count ?? 0;
+
+      res.json({ hadiths: rows, total, page, pages: Math.max(1, Math.ceil(total / limit)) });
+    } catch (error: any) {
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
+    }
+  });
+
+  // List categories with a hadith count for each.
+  app.get("/api/hadiths/categories", async (_req, res) => {
+    try {
+      const rows = await db
+        .select({ category: hadiths.category, count: sql<number>`count(*)::int` })
+        .from(hadiths)
+        .groupBy(hadiths.category)
+        .orderBy(hadiths.category);
+      res.json(rows.filter((r) => r.category));
+    } catch (error: any) {
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
+    }
+  });
+
+  // Single hadith by id. Registered after the literal /daily, /search and
+  // /categories routes so the :id param does not shadow them.
+  app.get("/api/hadiths/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      // Ids are uuids; reject malformed ids with 404 rather than a Postgres 500.
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        return res.status(404).json({ error: "Hadith not found" });
+      }
+      const rows = await db.select().from(hadiths).where(eq(hadiths.id, id)).limit(1);
+      if (rows.length === 0) {
+        return res.status(404).json({ error: "Hadith not found" });
+      }
+      res.json(rows[0]);
+    } catch (error: any) {
+      console.error('[route error]', error);
+      res.status(500).json({ error: 'Request failed' });
+    }
+  });
+
   // Get all hadiths
   app.get("/api/hadiths", async (req, res) => {
     try {

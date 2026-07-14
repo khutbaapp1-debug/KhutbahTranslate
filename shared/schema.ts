@@ -142,9 +142,15 @@ export const hadiths = pgTable("hadiths", {
   bookNumber: integer("book_number"),
   hadithNumber: integer("hadith_number"),
   narrator: text("narrator"), // e.g., "Abu Huraira"
-  category: text("category"), // 'faith', 'prayer', 'charity', 'character', etc.
-  reference: text("reference").notNull(), // full reference e.g., "Sahih Bukhari 1:2:8"
+  category: text("category"), // 'Faith', 'Prayer', 'Charity', 'Character', etc.
+  reference: text("reference").notNull(), // full reference e.g., "Sahih al-Bukhari 6303"
   grade: text("grade"), // 'sahih', 'hasan', 'daif', etc.
+  transliteration: text("transliteration"), // optional; null when not in source dataset
+  subcategory: text("subcategory"), // optional finer tag
+  isDailyEligible: boolean("is_daily_eligible").default(true),
+  // true = text/reference/narrator came from the verified fawazahmed0 dataset.
+  // Manually added hadiths should set this false until scholarly review.
+  sourceVerified: boolean("source_verified").default(true),
 });
 
 // Favorited hadiths (user-specific)
